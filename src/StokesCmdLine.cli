@@ -1,0 +1,71 @@
+## The Name specified is only used in/for the manual page
+Name ASPStokes
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASPFitsReader output FITS file format and generate ascii profiles}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Header line -- mark 4 format?
+Flag -l Header {Output header line to ascii profiles in Mark 4 format}
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Turn off baseline subtraction
+Flag -nobase NoBase {Turn off baseline subtraction}
+
+## Output parallactic angle vs. Stokes parameters file
+Flag -pafile ParAngFile {Output parallactic angle vs. Stokes parameters file}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP file
+String -infile Infile {Input data file from ASP} \
+    -m \
+    -c 1 1
+
+## Individual output files
+String -outroot OutfileRoot {Output data filename root [<PSR Name>.<MJD>.<Integration No.>.*]} \
+    -c 1 1 
+#    -d "*"
+## if option not selected, will use input file as root.
+## separate output file for:
+##       - .raw:  |L|^2, |R|^2, etc.
+##       - .prof: S, Q, U, V, etc.
+##       - .toa: toa file(s?)
+## maybe will get rid of this option altogether.
+
+
+########################################################################
+## INTEGER OPTIONS
+########################################################################
+
+## Number of input files.
+Int -nfiles NFiles {Number of consecutive data files} \
+    -c 1 1  \
+    -r 1 oo \
+    -d 1
+
+## Output only certain range of dumps
+Int -dumps DumpRange {Range of dumps to output as ascii files} \
+    -c 2 2 \
+    -r 0 oo 
+

@@ -1,0 +1,50 @@
+## The Name specified is only used in/for the manual page
+Name ASPAdd
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP .stokes.fits (or .rot.fits) data files, and add all profiles contained therein to one final ascii profile.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Turn off baseline subtraction
+Flag -nobase NoBase {Turn off baseline subtraction}
+
+## Weight average by SNR
+Flag -weight Weight {Weight averaging by signal to noise of each profile}
+
+## Sort out channels, and give a total profile for each channel
+###Flag -sortchans SortChans {Give total profile for each channel}
+
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP ascii file(s)
+String -infile Infile {Input ASP format ascii data files} \
+    -m \
+    -c 1 oo
+
+## Input ASP ascii (or .stokes.fits) existing standard profile to which 
+##  we would like to add .stokes.fits files (soon to be ascii files) 
+String -stdfile Stdfile {Existing standard profile to build on} \
+    -c 1 1
+

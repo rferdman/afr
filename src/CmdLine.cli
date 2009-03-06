@@ -1,0 +1,212 @@
+## The Name specified is only used in/for the manual page
+Name ASPFitsReader
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP FITS file formatted data files, process them, and generate full Stokes profiles in FITS format.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Use pspsmtoa header line format
+Flag -l Header {Choose pspmtoa header line format for .prof files}
+
+## Flip position angle to non-DT92 convention
+Flag -p FlipPA {Flip position angle to non-DT92 convention}
+
+## Output "raw" data files (|L|^2, |R|^2, etc.)
+Flag -r MakeRaw {Output data file with |L|^2, |R|^2, etc. as *.raw}
+
+## Output Stokes parameter files for each channel and dump in fits file
+Flag -a WriteAll {Output Stokes profiles for all channels and dumps used}
+
+## Scale L and R by RMS
+Flag -s Scale {Scale L and R by RMS}
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Swap polarization A and B due to polarizations flipped
+Flag -swap Swap {Swap polarizations}
+
+## Old fits file format
+Flag -old OldFits {Old FITS format}
+
+## Turn off parallactic angle corrections
+Flag -pangleoff PAngleOff {Turn off corrections for parallactic angle}
+
+## Turn off baseline subtraction
+Flag -nobase NoBase {Turn off baseline subtraction}
+
+## Don't write zeroed profiles (i.e. in which all scans were omitted) 
+## if they exist.  I keep writing them as default for now for omission 
+## purposes, so all scan numbers are the same as original .asp file.
+#Flag -nobad NoBad {Do not write output profiles for which all input scans were omitted}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP file
+String -infile Infile {Input data file from ASP} \
+    -m \
+    -c 1 1
+
+## Individual output files
+String -outroot OutfileRoot {Output data filename root [<PSR Name>.<MJD>.<Integration No.>.*]} \
+    -c 1 1 
+#    -d "*"
+## if option not selected, will use input file as root.
+## separate output file for:
+##       - .raw:  |L|^2, |R|^2, etc.
+##       - .prof: S, Q, U, V, etc.
+##       - .toa: toa file(s?)
+## maybe will get rid of this option altogether.
+
+## Input Standard profile file
+String -stdfile Stdfile {Input standard profile [<PSR short name>.std]} \
+    -c 1 1 
+#    -d "*"
+## if option not selected, will use pulsar short name as the root:
+## e.g. for 1534+12, file name = "1534.std
+
+## PSR name
+String -psr Source {PSR Name} \
+    -c 1 1
+
+## calibration file name
+String -calfile Calfile {Input calibration file} \
+    -c 1 1
+
+## thetaBB results file name
+String -thetabb ThetaBBfile {ThetaBB calculation filename} \
+    -c 1 1
+
+## mueller matrix file
+String -mueller Muellerfile {Mueller matrix filename} \
+    -c 1 1
+
+## file of scans to omit in reduction
+String -omitfile Omitfile {File of scans to omit} \
+    -c 1 1
+
+## use polyco file to adjust phases and spin frequencies of pulsar
+String -polyco Polyfile {Use polyco file to adjust pulsar phases} \
+    -c 0 1 
+#    -d "polyco.dat"
+
+########################################################################
+## FLOAT OPTIONS
+########################################################################
+
+## Sky Frequency
+# Float -fsky FSky {Sky Frequency in MHz} \
+#     -m \
+#     -r 0.0 10000.0 
+
+# Float -fomit FOmit {Choose frequency to omit in finding start phase of cal} \
+#     -c 1 128 \
+#     -r 0.0 100000.0
+
+Float -chanomit ChanOmit {Choose to omit all scans taken at these frequency channels} \
+    -c 1 128 \
+    -r 0.0 100000.0
+
+## Rotate TO phase in degrees
+#Float -tophase ToPhase {Rotate TO this phase in degrees [0]} \
+#    -c 1 1 \
+#    -r 0.0 360.0 
+#    -d 0.0
+    
+## Rotate BY phase in degrees
+#Float -byphase ByPhase {Rotate BY this phase in degrees [0]} \
+#    -c 1 1 \
+#    -r 0.0 360.0 
+#    -d 0.0 
+
+################
+## IMPORTANT: ##
+################
+## must check to see that *both* -tophase and -byphase are *not* selected 
+## at the same time.  Also, make default that we rotate TO zero phase.
+
+## The following option can only be used with the -subband option
+#Float -subcentre SubCentre {Chosen subband centre frequency} \
+#    -c 1 1 \
+#    -r 0.0 oo
+
+#Float -subbw SubBW {Width (in MHz) of each output subband -- to be used with -subcentre} \
+#    -c 1 1 \
+#    -r 0.0 oo
+
+
+########################################################################
+## INTEGER OPTIONS
+########################################################################
+
+## Number of input files.
+Int -nfiles NFiles {Number of consecutive data files} \
+    -c 1 1  \
+    -r 1 oo \
+    -d 1
+
+## Number of bins in output profile(s). Implies that there will be binning down.
+Int -nbins NBinsOut {Number of bins in output file} \
+    -c 1 1 \
+    -r 2 4096 
+#    -d 1024
+## Need to check in main program whether this has been selected.  If so, set
+## RunMode.BinDown = 1.  or just set RunMode.BinDown = RunMode.NBinsOutP (see 
+## clig manual -- should take care of zeros and ones).
+
+## Which channels user wants to add together.  Must be even number of arguments.
+## The 1st, 3rd, 5th, etc. argument is the start of the range, and 
+## the 2nd, 4th, 6th, etc. argument are the ends of the range.
+## The numbers refer to channel number (goes from 0 to # (channels-1 ))
+## No default, if there are no arguments, then add all channels together
+## Should be fun to parse.
+Int -addchans AddChans {Channel ranges to add together} \
+    -c 0 oo \
+    -r 0 oo 
+## Need to make sure of the following:
+##	- no overlapping channels
+##	- even number of arguments
+##	- upper range < number of channels
+##	- if no arguments, then add all channels
+
+#Int -nsubs NSubs {How many subbands into which to divide data} \
+#    -c 1 1 \
+#    -r 1 oo
+
+
+## How many dumps to add together at a time.  
+## Must be <= number of dumps.  One argument.
+## must be > 0.  if it's one, then it's the same as not adding dumps together.
+## if no arguments, then add all dumps together.
+Int -adddumps AddDumps {How many dumps to add together at a time} \
+    -c 0 1 \
+    -r 1 oo
+
+
+# Int -scanomit ScanOmit {Dump and Frequecy combination(s) to omit from reduction} \
+#    -c 2 oo \
+#    -r 0 oo
+
+
+Int -scanomit ScanOmit {Dump(s) to omit from reduction completely} \
+    -c 1 16384 \
+    -r 0 16383
+

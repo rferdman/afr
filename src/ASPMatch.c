@@ -1,0 +1,112 @@
+/* Takes in two profiles, and rotates the second to match the first, based */
+/* on shift found by fftfit  */
+/*   -- RDF, 08 Feb 2006 */
+
+
+#include <math.h>
+#include <stdio.h>
+#include <string.h>
+#include "ASPCommon.h"
+#include "MatchCmdLine.h"
+
+int main(int argc, char **argv)
+{
+  int i, nprof, bin[NBINMAX], NBins;
+  int ngood;
+  float  profs[NBINMAX],amps[NBINMAX], phas[NBINMAX];
+  float Shift,EShift,SNR,ESNR,b,errb;
+  double ByAngle;
+  char Headerline[256], Outfile[32], RefOutfile[32];
+  struct RunVars RunMode;
+  struct StdProfs Profile[2];
+
+  Cmdline *Cmd;
+
+  /* Get command line variables */
+  Cmd = parseCmdline(argc, argv);  
+
+  /* Normally use this somewhere, and not showOptionValues */
+  Cmd->tool = Cmd->tool;
+
+  RunMode.Verbose=Cmd->VerboseP;
+  RunMode.NoBase=Cmd->NoBaseP;
+  RunMode.Header=1;
+
+  strcpy(Outfile,"MatchedProf.out");
+  strcpy(RefOutfile,"RefMatchedProf.out");
+
+  /* Profile 0 = standard prof and profile 1 = "to be fitted" prof */
+
+  /* read in each profile in turn */
+  for(nprof=0;nprof<2;nprof++){
+
+    if ( ReadASPAsc(Cmd->Infile[nprof], Headerline, bin,  
+		    &Profile[nprof], &NBins) < 0) {
+      printf("Error in reading file %s.\n",Cmd->Infile[nprof]);
+      fflush(stdout);
+      exit(1);
+    }
+       
+    if(nprof==0){
+      RunMode.NBins = RunMode.NBinsOut = NBins;
+      printf("NBins = %d\n",RunMode.NBins);
+    }
+    else{
+      if (NBins != RunMode.NBins){
+	printf("\nBoth profiles MUST have same number of bins!  (%d != %d) Exiting...\n",RunMode.NBins,NBins);
+	fflush(stdout);
+	exit(1);
+      }
+    }
+  }
+    
+  /* Now have both profiles read in.  cprofc the first of the two profiles */
+  cprofc(Profile[0].rstds,RunMode.NBins,
+	 Profile[0].stdamps,Profile[0].stdphas);
+
+
+  memcpy(amps,Profile[0].stdamps,sizeof(float)*NBINMAX);
+  memcpy(phas,Profile[0].stdphas,sizeof(float)*NBINMAX);
+  memcpy(profs,Profile[1].rstds,sizeof(float)*NBINMAX);
+
+  /* Now fftfit to find shift required in second profile */
+  fftfit_(profs,&amps[1],&phas[1],
+	  &RunMode.NBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);  
+
+  /* Now shift second profile -- convert Shift from bins to radians */
+  ByAngle = (double)(-Shift/RunMode.NBins*TWOPI);
+
+  printf("Rotating %s by %lf radians\n",Cmd->Infile[1],ByAngle);
+  printf("Shift: %lf radians, eShift: %lf radians\n",
+	 ByAngle,EShift/RunMode.NBins*TWOPI);
+  printf("Scale factor: %f +- %f \n",b,errb);
+  
+  RotateProf(&RunMode, &Profile[1], ByAngle);
+
+  if (Cmd->ScaleP) {
+    //RotateProf(&RunMode, &Profile[0], 0.);
+
+    for(i=0;i<RunMode.NBins;i++){
+      Profile[1].rstds[i] /= b;
+      Profile[1].rstdq[i] /= b;
+      Profile[1].rstdu[i] /= b;
+      Profile[1].rstdv[i] /= b;
+    } 
+
+    //    MakePol(&RunMode,RunMode.NBins,&Profile[0]);
+    //WriteStokes(&RunMode,&Profile[0],Headerline,RefOutfile);
+  }
+
+  MakePol(&RunMode,RunMode.NBins,&Profile[1]);
+
+  WriteStokes(&RunMode,&Profile[1],Headerline,Outfile);
+
+  exit(0);
+
+}
+
+
+
+
+
+

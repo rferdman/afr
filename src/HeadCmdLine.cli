@@ -1,0 +1,45 @@
+## The Name specified is only used in/for the manual page
+Name ASPHead
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP fits profile file and extract header keyword values and other information.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+## Flag -v Verbose {Switch on verbose program operation}
+
+## Output in columns for easy parsing
+Flag -col Column {Output data in columns for easy parsing in scripts etc.}
+
+## Output list of keyword options
+Flag -list List {Output list of keywords and other info that can be used with -key flag}
+
+## For Nancay data, output times and TDIFF keyword
+Flag -tdiff TDiff {Output dump times and TDIFF for Nancay data}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP ascii file
+String -infile Infile {Input ASP fits data files} \
+    -c 1 oo
+
+String -key Keyword {List of fits keywords for which to search} \
+    -c 1 oo

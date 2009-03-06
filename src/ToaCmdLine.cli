@@ -1,0 +1,72 @@
+## The Name specified is only used in/for the manual page
+Name ASPToa
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in a standard profile and ASP Stokes profile FITS files, and calculate times-of-arrival through cross-correlation in the frequency domain.  Output a TOA file.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Write TOAs in tempo2 format
+Flag -tempo2 Tempo2 {Write TOAs in tempo2-compatible format}
+
+## Don't rotate standard profile to zero phase
+Flag -nozero NoZero {Do not rotate standard profile to zero phase}
+
+## Various standard flags we might want if we are using tempo2:
+Flag -mjdflag MJDFlag {Appendd MJD flag to TOA line if using tempo2 format}
+Flag -beflag BEFlag {Append backend flag to TOA line if using tempo2 format}
+
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input standard profile asci file
+String -stdfile StdFile {Input ascii standard profile in pspmtoa format} \
+    -m \
+    -c 1 1
+
+## Input ASP files (ASP fits files for which user would like TOAs)
+String -infile Infiles {Input ASP data file} \
+    -m \
+    -c 1 oo
+
+## Output TOA file name (optional)
+String -toafile Toafile {Output TOA file name} \
+    -c 1 1
+
+## Append these tempo2 flags to the end of the TOA line
+## Enclose in quotes to make it all one string.
+String -t2flags T2Flags {Append these tempo2 flags to the end of the TOA line} \
+    -c 1 1
+
+
+########################################################################
+## FLOAT OPTIONS
+########################################################################
+
+## Choose MJD range(s) within data set for which to calculate TOAs
+Float -mjd MJDRange {Choose MJD range(s) for which to calculate TOAs} \
+    -c 2 oo
+
+## Choose frequency range within data set for which to calculate TOAs
+Float -freq FreqRange {Choos frequency range (in MHz) within which to calculate TOAs} \
+    -c 2 2

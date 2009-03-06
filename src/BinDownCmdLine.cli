@@ -1,0 +1,53 @@
+## The Name specified is only used in/for the manual page
+Name ASPBinDown
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP ascii profile and bin down to specified number of bins}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Turn off baseline subtraction
+###Flag -nobase NoBase {Turn off baseline subtraction}
+
+
+## m4-style header input (and ths output)
+Flag -m4head m4head {Mark4-style header input (and thus output)}
+
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP ascii file
+String -infile Infile {Input ascii data file from ASP} \
+    -m \
+    -c 1 1
+
+
+########################################################################
+## INTEGER OPTIONS
+########################################################################
+
+## Number of output bins
+Int -nbinsout NBinsOut {Number of Output Bins} \
+    -m \
+    -c 1 1  
+    

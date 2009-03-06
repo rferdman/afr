@@ -1,0 +1,41 @@
+## The Name specified is only used in/for the manual page
+Name ASPMatch
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in two ASP format ascii profiles and shift the second to match the first}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Turn off baseline subtraction
+Flag -nobase NoBase {Turn off baseline subtraction}
+
+## Scale Matched Prof to match ref prof
+Flag -scale Scale {Scale rotated profile to match reference profile}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP ascii file
+String -infile Infile {Input ascii data file from ASP -- *** 2nd will be rotated to match 1st ***} \
+    -m \
+    -c 2 2
+

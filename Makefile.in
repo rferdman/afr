@@ -1,0 +1,63 @@
+SHELL = /bin/sh
+
+#subdirs = src
+subdirs = @subdirs@
+top_srcdir = @top_srcdir@
+srcdir = @srcdir@
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+bindir = $(exec_prefix)/bin
+mandir = $(prefix)/man/man1
+
+ifndef ASP_BIN_DIR
+ASP_BIN_DIR = ./bin
+endif
+
+ASP_INCLUDE_DIR = ./include
+
+FITS_INCLUDE_DIR = /usr/include
+FITS_LIB_DIR = /usr/lib
+#FITS_INCLUDE_DIR = /sw/include
+#FITS_LIB_DIR = /sw/lib
+
+#CC = gcc -Wall
+CC = @CC@
+CFLAGS = @CFLAGS@ -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
+CFLAGS_NO_OPT = -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
+CFLAGS_OPT2 = -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
+F77 = @F77@
+F77FLAGS = @F77FLAGS@ -I$(ASP_INCLUDE_DIR)
+
+
+
+#
+# Object dependencies:
+#-----------------------
+
+$(ASP_BIN_DIR):
+	mkdir $(ASP_BIN_DIR)
+
+
+
+all:
+	@for dir in ${subdirs}; do \
+	  (cd $$dir && $(MAKE) all) \
+	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+
+
+
+clean:
+	/bin/rm -f *~
+	@for dir in ${subdirs}; do \
+	  (cd $$dir && $(MAKE) clean) \
+	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+
+distclean: clean
+	/bin/rm -f Makefile config.h config.status config.cache config.log
+	@for dir in ${subdirs}; do \
+	  (cd $$dir && $(MAKE) distclean) \
+	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
+	done && test -z "$$fail"
+

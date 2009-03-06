@@ -1,0 +1,107 @@
+## The Name specified is only used in/for the manual page
+Name ASPCal
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP output calibrations FITS files, perform various calibration tasks, and output an ascii calibration file for input into ASPFitsReader.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Flip position angle to non-DT92 convention
+Flag -p FlipPA {Flip position angle to non-DT92 convention}
+
+## Output "raw" data files (|A|^2, |B|^2, etc.)
+Flag -r MakeRaw {Output data file with |A|^2, |B|^2, etc. as *.raw}
+
+## Scale L and R by RMS
+###Flag -s Scale {Scale L and R by RMS}
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Swap polarization A and B due to polarizations flipped
+###Flag -swap Swap {Swap polarizations}
+
+## Use all dumps in calibration files
+Flag -adddumps AddDumps {Add all calibration dumps together}
+
+## Assume constant Tsys when calculating cal factors (pased on fluxcal routine
+## in psrchive
+Flag -tsys ConstTsys {Assume constant system temperature in calculating cal factors}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP pulsar cal file
+String -calfile Calfile {Pulsar calibration input data file from ASP} \
+    -m \
+    -c 1 1
+
+## Input ASP continuum cal file
+String -contfile Contfile {Continuum calibration input data files from ASP} \
+    -c 2 2
+
+## Individual output files
+String -outroot OutfileRoot {Output data filename root [<PSR Name>.<MJD>.<Integration No.>.*]} \
+    -c 1 1 
+#    -d "*"
+## if option not selected, will use input file as root.
+## separate output file for:
+##       - .raw:  |L|^2, |R|^2, etc.
+##       - .prof: S, Q, U, V, etc.
+##       - .toa: toa file(s?)
+## maybe will get rid of this option altogether.
+
+
+########################################################################
+## FLOAT OPTIONS
+########################################################################
+
+Float -fomit FOmit {Choose frequency to omit in finding start phase of cal} \
+    -c 1 128 \
+    -r 0.0 100000.0
+
+Float -flux Flux {Flux of continuum source in Jy} \
+    -r 0.0 oo
+
+Float -tcal Tcal {Cal temperature in Kelvin} \
+    -c 2 2 \
+    -r 0.0 oo
+
+Float -gain Gain {Telescope gain in K/Jy} \
+    -m \
+    -r 0.0 oo
+
+Float -force Force {Force phase of switch from cal pulse on to cal pulse off} \
+    -c 1 1 \
+    -r 0.0 1.0 
+
+## Let ASPCal choose which method is best to use; run constant gain assumption
+## and if Tsys from polarization A to B differs by > user-entered percentage,
+## THEN do constant Tsys (psrchive) method.
+Float -choose ChooseMethod {Choose method of Cal Height flux based on minimum allowable Tsys ratio between polarizations, given by user as a percentage} \
+     -c 0 1 \
+     -r 0.0 100.0 
+
+########################################################################
+## INTEGER OPTIONS
+########################################################################
+
+Int -nbad NBadThresh {Minimum allowable number of bad polA/polB Tsys ratios (channel-to-channel ratios, for each of ON and OFF source cals separately)} \
+    -c 1 1 \
+    -r 0 oo
