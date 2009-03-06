@@ -10,10 +10,10 @@ ASP_INCLUDE_DIR = ../include
 #### libcfitsio.a library files, respectively.            ####
 #FITS_INCLUDE_DIR = /usr/include
 #FITS_LIB_DIR = /usr/lib
-#FITS_INCLUDE_DIR = /sw/include
-#FITS_LIB_DIR = /sw/lib
-FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
-FITS_LIB_DIR = /astro/mahler/gonzalez/lib
+FITS_INCLUDE_DIR = /sw/include
+FITS_LIB_DIR = /sw/lib
+#FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
+#FITS_LIB_DIR = /astro/mahler/gonzalez/lib
 
 
 CC = gcc
@@ -30,7 +30,7 @@ ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
 # Object file names:
 #-------------------
 
-OBJS1 = ASPFitsReader.o CmdLine.o GetOptions.o GetChans.o GetOmit.o \
+OBJS1 = ASPFitsReader.o CmdLine.o GetOptions.o GetChans.o GetOmit.o Sum.o \
 	Freq2Chan.o InitPars.o ReadCal.o GetCalData.o ReadASPHdr.o ReadStd.o \
 	GetPoly.o cprofc.o ReadASPData.o MakeStokes.o PhaseShift.o PhaseCalc.o \
 	BinDown.o MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o \
