@@ -1,102 +1,92 @@
-void ISort(n,ra)
-     int n;
-     int ra[];
+/* Basic shell sort; obtained from 
+   http://linux.wku.edu/~lamonml/algor/sort/shell.html */
+
+/* Performs in-place sorting of input array */
+
+void ISort(int n_array, int array[])
 {
-  int l,j,ir,i;
-  double rra;
-                                                                                
-  l=(n >> 1)+1;
-  ir=n;
-  for (;;) {
-    if (l > 1)
-      rra=ra[--l];
-    else {
-      rra=ra[ir];
-      ra[ir]=ra[1];
-      if (--ir == 1) {
-        ra[1]=rra;
-        return;
+  int   i, j, increment;
+  int   temp;
+
+  increment = 3;
+  while (increment > 0)
+  {
+    for (i=0; i < n_array; i++)
+    {
+      j = i;
+      temp = array[i];
+      while ((j >= increment) && (array[j-increment] > temp))
+      {
+        array[j] = array[j - increment];
+        j = j - increment;
       }
+      array[j] = temp;
     }
-    i=l;
-    j=l << 1;
-    while (j <= ir) {
-      if (j < ir && ra[j] < ra[j+1]) ++j;
-      if (rra < ra[j]) {
-        ra[i]=ra[j];
-        j += (i=j);
-      }
-      else j=ir+1;
-    }
-    ra[i]=rra;
+    if (increment/2 != 0)
+      increment = increment/2;
+    else if (increment == 1)
+      increment = 0;
+    else
+      increment = 1;
   }
 }
 
-void FSort(n,ra)
-     int n;
-     float ra[];
-{
-  int l,j,ir,i;
-  double rra;
 
-  l=(n >> 1)+1;
-  ir=n;
-  for (;;) {
-    if (l > 1)
-      rra=ra[--l];
-    else {
-      rra=ra[ir];
-      ra[ir]=ra[1];
-      if (--ir == 1) {
-	ra[1]=rra;
-	return;
+void FSort(int n_array, float array[])
+{
+  int   i, j, increment;
+  float temp;
+
+  increment = 3;
+  while (increment > 0)
+  {
+    for (i=0; i < n_array; i++)
+    {
+      j = i;
+      temp = array[i];
+      while ((j >= increment) && (array[j-increment] > temp))
+      {
+        array[j] = array[j - increment];
+        j = j - increment;
       }
+      array[j] = temp;
     }
-    i=l;
-    j=l << 1;
-    while (j <= ir) {
-      if (j < ir && ra[j] < ra[j+1]) ++j;
-      if (rra < ra[j]) {
-	ra[i]=ra[j];
-	j += (i=j);
-      }
-      else j=ir+1;
-    }
-    ra[i]=rra;
+    if (increment/2 != 0)
+      increment = increment/2;
+    else if (increment == 1)
+      increment = 0;
+    else
+      increment = 1;
   }
 }
 
-void DSort(n,ra)
-     int n;
-     double ra[];
+
+void DSort(int n_array, double array[])
 {
-  int l,j,ir,i;
-  double rra;
-                                                                                
-  l=(n >> 1)+1;
-  ir=n;
-  for (;;) {
-    if (l > 1)
-      rra=ra[--l];
-    else {
-      rra=ra[ir];
-      ra[ir]=ra[1];
-      if (--ir == 1) {
-        ra[1]=rra;
-        return;
+  int    i, j, increment;
+  double temp;
+
+  increment = 3;
+  while (increment > 0)
+  {
+    for (i=0; i < n_array; i++)
+    {
+      j = i;
+      temp = array[i];
+      while ((j >= increment) && (array[j-increment] > temp))
+      {
+        array[j] = array[j - increment];
+        j = j - increment;
       }
+      array[j] = temp;
     }
-    i=l;
-    j=l << 1;
-    while (j <= ir) {
-      if (j < ir && ra[j] < ra[j+1]) ++j;
-      if (rra < ra[j]) {
-        ra[i]=ra[j];
-        j += (i=j);
-      }
-      else j=ir+1;
-    }
-    ra[i]=rra;
+    if (increment/2 != 0)
+      increment = increment/2;
+    else if (increment == 1)
+      increment = 0;
+    else
+      increment = 1;
   }
 }
+
 
