@@ -144,13 +144,13 @@ Float -chanomit ChanOmit {Choose to omit all scans taken at these frequency chan
 ## at the same time.  Also, make default that we rotate TO zero phase.
 
 ## The following option can only be used with the -subband option
-#Float -subcentre SubCentre {Chosen subband centre frequency} \
-#    -c 1 1 \
-#    -r 0.0 oo
+Float -subref SubRef {Chosen subband centre frequency} \
+    -c 1 1 \
+    -r 0.0 oo
 
-#Float -subbw SubBW {Width (in MHz) of each output subband -- to be used with -subcentre} \
-#    -c 1 1 \
-#    -r 0.0 oo
+Float -subbw SubBW {Width (in MHz) of each output subband -- to be used with -subcentre} \
+    -c 1 1 \
+    -r 0.0 oo
 
 
 ########################################################################
@@ -187,9 +187,13 @@ Int -addchans AddChans {Channel ranges to add together} \
 ##	- upper range < number of channels
 ##	- if no arguments, then add all channels
 
-#Int -nsubs NSubs {How many subbands into which to divide data} \
-#    -c 1 1 \
-#    -r 1 oo
+Int -nsubs NSubs {How many subbands into which to divide data} \
+    -c 1 1 \
+    -r 1 oo
+
+Int -nchansub NChanSub {How many input channels to include per subband} \
+    -c 1 1 \
+    -r 1 oo
 
 
 ## How many dumps to add together at a time.  
