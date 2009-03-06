@@ -85,6 +85,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
   }
 
   /* If no standard profile is given, then don't create one  */
+#if 0
   if(!(Cmd->StdfileP)) {
     printf("No standard profile given.  Will NOT rotate ");
     printf("input profiles to match.\n");fflush(stdout);
@@ -102,7 +103,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
   else {
     strcpy(RunMode->Stdfile,Cmd->Stdfile);
   }    
-
+#endif
 
   if(RunMode->ThetaBBFlag)
     strcpy(RunMode->ThetaBBfile,Cmd->ThetaBBfile);
