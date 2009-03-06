@@ -165,11 +165,14 @@ int main(int argc, char **argv)
     printf("NDumps = %d\n",RunMode.NDumps);fflush(stdout);
   }
   
-  printf("Number of input channels:  %d\n",InHdr.obs.NChan);
-  printf("Number of input dumps:     %d\n\n",RunMode.NDumps);
+  printf("Number of input channels:       %d\n",InHdr.obs.NChan);
+  printf("Number of input dumps:          %d\n",RunMode.NDumps);
+  printf("Number of input profile bins:   %d\n\n",RunMode.NBins);
 
-  printf("Number of output channels: %d\n",RunMode.NOutChans);
-  printf("Number of output dumps:    %d\n\n",RunMode.NOutDumps);
+  printf("Number of output channels:      %d\n",RunMode.NOutChans);
+  printf("Number of output dumps:         %d\n",RunMode.NOutDumps);
+  printf("Number of output profile bins:  %d\n\n",RunMode.NBinsOut);
+
   fflush(stdout);
 
   /* Set some output header variables */
@@ -182,7 +185,8 @@ int main(int argc, char **argv)
     OutChanIndex = (int)(((double)(RunMode.FirstChanAdd[i_chan_out] + 
 				   RunMode.LastChanAdd[i_chan_out]))/2.);
     OutHdr.obs.ChanFreq[i_chan_out]=InHdr.obs.ChanFreq[OutChanIndex];
-    printf("ChanfreqOut = %lf\n",OutHdr.obs.ChanFreq[i_chan_out]);
+    if (Cmd->VerboseP) 
+      printf("ChanfreqOut = %lf\n",OutHdr.obs.ChanFreq[i_chan_out]);
   }
   /* Set up output fits file stuff */
   NFilesOut = (int)(((float)RunMode.NOutDumps)/MAXDUMPS)+1;
