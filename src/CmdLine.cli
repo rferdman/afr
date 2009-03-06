@@ -4,7 +4,7 @@ Name ASPFitsReader
 ## Usage specifies a one-liner which is printed as part of
 ## usage-message. It is also used in the NAME-section of the manual
 ## page as a short description.
-Usage {Read in ASP FITS file formatted data files, process them, and generate full Stokes profiles in FITS format.}
+Usage {Reads in ASP FITS file formatted data files.  Applies various calibrations, scan rejection, profile binning, and scan integration.  Generates and outputs full Stokes profiles in FITS format.}
 
 ## The Version specified is printed as part of the usage-message. The
 ## example used here records the date of the clig-run as the version.
@@ -22,7 +22,7 @@ Commandline tool
 ########################################################################
 
 ## Use pspsmtoa header line format
-Flag -l Header {Choose pspmtoa header line format for .prof files}
+###Flag -l Header {Choose pspmtoa header line format for .prof files}
 
 ## Flip position angle to non-DT92 convention
 Flag -p FlipPA {Flip position angle to non-DT92 convention}
@@ -31,7 +31,7 @@ Flag -p FlipPA {Flip position angle to non-DT92 convention}
 Flag -r MakeRaw {Output data file with |L|^2, |R|^2, etc. as *.raw}
 
 ## Output Stokes parameter files for each channel and dump in fits file
-Flag -a WriteAll {Output Stokes profiles for all channels and dumps used}
+###Flag -a WriteAll {Output Stokes profiles for all channels and dumps used}
 
 ## Scale L and R by RMS
 Flag -s Scale {Scale L and R by RMS}
@@ -77,8 +77,8 @@ String -outroot OutfileRoot {Output data filename root [<PSR Name>.<MJD>.<Integr
 ## maybe will get rid of this option altogether.
 
 ## Input Standard profile file
-String -stdfile Stdfile {Input standard profile [<PSR short name>.std]} \
-    -c 1 1 
+##String -stdfile Stdfile {Input standard profile [<PSR short name>.std]} \
+##    -c 1 1 
 #    -d "*"
 ## if option not selected, will use pulsar short name as the root:
 ## e.g. for 1534+12, file name = "1534.std

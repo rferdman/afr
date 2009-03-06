@@ -17,7 +17,6 @@ int GetChans(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
   double BW;
   FILE *Ftest;
 
-  int testarray[10];
 
   BW = DSum(hdr->obs.ChanWidth, hdr->obs.NChan);
 

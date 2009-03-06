@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   //  int            PhaseBin[2], ContPhaseBin[2][2];
   int            OnBin[2],OffBin[2], ContOnBin[2][2],ContOffBin[2][2];
 
-  int            ONSource, OFFSource;
+  int            ONSource=0, OFFSource=0; // just to initialize for compilation
   int            NumChansFound;
   int            NBadRatio=0;
   int            SkipChan[NCHMAX];
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
   double         CalHeight[NCHMAX][2], ContCalHeight[2], ContCalFrac[2];
   // double         DeltaOff, DeltaOn;
 
-  double         JyPerCount[NCHMAX][4], JyPerCal[NCHMAX][4], KPerCount;
+  double         JyPerCount[NCHMAX][4], JyPerCal[NCHMAX][4];
   double         Tsys[2][2], Tant, Tcal;
   double         TsysRatio[NCHMAX][2], AvgTsysRatio[2];
   // double         Gain;

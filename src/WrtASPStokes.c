@@ -21,7 +21,7 @@ int WrtASPStokes(struct ASPHdr hdr, struct SubHdr subhdr, fitsfile *Fout,
 		 int nscan, struct StdProfs *OutputProfs, int Omitfile,
 		 struct RunVars *RunMode)
 {
-  int     status=0, i, j, k, colnum, colindex, nomit, do_omit;
+  int     status=0, i, j, k, colnum, colindex;
   char    ExtName[4*NCHMAX],*tunit[4*NCHMAX],*tform[4*NCHMAX],*ttype[4*NCHMAX];
   int     retval = -1;
   char    ErrMsg[512];

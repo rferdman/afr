@@ -18,7 +18,7 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
   int     bin, omit, nomit, chan, nchans;
   double  APlusB[NBINMAX], MedA[NBINMAX], MedB[NBINMAX];
   double  NormA[NBINMAX], NormB[NBINMAX];
-  double  CalHeight, LowAvg, HighAvg;
+  double  CalHeight, LowAvg;//, HighAvg;
   int     NumNearest=100, TempPhaseBin[2];
   int     PhaseBin[2];  
   int     SmallBin, LargeBin;

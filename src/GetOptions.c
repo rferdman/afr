@@ -20,7 +20,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
 
   /**** Flag Options ****/
 
-  RunMode->Header       = Cmd->HeaderP;
+  //  RunMode->Header       = Cmd->HeaderP;
   RunMode->FlipPA       = Cmd->FlipPAP;
   RunMode->MakeRaw      = Cmd->MakeRawP;
   RunMode->Scale        = Cmd->ScaleP;
@@ -84,26 +84,6 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
       printf("OutFileRoot is %s\n",RunMode->OutfileRoot);fflush(stdout); 
   }
 
-  /* If no standard profile is given, then don't create one  */
-#if 0
-  if(!(Cmd->StdfileP)) {
-    printf("No standard profile given.  Will NOT rotate ");
-    printf("input profiles to match.\n");fflush(stdout);
-    /*    if (strcmp(hdr->gen.ObsMode,"CAL") == 0){
-      strncpy(ShortName,RunMode->Source,5);
-      ShortName[5] = '\0';
-      sprintf(RunMode->Stdfile,"%4s.std",ShortName);
-    }
-    else{
-      strncpy(ShortName,RunMode->Source,4);
-     ShortName[4] = '\0';
-      sprintf(RunMode->Stdfile,"%4s.std",ShortName);
-      } */
-  } 
-  else {
-    strcpy(RunMode->Stdfile,Cmd->Stdfile);
-  }    
-#endif
 
   if(RunMode->ThetaBBFlag)
     strcpy(RunMode->ThetaBBfile,Cmd->ThetaBBfile);
@@ -251,7 +231,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
     printf("=====================\n");fflush(stdout);
     printf("Flag options:\n");fflush(stdout);
     printf("-------------\n");fflush(stdout);
-    printf("RunMode->Header      = %d\n",RunMode->Header);fflush(stdout);
+    //    printf("RunMode->Header      = %d\n",RunMode->Header);fflush(stdout);
     printf("RunMode->FlipPA      = %d\n",RunMode->FlipPA);fflush(stdout);
     printf("RunMode->MakeRaw     = %d\n",RunMode->MakeRaw);fflush(stdout);
     printf("RunMode->Scale       = %d\n",RunMode->Scale);fflush(stdout);
@@ -261,7 +241,6 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
     printf("RunMode->Infile      = %s\n",RunMode->Infile);fflush(stdout);
     printf("RunMode->OutfileRootP = %d\n",Cmd->OutfileRootP);fflush(stdout);
     printf("RunMode->OutfileRoot = %s\n",RunMode->OutfileRoot);fflush(stdout);
-    printf("RunMode->Stdfile     = %s\n",RunMode->Stdfile);fflush(stdout);
     printf("RunMode->Source      = %s\n",RunMode->Source);fflush(stdout);
     printf("CalMode->Calfile     = %s\n",CalMode->Calfile);fflush(stdout);
     printf("RunMode->ThetaBBfile = %s\n\n",RunMode->ThetaBBfile);fflush(stdout);

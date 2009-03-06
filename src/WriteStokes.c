@@ -8,10 +8,7 @@ void WriteStokes(struct RunVars *RunMode,
 
   int i;
   FILE *fpout;
-  double Savg;
-  //  double Srms;
   double x,ptype;
-  double Duty,FinalMask[NBINMAX];
 
   if ((fpout = fopen(Stokesfile,"w")) == 0)
     { printf("Cannot open %s. Exiting...\n",Stokesfile); exit(1); }

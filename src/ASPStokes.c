@@ -33,7 +33,7 @@ int main(int argc, char *argv[])
   int i,j,nscan,status=0;
   int fitsstatus=0;
   long NPtsProf=0;
-  double ParAng, MJD, RA, Dec;
+  double ParAng, MJD, RA=0., Dec=0.;
   char NObs[3];
 
   double SBase,Srms,VBase,Vrms,LinAvg,Linrms,UBase,QBase,Urms,Qrms;

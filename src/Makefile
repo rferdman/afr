@@ -31,11 +31,11 @@ ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
 #-------------------
 
 OBJS1 = ASPFitsReader.o CmdLine.o GetOptions.o GetChans.o GetOmit.o Sum.o \
-	Freq2Chan.o InitPars.o ReadCal.o GetCalData.o ReadASPHdr.o ReadStd.o \
+	Freq2Chan.o InitPars.o ReadCal.o GetCalData.o ReadASPHdr.o \
 	GetPoly.o cprofc.o ReadASPData.o MakeStokes.o PhaseShift.o PhaseCalc.o \
 	BinDown.o MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o \
-	MaxMin.o FindPeak.o RotateProf.o FitAngle.o GetChi.o GetAngle.o \
-	FitThetaBB.o FitMueller.o FinalDump.o WrtASPHdr.o WrtASPStokes.o \
+	MaxMin.o FindPeak.o RotateProf.o FitAngle.o GetChi.o \
+	FitThetaBB.o FitMueller.o WrtASPHdr.o WrtASPStokes.o \
 	Median.o
 
 OBJS2 = ffft.o fftfit.o cprof.o fccf.o brent.o 

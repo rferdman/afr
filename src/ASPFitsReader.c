@@ -21,30 +21,29 @@ int main(int argc, char **argv)
   int             i,i_dump_in,i_dump_out,i_chan_in,i_chan_out,i_out,i_bin; 
   int             MinAddDump, MaxAddDump, OutChanIndex, denom;
   int             SubOutDumpIndex, SubOutChanIndex;
-  int             hdutype, status=0, q;
-  int             RootIndex=0, NewDump=0, NumDumps=-1;
-  int             NFirstTable, NumHDU, FileNo, NFilesOut, FileOutNo;
+  int             hdutype, status=0;
+  int             RootIndex=0;
+  int             NFirstTable, NumHDU, NFilesOut, FileOutNo;
   long            NPtsProf=0;
   char            ProgName[256], *HeadLine[64];
-  char            *AddChansHead[64], *OutputHead[64];
+  char            *OutputHead[64];
   char            FitsFile[128], FitsFileOut[128];
   fitsfile        *Fin, **Fout;
   int             fitsstatus=0;
   struct ASPHdr   InHdr, OutHdr;
   struct SubHdr   *SubInHdr, SubOutHdr; //, *SubDumpHdr, 
-  struct RunVars  RunMode, StdRunMode;
+  struct RunVars  RunMode;
   struct CalVars  CalMode;
-  struct StdProfs StdProfile, *InputProfs, TempOutProfs, StokesProfs;
-  struct StdProfs *AddChansProfs, *OutputProfs; 
+  struct StdProfs *InputProfs, TempOutProfs, StokesProfs;
+  struct StdProfs *OutputProfs; 
   double          **ASquared, **BSquared, **ReAconjB, **ImAconjB;
   int             **SampleCount;
   double          *JyPerCount[NCHMAX];
-  double          TotWgt;
-  char            Stokesfile[256], TempInFile[256];
+  char            Stokesfile[256];
 
   double          StartMJD;
   struct Polyco   *Polycos;
-  int             n_poly;
+  int             n_poly=0;
 
   Cmdline         *Cmd;
 
@@ -235,7 +234,7 @@ int main(int argc, char **argv)
   /* malloc header lines for ascii output */
   for(i_chan_in=0;i_chan_in<InHdr.obs.NChan;i_chan_in++){
    if( ((HeadLine[i_chan_in] = (char *)malloc(128)) == NULL) || 
-	((AddChansHead[i_chan_in] = (char *)malloc(128)) == NULL) || 
+       //	((AddChansHead[i_chan_in] = (char *)malloc(128)) == NULL) || 
 	((OutputHead[i_chan_in] = (char *)malloc(128)) == NULL) ){
       printf("HeadLine malloc'ing failed for i_chan_in = %d\n",i_chan_in);
       fflush(stdout);
@@ -244,11 +243,11 @@ int main(int argc, char **argv)
   }  
 
   /* Read in standard profile and rotate it to zero phase */
-  if (ReadStd(&RunMode, &StdRunMode, &StdProfile, &TotWgt) < 0 ){
+  /* if (ReadStd(&RunMode, &StdRunMode, &StdProfile, &TotWgt) < 0 ){
     printf("Could not read standard profile correctly.  Exiting...\n");
     fflush(stdout);
     exit(6);
-  } 
+    }  */
 
   /* Read in ThetaBB values and Mueller matrix */
   if (RunMode.ThetaBBFlag){
@@ -459,9 +458,9 @@ int main(int argc, char **argv)
 	    
 	    /* Write Stokes parameters, linear polarization, 
 	       and position angle to file if desired */
-	    if (Cmd->WriteAllP)
+	    /* if (Cmd->WriteAllP)
 	      WriteStokes(&RunMode, &StokesProfs, HeadLine[i_chan_in], 
-			  Stokesfile);
+	      Stokesfile); */
 	    
 	    /* Correct for phase offset between polarizations */
 	    if(Cmd->ThetaBBfileP)
