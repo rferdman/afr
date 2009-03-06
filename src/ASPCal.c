@@ -43,6 +43,7 @@ int main(int argc, char **argv)
   int            ONSource, OFFSource;
   int            NumChansFound;
   int            NBadRatio=0;
+  int            SkipChan[NCHMAX];
   //  double         HighAvg[2], LowAvg[2];
   double         OnAvg[2], OffAvg[2];
   double         CalHeight[NCHMAX][2], ContCalHeight[2], ContCalFrac[2];
@@ -78,6 +79,8 @@ int main(int argc, char **argv)
   /* Store program name */
   strcpy(ProgName,argv[0]);  
 
+  /* Zero out SkipChan array */
+  IZero(&SkipChan[0], NCHMAX);
 
   /*** PUT IN READING OF PULSAR CAL FILE HERE ***/
 
@@ -208,23 +211,32 @@ int main(int argc, char **argv)
 	  CalHeight[i][pol] = GetCalHeight(BSquared[i],CalRunMode.NBins,OnBin,OffBin,
 					   &OnAvg[0],&OffAvg[0]);
       
+	/* If cal is weird and gives negative values, then skip in and don't 
+	   write JyPerCount to file.  AFR will omit that channel 
+	   automatically.*/
 	if (CalHeight[i][pol] < 0.) {
-	  printf("ERROR: Did not calculate CalHeight correctly. Exiting...\n");
-	  fflush(stdout);
-	  return -9;
+	  printf("WARNING: Did not calculate CalHeight correctly. ");
+	  printf("Skipping and will not write channel %.1lf to file.\n",
+		 CalHdr.obs.ChanFreq[i]);
+	  SkipChan[i]=1;
+	  // return -9;
 	}
-	if(CalRunMode.Verbose)
-	  printf("OnAvg[%d] = %lf, OffAvg[%d] = %lf\n",
-		 pol,OnAvg[0],pol,OffAvg[0]);
-      
-	/* Calculate only if we are not using continuum cals */
-	if (!CalCmd->ContfileP)
-	  JyPerCount[i][pol] = CalMode.Tcal[pol]/(CalMode.Gain*CalHeight[i][pol]); 
-      
+	else {
+	  if(CalRunMode.Verbose)
+	    printf("OnAvg[%d] = %lf, OffAvg[%d] = %lf\n",
+		   pol,OnAvg[0],pol,OffAvg[0]);
+	  
+	  /* Calculate only if we are not using continuum cals */
+	  if (!CalCmd->ContfileP)
+	    JyPerCount[i][pol] = CalMode.Tcal[pol]/(CalMode.Gain*CalHeight[i][pol]); 
+	}
       }
       /* Calculate Jy/count for polarization cross-products, again, 
        * if not using continuum cal file */
       if (!CalCmd->ContfileP){
+	/* Calculate and print to file only if channel is good and not being
+	   skipped */
+	if (!SkipChan[i]){
 	JyPerCount[i][2] = JyPerCount[i][3] 
 	  = sqrt(JyPerCount[i][0]*JyPerCount[i][1]);          
 
@@ -233,12 +245,12 @@ int main(int argc, char **argv)
 		 JyPerCount[i][0],JyPerCount[i][1],
 		 JyPerCount[i][2],JyPerCount[i][3]);
       
+	/* write cal factors to file */
 	fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",CalHdr.obs.ChanFreq[i],
 		JyPerCount[i][0],JyPerCount[i][1],
 		JyPerCount[i][2],JyPerCount[i][3] );
-
+	}
       }
-      
     }
 
     fits_close_file(Fcal, &status);
@@ -425,10 +437,11 @@ int main(int argc, char **argv)
 					    ContOnBin[i],ContOffBin[i],
 					    &OnAvg[i], &OffAvg[i]);
 	  if (ContCalHeight[i] < 0.) {
-	    printf("ERROR: Did not calculate CalHeight correctly for ");
-	    printf("continuum cal scan %s. Exiting...\n",ContRunMode[i].Infile);
-	    fflush(stdout);
-	    exit(7);
+	    printf("WARNING: Did not calculate CalHeight correctly for ");
+	    printf("continuum cal scan %s. ",ContRunMode[i].Infile);
+	    printf("Skipping and will not write channel %.1lf to file.\n",
+		 ContHdr[0].obs.ChanFreq[j]);
+	    SkipChan[j]=1;
 	  }
 
 	/* Calculte calheight/baseline ratio for each scan and use that to 
@@ -601,17 +614,21 @@ int main(int argc, char **argv)
 	for (j=0;j<CalHdr.obs.NChan;j++){
 	  if(CalHdr.obs.ChanFreq[j] == ContHdr[0].obs.ChanFreq[i]) {
 	    NumChansFound++;
-	    for(pol =0;pol<2;pol++){
-	      JyPerCount[j][pol] = JyPerCal[i][pol]/CalHeight[j][pol];
-	    }
-
-	    /* Write JyPerCount's to file as we find matching frequencies */
-	    JyPerCount[j][2] = JyPerCount[j][3] 
-	      = sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
-	    fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",CalHdr.obs.ChanFreq[j],
-		    JyPerCount[j][0],JyPerCount[j][1],
-		    JyPerCount[j][2],JyPerCount[j][3] );
 	    
+	    /* Write to file if this channel is not bad data */
+	    if (!SkipChan[j]) {
+	      for(pol =0;pol<2;pol++){
+		JyPerCount[j][pol] = JyPerCal[i][pol]/CalHeight[j][pol];
+	      }
+	      
+	      /* Write JyPerCount's to file as we find matching frequencies */
+	      JyPerCount[j][2] = JyPerCount[j][3] 
+		= sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
+	      fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",
+		      CalHdr.obs.ChanFreq[j],
+		      JyPerCount[j][0],JyPerCount[j][1],
+		      JyPerCount[j][2],JyPerCount[j][3] );
+	    }
 	    
 	    break; // move on to next continuum cal frequency to match up
 	  }
@@ -641,11 +658,15 @@ int main(int argc, char **argv)
 
       /* write to output file */
       for (j=0;j<ContHdr[0].obs.NChan;j++){
-	JyPerCount[j][2] = JyPerCount[j][3] 
-	  = sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
-	fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",ContHdr[0].obs.ChanFreq[j],
-		JyPerCount[j][0],JyPerCount[j][1],
-		JyPerCount[j][2],JyPerCount[j][3] );
+	/* Write to file if this channel is not bad data */
+	if (!SkipChan[j]) {
+	  JyPerCount[j][2] = JyPerCount[j][3] 
+	    = sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
+	  fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",
+		  ContHdr[0].obs.ChanFreq[j],
+		  JyPerCount[j][0],JyPerCount[j][1],
+		  JyPerCount[j][2],JyPerCount[j][3] );
+	}
       }
     }
 
