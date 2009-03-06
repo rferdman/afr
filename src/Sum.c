@@ -1,37 +1,40 @@
 /* Straight summation of an array */
 
-int ISum (int *Array, int ArrLen, int *ArrSum) {
+int ISum (int *Array, int ArrLen) {
 
   int i_arr;
+  int ArrSum;
 
   ArrSum=0;
   for (i_arr=0; i_arr<ArrLen; i_arr++){
-    *ArrSum += Array[i_arr];
+    ArrSum += Array[i_arr];
   }
 
-  return 0;
+  return ArrSum;
 }
 
-int FSum (float *Array, int ArrLen, float *ArrSum) {
+float FSum (float *Array, int ArrLen) {
 
   int i_arr;
+  float ArrSum;
 
   ArrSum=0.;
   for (i_arr=0; i_arr<ArrLen; i_arr++){
-    *ArrSum += Array[i_arr];
+    ArrSum += Array[i_arr];
   }
 
-  return 0;
+  return ArrSum;
 }
 
-int DSum (double *Array, int ArrLen, double *ArrSum) {
+double DSum (double *Array, int ArrLen) {
 
   int i_arr;
+  double ArrSum;
 
   ArrSum=0.;
   for (i_arr=0; i_arr<ArrLen; i_arr++){
-    *ArrSum += Array[i_arr];
+    ArrSum += Array[i_arr];
   }
 
-  return 0;
+  return ArrSum;
 }
