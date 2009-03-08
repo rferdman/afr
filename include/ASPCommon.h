@@ -150,9 +150,6 @@ int    Median(double *, double *, int, int);
 void   ReadASPData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		   fitsfile *, int, long, double **, double **, double **, 
 		   double **, int **, char **);
-int    ReadStd(struct RunVars *, struct RunVars *, struct StdProfs *, double *);
-int    MakeStd(struct ASPHdr *, struct RunVars *, struct StdProfs *, 
-	       struct StdProfs *, int);
 void   MakeStokes(struct ASPHdr *,struct RunVars *, struct StdProfs *,double *,
 		  double *, double *, double *, double *);
 int    PhaseShift(struct Polyco *, int , struct StdProfs *, struct RunVars *, 
@@ -169,34 +166,22 @@ void   DSort(int , double *);
 void   FZero(float *, int);
 void   DZero(double *, int);
 void   IZero(int *, int);
+int    ISum(int *, int);
+float  FSum(float *, int);
+double DSum(double *, int);
 double FindPeak(float *, int *, int *);
 double Max(double *,int , int *);
 double Min(double *,int , int *);
 int    IMax(int *, int, int *);
 int    IMin(int *, int, int *);
 void   WriteStokes(struct RunVars *, struct StdProfs *, char *, char *);
-void   AddChans(struct RunVars *, struct StdProfs *, struct StdProfs *,
-                struct StdProfs *, char **, struct ASPHdr *,
-                struct SubHdr *, struct SubHdr *, double *, char **, int);
-/*void   AddChans(struct RunVars *, struct StdProfs *, struct StdProfs *, 
-		char **, struct ASPHdr *, 
-		struct SubHdr *, struct SubHdr *, double *, char **, int);*/
 void   RotateProf(struct RunVars *, struct StdProfs *, double);
 void   FitAngle(struct RunVars *, struct ASPHdr *, struct SubHdr *, 
 		struct StdProfs *);
-//double GetChi(char *, double, int, double, double);
 double GetChi(char *, double, char *, double, double);
 double ratorad(char *);
 double dectorad(char *);
-void   AddDumps(struct RunVars *, struct ASPHdr *, struct SubHdr *, 
-		struct SubHdr *,struct StdProfs *, struct StdProfs *, 
-		char **, char **, int, int *);
-void   GetAngle(struct RunVars *, struct StdProfs *, struct StdProfs *);
-void   FinalDump(struct RunVars *, struct ASPHdr *, struct StdProfs *, 
-		 char **);
 int    WrtASPHdr(struct ASPHdr *, fitsfile *);
-/* int    WrtASPStokes(struct ASPHdr, struct SubHdr, fitsfile *, int, 
-   struct StdProfs *, Cmdline *, struct RunVars *); */
 int    WrtASPStokes(struct ASPHdr, struct SubHdr, fitsfile *, int, 
 		    struct StdProfs *,  int, struct RunVars *);
 void   ReadASPStokes(struct ASPHdr *, struct SubHdr *,fitsfile *, long , 

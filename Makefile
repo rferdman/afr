@@ -12,10 +12,10 @@ ASP_INCLUDE_DIR = ./include
 #### libcfitsio.a library files, respectively.            ####
 #FITS_INCLUDE_DIR = /usr/include
 #FITS_LIB_DIR = /usr/lib
-#FITS_INCLUDE_DIR = /sw/include
-#FITS_LIB_DIR = /sw/lib
-FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
-FITS_LIB_DIR = /astro/mahler/gonzalez/lib
+FITS_INCLUDE_DIR = /sw/include
+FITS_LIB_DIR = /sw/lib
+#FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
+#FITS_LIB_DIR = /astro/mahler/gonzalez/lib
 
 CC = gcc 
 CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
