@@ -12,7 +12,8 @@ void BMask(float *x,int *nbins,double *duty,double *y)
 
   for(i=0;i<*nbins;i++) y[i] = x[i];
 
-  DSort(*nbins,(&y[0]-1));
+  //  DSort(*nbins,(&y[0]-1));
+  DSort(*nbins, &y[0]);
 
   /*  for(i=0;i<(*nbins-1);i++) 
     diff[i]  =diffsave[i] = y[i+1] - y[i];
