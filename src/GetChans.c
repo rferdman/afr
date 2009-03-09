@@ -297,8 +297,9 @@ int GetChans(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 	else /* (chan_start == hdr->obs.NChan-1) */ chan_down=1;
       }
       else{ /* channel lands somewhere in the middle */
-	/* Choose channel with  next lowest centre frequency to start */
-	chan_start = Freq2Chan(Cmd->SubRef - 2., 
+	/* Choose channel with  next lowest centre frequency channel index 
+	   to start */
+	chan_start = Freq2Chan(Cmd->SubRef - 2.*RunMode->Sideband, 
 			       hdr->obs.ChanFreq, hdr->obs.NChan);
       }
 
