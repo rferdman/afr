@@ -18,9 +18,10 @@ int main(int argc, char *argv[])
   int NFirstTable, NumHDU, hdutype, status=0; // FITS int's
   int RootIndex=0, LastSlashIndex=0; // filename indices
   int bin[NBINMAX], StdBins, NDumps=0; // profile info
-  int NToa=0; // TOA counter
+  int NToa=0, TotToa=0, NWrtToa=0, TotWrtToa=0; // TOA counters: All TOAs, and Written-to-file TOAs (which may be different due to comman-line restrictions)
   int ngood; // for fftfit
   int MJD0; // integer MJD for output TOA
+  int freqwrite=0, mjdwrite=0; // flags used to signify allowed freq and mjd ranges for TOAs
 
   long NPtsProf=0; // needs to ba a long for fits routines
 
@@ -103,23 +104,40 @@ int main(int argc, char *argv[])
   }
   
 
-  printf("\n==========================\n");
-  printf("ASP FITS Header %s\n",Hdr.gen.HdrVer);
-  printf("==========================\n\n");fflush(stdout);
+  printf("\n=======\n");
+  printf("ASPToa  %s\n",Hdr.gen.HdrVer);
+  printf("=======\n\n");fflush(stdout);
      
-  printf("PSR %s:\n",Hdr.target.PSRName);
-  printf("--------------\n\n");
-
   printf("Standard profile: %s\n\n",Cmd->StdFile);
   printf("Finding TOAs for %d data files.\n\n",Cmd->InfilesC);
 
   if (Cmd->NoZeroP){
-    printf("Have chosen not to rotate standard profile to zero phase.\n\n");
+    printf("Have chosen not to rotate standard profile to zero phase.\n");
   }
   else{
     printf("Rotated standard profile by %f radians to put it at ", pha1);
-    printf("zero phase.\n\n");
+    printf("zero phase.\n");
   }
+
+  if (Cmd->FreqRangeP) {
+    if (Cmd->FreqRange[0] > Cmd->FreqRange[1]) {
+      printf("Error:  first argument to -freq must be less than second ");
+      printf("argument.  Exiting...");
+      exit(2);
+    }
+    printf("Including only frequencies from %.1lf to %.1lf MHz\n",
+	   Cmd->FreqRange[0], Cmd->FreqRange[1]);
+  }
+  if (Cmd->MJDRangeP) {
+    if (Cmd->MJDRange[0] > Cmd->MJDRange[1]) {
+      printf("Error:  first argument to -mjd must be less than second ");
+      printf("argument.  Exiting...");
+      exit(2);
+    }
+    printf("Including only TOAs with MJDs from %.1lf to %.1lf\n",
+	   Cmd->MJDRange[0], Cmd->MJDRange[1]);
+  }
+  printf("\n+===========================================================+\n\n");
 
   if(Cmd->Tempo2P){
     printf("Have chosen to output TOAs in tempo2 format\n\n");
@@ -141,6 +159,9 @@ int main(int argc, char *argv[])
   /**** FOR LOOP OVER N_FILES OR SOMETHING ****/
 
   for(i_file=0;i_file<Cmd->InfilesC;i_file++){ // over all input fits files
+
+    NToa=0;  /* Initialize NToa for this file */
+    NWrtToa=0;
 
     strcpy(FitsFile, Cmd->Infiles[i_file]);
   
@@ -177,10 +198,11 @@ int main(int argc, char *argv[])
     }
 
   
-    printf("Input file:  %s\n\n",Infile);fflush(stdout);
+    printf("Input file:  %s\n",Infile);fflush(stdout);
      //   printf("Input file:  %s\n\n",FitsFile);fflush(stdout);
 
-    printf("Centre Frequency: %6.1lf MHz\n\n",Hdr.obs.FSkyCent);fflush(stdout);
+     printf("PSR %s\n",Hdr.target.PSRName);
+     printf("Centre Frequency: %6.1lf MHz\n",Hdr.obs.FSkyCent);fflush(stdout);
   
     NDumps = 0;
     /* Get number of HDUs in fits file */
@@ -345,6 +367,7 @@ int main(int argc, char *argv[])
 	  sprintf(TOA,"%5d%14s",MJD0,&frac[1]);
 	}
 	NToa++; // count up TOAs
+	//	TotToa++;
 
 	strncpy(Source,Hdr.target.PSRName,7);
 	strncpy(&Source[7],"\0",1);
@@ -381,16 +404,40 @@ int main(int argc, char *argv[])
 	  }
 	}
 
+	freqwrite=mjdwrite=0;
+
+	/* If user did not restrict frequencies OR user did restrict 
+	   frequencies AND frequency of current TOA is within restricted
+	   range, then allow writing based on frequency */
+	if (!Cmd->FreqRangeP || ( Cmd->FreqRangeP && 
+	    (Hdr.obs.ChanFreq[i_chan] >= Cmd->FreqRange[0] && 
+	     Hdr.obs.ChanFreq[i_chan] <= Cmd->FreqRange[1]) ) )
+	  freqwrite=1;
+
+	if  (!Cmd->MJDRangeP || ( Cmd->MJDRangeP && 
+	     ((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
+	      (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
+	  mjdwrite=1;
 
 	/*** write each new TOA to file in the correct tempo format ***/
-	if (Cmd->Tempo2P) {
-	  fprintf(Ftoa, "%s %8.3lf %22s %8.3f %3s %s\n",
-		Infile, Hdr.obs.ChanFreq[i_chan],TOA, TOAErr, NObs, AllT2Flags);
+
+	/* If it passes frequency and MJD restriction parameters then write */
+	if (freqwrite && mjdwrite) {
+	  NWrtToa++;
+	  if (Cmd->Tempo2P) {
+	    fprintf(Ftoa, "%s %8.3lf %22s %8.3f %3s %s\n",
+	       Infile, Hdr.obs.ChanFreq[i_chan],TOA, TOAErr, NObs, AllT2Flags);
+	  }
+	  else {
+	    if (Cmd->NoIncrementP)
+	      fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
+		      NObs,1,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
+	    else
+	      fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
+		      NObs,TotWrtToa+NWrtToa,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
+	  }
 	}
-	else {
-	  fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
-		  NObs,NToa,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
-	}
+
       }
       
       if(Cmd->VerboseP) printf("\n");fflush(stdout);
@@ -403,16 +450,22 @@ int main(int argc, char *argv[])
 
     //  for (i=0;i<Cmd->NFiles;i++)
     fits_close_file(Fstokes, &status);
-    
-    
+    TotToa+=NToa;
+    TotWrtToa+=NWrtToa;
+
+    printf("%d TOAs found\n", NToa);
+    if (Cmd->FreqRangeP || Cmd->MJDRangeP)
+      printf("%d TOAs written based on command-line restrictions\n\n",NWrtToa);
     
   }
     
   /******* END LOOP OVER FILES ********/
 
   /** close TOA file **/
-
-  printf("Completed successfully.  Found %d TOAs.\n\n", NToa);
+  printf("\n+===========================================================+\n\n");
+  printf("Completed successfully.  Found %d TOAs.\n", TotToa);
+  if (Cmd->FreqRangeP || Cmd->MJDRangeP)
+    printf("Wrote %d to file based on command-line restrictions\n",TotWrtToa);
   printf("Output TOA file: %s \n\n",Toafile);fflush(stdout);
     
   fclose(Ftoa);
