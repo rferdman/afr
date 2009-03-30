@@ -31,9 +31,11 @@ Flag -tempo2 Tempo2 {Write TOAs in tempo2-compatible format}
 Flag -nozero NoZero {Do not rotate standard profile to zero phase}
 
 ## Various standard flags we might want if we are using tempo2:
-Flag -mjdflag MJDFlag {Appendd MJD flag to TOA line if using tempo2 format}
+Flag -mjdflag MJDFlag {Append MJD flag to TOA line if using tempo2 format}
 Flag -beflag BEFlag {Append backend flag to TOA line if using tempo2 format}
 
+## Choose not to increment toa number
+Flag -noinc NoIncrement {Do not increment TOA number (may be useful for tempo1 where, if n_toa > 9999, formatting fails)}
 
 ########################################################################
 ## STRING OPTIONS
@@ -60,13 +62,13 @@ String -t2flags T2Flags {Append these tempo2 flags to the end of the TOA line} \
 
 
 ########################################################################
-## FLOAT OPTIONS
+## DOUBLE OPTIONS
 ########################################################################
 
 ## Choose MJD range(s) within data set for which to calculate TOAs
-Float -mjd MJDRange {Choose MJD range(s) for which to calculate TOAs} \
+Double -mjd MJDRange {Choose MJD range(s) for which to calculate TOAs} \
     -c 2 oo
 
 ## Choose frequency range within data set for which to calculate TOAs
-Float -freq FreqRange {Choos frequency range (in MHz) within which to calculate TOAs} \
+Double -freq FreqRange {Choose frequency range (in MHz) within which to calculate TOAs} \
     -c 2 2
