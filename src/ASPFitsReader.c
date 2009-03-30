@@ -230,6 +230,9 @@ int main(int argc, char **argv)
     exit(7);
   }
 
+  if (Cmd->ScaleP)
+    printf("Will scale polarizations by their respective baseline RMS.\n");
+  printf("\n");
 
   /* malloc header lines for ascii output */
   for(i_chan_in=0;i_chan_in<InHdr.obs.NChan;i_chan_in++){
