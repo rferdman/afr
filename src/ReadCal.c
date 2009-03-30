@@ -64,7 +64,7 @@ int ReadCal(struct ASPHdr *hdr, struct RunVars *RunMode,
     for (i=0;i<hdr->obs.NChan;i++)
       JyPerCount[i][0] = JyPerCount[i][1] = JyPerCount[i][2] = JyPerCount[i][3]
 	= 1.0;
-    printf("No cal file given.  Will set cal factors to 1.0.\n\n");fflush(stdout);
+    printf("No cal file given.  Will set cal factors to 1.0.\n");fflush(stdout);
     return 1;
   }
 
