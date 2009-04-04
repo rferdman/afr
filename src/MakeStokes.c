@@ -18,13 +18,13 @@ void MakeStokes(struct ASPHdr *hdr, struct RunVars *RunMode,
   double LBase,RBase,RScale,CScale;
   double Lrms,Rrms;
 
-  float MeanA, MeanB;
+  // float MeanA, MeanB;
 
   /* Here, scale each array to rms of ASquared */
   if(RunMode->Scale) {
     
     //printf("Scaling each polarization by baseline RMS.\n\n");
-    MeanA=MeanB=0;
+    // MeanA=MeanB=0;
     /* flaot-friendly format: */
     for (i=0;i<RunMode->NBins;i++) {
       TempProf[i] = (float)(ASquared[i]);
@@ -37,10 +37,10 @@ void MakeStokes(struct ASPHdr *hdr, struct RunVars *RunMode,
 /*     Baseline(&ASquared[0],FinalMask,&RunMode->NBins,&LBase,&Lrms); */
     Baseline(&TempProf[0],FinalMask,&RunMode->NBins,&LBase,&Lrms);
 
-    /* flaot-friendly format: */
+    /* float-friendly format: */
     for (i=0;i<RunMode->NBins;i++) {
       TempProf[i] = (float)(BSquared[i]);
-      //  MeanB += (float)BSquared[i]; 
+      // MeanB += (float)BSquared[i]; 
     }
 
     Baseline(&TempProf[0],FinalMask,&RunMode->NBins,&RBase,&Rrms);
@@ -52,41 +52,25 @@ void MakeStokes(struct ASPHdr *hdr, struct RunVars *RunMode,
 	   MeanB /= (float)RunMode->NBins; */
 
     for(i=0;i<RunMode->NBins;i++) {
-      
-#if 0
-      /* Mean subtract */
-      ASquared[i] = ASquared[i]/MeanA - 1.0;
-      BSquared[i] = BSquared[i]/MeanB - 1.0;
-      ReAconjB[i] = ReAconjB[i]/sqrt(MeanA*MeanB);
-      ImAconjB[i] = ImAconjB[i]/sqrt(MeanA*MeanB);
-#endif     
-#if 0
-      /* Mean baseline subtract */
-      ASquared[i] = ASquared[i]/LBase - 1.0;
-      BSquared[i] = BSquared[i]/RBase - 1.0;
-      ReAconjB[i] = ReAconjB[i]/sqrt(LBase*RBase);
-      ImAconjB[i] = ImAconjB[i]/sqrt(LBase*RBase);
-#endif
-#if 0
+
       /* Same as other scaling, but each pol separately instead of 
 	 relative to L */
-      ASquared[i] *= Lrms;
-      BSquared[i] *= Rrms;
-      ReAconjB[i] *= sqrt(Lrms*Rrms);
-      ImAconjB[i] *= sqrt(Lrms*Rrms); 
-#endif
+      ASquared[i] *= Lrms; /* because it's |L|^2 */
+      BSquared[i] *= Rrms; /* because it's |R|^2 */
+      ReAconjB[i] *= sqrt(Lrms*Rrms); /* because it's Re(L*R) */
+      ImAconjB[i] *= sqrt(Lrms*Rrms); /* because it's Re(L*R) */
 
+#if 0
       BSquared[i] *= RScale;  /* because it's |R|^2 */
       ReAconjB[i] *= CScale;  /* because it's Re(L*R) */
       ImAconjB[i] *= CScale;  /* because it's Im(L*R) */
+#endif
 
     }
     if(RunMode->Verbose)  
       printf("Lrms = %f, Rrms = %f, RScale = %f, Cscale = %f\n",
 	     Lrms,Rrms,RScale,CScale);fflush(stdout);
   }
-
- 
 
   /* Calculate Stokes Parameters */
 
