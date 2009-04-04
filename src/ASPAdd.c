@@ -19,6 +19,7 @@ int main(int argc, char **argv)
   int             got_bins=0, got_mjd1=0, zeroed_outprofs=0;
   long            NPtsProf=0, FirstNPtsProf=0;
   float           Weight=1.0, TotWeight=0.;
+  float          ProfSum;
   double          x, ptype;
   double          MJD_first=0., MJD_last=0., MJD_mid;
   double          IMJDMid, MJDSecsMid;
@@ -183,8 +184,11 @@ int main(int argc, char **argv)
 	
 	for(i_chan=0;i_chan<Hdr[i_file].obs.NChan;i_chan++){
 	  
-	  
-	  if(InProfile[i_chan].rstds[0] > -99998.) { // i.e. good data
+	  /* Bad scans are zeroed so if summ of the profile is zero, it's 
+	     not to be used in summation */
+	  ProfSum = FSum(&InProfile[i_chan].rstds[0], NPtsProf);
+	  if(ProfSum != 0.0) { // i.e. good data
+	    //	  if(InProfile[i_chan].rstds[0] > -99998.) { // i.e. good data
 	    
 	    /* Get SNR for each Profile if we want to use weighting; 
 	       otherwise weights will all be 1.0 */
@@ -197,7 +201,8 @@ int main(int argc, char **argv)
 	      SPeak =  FindPeak(InProfile[i_chan].rstds,
 				&Hdr[i_file].redn.RNBinTimeDump,&spk);
 	      InProfile[i_chan].SNR = SPeak*Srms;
-	      Weight = InProfile[i_chan].SNR;
+	      //	      Weight = InProfile[i_chan].SNR;
+	      Weight = Srms; // which is actually 1/RMS.
 	    }
 	    // printf("SNR %d = %lf\n",i_chan,InProfile[i_chan].SNR);
 	    
