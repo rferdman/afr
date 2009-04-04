@@ -28,7 +28,7 @@ Flag -v Verbose {Switch on verbose program operation}
 Flag -nobase NoBase {Turn off baseline subtraction}
 
 ## Weight average by SNR
-Flag -weight Weight {Weight averaging by signal to noise of each profile}
+Flag -weight Weight {Weight averaging by rms noise of each profile}
 
 ## Sort out channels, and give a total profile for each channel
 ###Flag -sortchans SortChans {Give total profile for each channel}
@@ -42,9 +42,4 @@ Flag -weight Weight {Weight averaging by signal to noise of each profile}
 String -infile Infile {Input ASP format ascii data files} \
     -m \
     -c 1 oo
-
-## Input ASP ascii (or .stokes.fits) existing standard profile to which 
-##  we would like to add .stokes.fits files (soon to be ascii files) 
-String -stdfile Stdfile {Existing standard profile to build on} \
-    -c 1 1
 
