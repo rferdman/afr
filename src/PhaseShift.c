@@ -29,7 +29,6 @@ int PhaseShift(struct Polyco *Polycos, int n_poly, struct StdProfs *Profile,
   PhaseDiff = RefPhase - SubHdr->DumpRefPhase[chan];
   ByAngle = PhaseDiff*TWOPI;
   //  ByAngle = PhaseDiff;
-  
     
   RotateProf(RunMode, Profile, ByAngle);
 
