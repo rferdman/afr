@@ -88,9 +88,9 @@ int main(int argc, char **argv)
     exit(1);
   }
 
-  printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
+  /* printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
   printf("NEW VERSION!!!!!!!!!!!!!!!\n");
-  printf("!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n");
+  printf("!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"); */
   
   /* Read in values for header variables */
   if(ReadASPHdr(&InHdr, Fin) < 0){
@@ -107,6 +107,8 @@ int main(int argc, char **argv)
   printf("PSR %s:\n",InHdr.target.PSRName);
   printf("--------------\n\n");
   printf("Centre Frequency: %6.1lf MHz\n\n",InHdr.obs.FSkyCent);fflush(stdout);
+  printf("Start MJD: %.3lf\n\n", 
+	 (double)InHdr.obs.IMJDStart + ((double)InHdr.obs.StartTime/86400.0));
 
   /* Add up total number of dumps between all files */
   RunMode.NDumps = 0;
@@ -521,22 +523,27 @@ int main(int argc, char **argv)
 
     /** Set Middle time stamp in SubOutHdr for this output dump **/
     SubOutDumpIndex = (int)(floor((double)(MinAddDump + MaxAddDump - 1))/2.);
+    // SubOutDumpIndex = MinAddDump;
+    // SubOutDumpIndex = (int)(floor((double)(MinAddDump + MaxAddDump))/2.);
     SubOutHdr.DumpMiddleSecs = SubInHdr[SubOutDumpIndex].DumpMiddleSecs;
+    /* printf("CHECK DUMPS:\n");
+    printf("MinAddDump = %d,  MaxAddDump = %d\n",MinAddDump,MaxAddDump);
+    printf("OutDumpIndex = %d\n\n", SubOutDumpIndex); */
 
     /** Now set SubHdr entries for phase and period **/
     /** It is the central dump, and central channel **/
     /** Need to do it here because need to have had read all dumps from 
 	this set in order to have data in hand **/
     for (i_chan_out=0; i_chan_out<RunMode.NOutChans; i_chan_out++){
-      for (i_chan_in=RunMode.FirstChanAdd[i_chan_out]; 
-	   i_chan_in<=RunMode.LastChanAdd[i_chan_out]; i_chan_in++){ 
+      /*  for (i_chan_in=RunMode.FirstChanAdd[i_chan_out]; 
+	  i_chan_in<=RunMode.LastChanAdd[i_chan_out]; i_chan_in++){  */
 	SubOutChanIndex = (int)(((double)(RunMode.FirstChanAdd[i_chan_out] + 
 					  RunMode.LastChanAdd[i_chan_out]))/2.);
 	SubOutHdr.DumpRefPhase[i_chan_out] = 
 	  SubInHdr[SubOutDumpIndex].DumpRefPhase[SubOutChanIndex];
 	SubOutHdr.DumpRefPeriod[i_chan_out] = 
 	  SubInHdr[SubOutDumpIndex].DumpRefPeriod[SubOutChanIndex];
-      }
+	// }
      /* Divide profiles by proper denominator for averaging profiles */
       i_out=i_dump_out*RunMode.NOutChans+i_chan_out;
       denom = RunMode.TotScans[i_out]-RunMode.TotOmit[i_out];
