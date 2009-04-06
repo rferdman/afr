@@ -295,7 +295,7 @@ int main(int argc, char *argv[])
 
 	/*********** READING DONE.  BEGIN PHASE DETERMINATION ************/
 
-	memcpy(profs,Profiles->rstds,sizeof(float)*NBINMAX);
+	memcpy(profs,Profiles[i_chan].rstds,sizeof(float)*NBINMAX);
 
 	/* Now fftfit to find shift required in second profile */
 	fftfit_(profs,&stdamps[1],&stdphas[1],
