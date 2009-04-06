@@ -619,7 +619,7 @@ int main(int argc, char **argv)
 	    if (!SkipChan[j]) {
 	      for(pol =0;pol<2;pol++){
 		JyPerCount[j][pol] = JyPerCal[i][pol]/CalHeight[j][pol];
-		JyPerCount[j][pol] *= CalMode.Gain/CalMode.Gainonpulsar;
+		JyPerCount[j][pol] *= CalMode.Gain/CalMode.GainOnPulsar;
 	      }
 	      
 	      /* Write JyPerCount's to file as we find matching frequencies */

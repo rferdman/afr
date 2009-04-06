@@ -87,7 +87,7 @@ Float -gain Gain {Telescope gain in K/Jy at continuum source} \
     -m \
     -r 0.0 oo
 
-Float -gainonpulsar Gainonpulsar {Telescope gain in K/Jy at pulsar, if different from gain at continuum source} \
+Float -gainonpulsar GainOnPulsar {Telescope gain in K/Jy at pulsar, if different from gain at continuum source} \
     -r 0.0 oo
 
 Float -force Force {Force phase of switch from cal pulse on to cal pulse off} \

@@ -92,12 +92,12 @@ int GetCalOpt(struct RunVars *RunMode, struct CalVars *CalMode,
     CalMode->Gain = CalCmd->Gain;
   else
     CalMode->Gain = -1.0;
-  if(CalCmd->GainonpulsarP)
-    CalMode->Gainonpulsar = CalCmd->Gainonpulsar;
+  if(CalCmd->GainOnPulsarP)
+    CalMode->GainOnPulsar = CalCmd->GainOnPulsar;
   else
-    CalMode->Gainonpulsar = CalMode->Gain;
+    CalMode->GainOnPulsar = CalMode->Gain;
   printf("Will assume (Gain at pulsar)/(Gain at continuum source) is: %f\n",
-	CalMode->Gainonpulsar/CalMode->Gain);
+	CalMode->GainOnPulsar/CalMode->Gain);
   
   /**** String Options ****/
 
