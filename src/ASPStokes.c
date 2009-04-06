@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
 		  StokesHdr.target.PSRName);	
 	}
 	else {
-	  sprintf(StokesHead,"# %.1f %.7f %.10f %ld %.3f %.3f %d %s %d %9s %.10f",
+	  sprintf(StokesHead,"# %.1f %.7f %.13f %ld %.3f %.3f %d %s %d %9s %.10f",
 		  (double)StokesHdr.obs.IMJDStart, StokesSubHdr.DumpMiddleSecs, 
 		  StokesSubHdr.DumpRefPeriod[i],(long)1,
 		  StokesHdr.obs.ChanFreq[i], 
