@@ -246,7 +246,7 @@ int main(int argc, char **argv)
 		 JyPerCount[i][2],JyPerCount[i][3]);
       
 	/* write cal factors to file */
-	fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",CalHdr.obs.ChanFreq[i],
+	fprintf(Fcalout,"%lf  %e  %e  %e  %e\n",CalHdr.obs.ChanFreq[i],
 		JyPerCount[i][0],JyPerCount[i][1],
 		JyPerCount[i][2],JyPerCount[i][3] );
 	}
@@ -619,12 +619,13 @@ int main(int argc, char **argv)
 	    if (!SkipChan[j]) {
 	      for(pol =0;pol<2;pol++){
 		JyPerCount[j][pol] = JyPerCal[i][pol]/CalHeight[j][pol];
+		JyPerCount[j][pol] *= CalMode.Gain/CalMode.Gainonpulsar;
 	      }
 	      
 	      /* Write JyPerCount's to file as we find matching frequencies */
 	      JyPerCount[j][2] = JyPerCount[j][3] 
 		= sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
-	      fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",
+	      fprintf(Fcalout,"%lf  %e  %e  %e  %e\n",
 		      CalHdr.obs.ChanFreq[j],
 		      JyPerCount[j][0],JyPerCount[j][1],
 		      JyPerCount[j][2],JyPerCount[j][3] );
@@ -662,7 +663,7 @@ int main(int argc, char **argv)
 	if (!SkipChan[j]) {
 	  JyPerCount[j][2] = JyPerCount[j][3] 
 	    = sqrt(JyPerCount[j][0]*JyPerCount[j][1]);          
-	  fprintf(Fcalout,"%lf  %lf  %lf  %lf  %lf\n",
+	  fprintf(Fcalout,"%lf  %e  %e  %e  %e\n",
 		  ContHdr[0].obs.ChanFreq[j],
 		  JyPerCount[j][0],JyPerCount[j][1],
 		  JyPerCount[j][2],JyPerCount[j][3] );

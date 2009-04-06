@@ -86,6 +86,7 @@ struct CalVars {
   double Tcal[2];
   double JyPerCal[2];
   double Gain;
+  double Gainonpulsar;
   double AddAngle;
   double ForcePhase;
   double FOmit[NCHMAX];
