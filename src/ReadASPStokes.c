@@ -38,7 +38,7 @@ void ReadASPStokes(struct ASPHdr *hdr, struct SubHdr *subhdr,
        printf("          CHANNEL (MHz)   REF. PHASE   REF. PERIOD (s)\n");
        printf("          -------------   ----------   ---------------\n");
        for(i=0;i<hdr->obs.NChan;i++) 
-	 printf("          %13.1lf%13.8lf%18.11lf\n", hdr->obs.ChanFreq[i],
+	 printf("          %13.1lf%13.8lf%20.13lf\n", hdr->obs.ChanFreq[i],
 		subhdr->DumpRefPhase[i], subhdr->DumpRefPeriod[i]);       
        fflush(stdout);
      }
