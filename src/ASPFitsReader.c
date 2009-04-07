@@ -652,7 +652,7 @@ int main(int argc, char **argv)
 
   printf("Completed successfully.\n\n");fflush(stdout);
 
-  PrintLog(&RunMode, &InHdr, Cmd);
+  if (Cmd->VerboseP) PrintLog(&RunMode, &InHdr, Cmd);
 
   exit(0);
 }
@@ -724,7 +724,7 @@ void PrintLog(struct RunVars *RunMode, struct ASPHdr *Hdr, Cmdline *Cmd)
       }
       fprintf(Fcheck, "\n");
     }
-        fprintf(Fcheck, "\n\n\n");
+    fprintf(Fcheck, "\n\n\n");
     
     //    Fcheck=fopen("test_omit_totals.dat", "w");
     fprintf(Fcheck, "  Total Input Scans in each Output Dump/Channel combination:\n\n");
