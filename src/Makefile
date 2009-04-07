@@ -68,7 +68,7 @@ ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o ReadASPStokes.o Sum.o MakePol.o \
 	Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \
-	cprofc.o
+	Sum.o cprofc.o
 
 %.o: %.f
 	$(F77) $(F77FLAGS) $<
