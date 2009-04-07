@@ -19,7 +19,7 @@ int main(int argc, char **argv)
   int             got_bins=0, got_mjd1=0, zeroed_outprofs=0;
   long            NPtsProf=0, FirstNPtsProf=0;
   float           Weight=1.0, TotWeight=0.;
-  float          ProfSum;
+  float           ProfSum;
   double          x, ptype;
   double          MJD_first=0., MJD_last=0., MJD_mid;
   double          IMJDMid, MJDSecsMid;
@@ -243,9 +243,9 @@ int main(int argc, char **argv)
 	  }
 	  else {
 	    n_omit++;
-	    printf("File %d, Dump %d, Channel %d (%lf MHz) were found to be\n",
+	 /* printf("File %d, Dump %d, Channel %d (%lf MHz) were found to be\n",
 		   i_file,i_scan,i_chan,Hdr[i_file].obs.ChanFreq[i_chan]);
-	    printf("  zeroed and so are not included.\n");fflush(stdout);
+	    printf("  zeroed and so are not included.\n");fflush(stdout); */
 	  }
 	  //    if(i_chan==0) {for(i=0;i<50;i++) printf("%lf  ",OutProfile[0].rstds[i]);printf("\n\n");fflush(stdout);};
 	}
