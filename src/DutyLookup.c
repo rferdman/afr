@@ -23,6 +23,7 @@ double DutyLookup(char *Source)
   if(strncmp(Source,"0751+18",7) == 0) Duty = 0.70;
   if(strncmp(Source,"1012+53",7) == 0) Duty = 0.40;
   if(strncmp(Source,"1022+10",7) == 0) Duty = 0.83;
+  if(strncmp(Source,"1023+0038",9) == 0) Duty = 0.50; // estimation IHS
   if(strncmp(Source,"1257+12",7) == 0) Duty = 0.65;
   if(strncmp(Source,"1518+49",7) == 0) Duty = 0.85;
   if(strncmp(Source,"1534+12",7) == 0) Duty = 0.40;
