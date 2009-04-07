@@ -19,12 +19,14 @@ int main(int argc, char *argv[])
   int RootIndex=0, LastSlashIndex=0; // filename indices
   int bin[NBINMAX], StdBins, NDumps=0; // profile info
   int NToa=0, TotToa=0, NWrtToa=0, TotWrtToa=0; // TOA counters: All TOAs, and Written-to-file TOAs (which may be different due to comman-line restrictions)
+  int NOmit=0; // keep track of number of scans omitted from each file
   int ngood; // for fftfit
   int MJD0; // integer MJD for output TOA
   int freqwrite=0, mjdwrite=0; // flags used to signify allowed freq and mjd ranges for TOAs
 
   long NPtsProf=0; // needs to ba a long for fits routines
 
+  float ProfSum;
   float profs[NBINMAX],stdamps[NBINMAX], stdphas[NBINMAX], pha1; // for fftfit
   float Shift,EShift,SNR,ESNR,b,errb; // more fftfit variables
 
@@ -162,6 +164,7 @@ int main(int argc, char *argv[])
 
     NToa=0;  /* Initialize NToa for this file */
     NWrtToa=0;
+    NOmit=0;
 
     strcpy(FitsFile, Cmd->Infiles[i_file]);
   
@@ -295,182 +298,197 @@ int main(int argc, char *argv[])
 
 	/*********** READING DONE.  BEGIN PHASE DETERMINATION ************/
 
-	memcpy(profs,Profiles[i_chan].rstds,sizeof(float)*NBINMAX);
-
-	/* Now fftfit to find shift required in second profile */
-	fftfit_(profs,&stdamps[1],&stdphas[1],
-		&StdBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);  
-	
-	/** Determine difference between read-in profile and standard 
-	    profile **/
-	if (Cmd->VerboseP) 
-	  printf("Shift, b: %f +/- %f, %f +/- %f\n\n",Shift,EShift,b,errb);
-
-	/* Convert shift to phase (0,1) and radians (0,2pi) */
-        PhaseShift = (double)(-Shift/(double)StdBins);
-	AngleShift = (double)(-Shift/(double)StdBins*TWOPI);
-
-	if(Cmd->VerboseP){
-	  printf("Dump %d, Channel %d:\n",i_scan, i_chan);
-	  printf("----------------------\n");
-	  printf("Shift: %f +/- %f bins\n", Shift, EShift);
-	  printf("          %lf +/- %lf rad\n",AngleShift,EShift/StdBins*TWOPI);
-	  printf("          %lf +/- %lf phase\n",PhaseShift, EShift/StdBins);
-	  printf("Scale factor: %f +- %f \n\n",b,errb);
-	}
-	
-	/*********** PHASE DIFF COMPLETED ***********/
-	
-	/*** Calculate time to add to time stamp of scan:  ***/
-	     
-	/* First make shift positive if it is not: */
-	if(Shift < 0.0) Shift +=StdBins;
-
-	/* Change in rot. phase = (phase shift) - (initial phase of profile) */
-	PhaseChange = Shift/(double)StdBins -StokesSubHdr.DumpRefPhase[i_chan];
-	/* Make sure it's positive */
-	if (PhaseChange < 0.0) PhaseChange += 1.0;
-
-	if(Cmd->VerboseP) 
-	  printf("Initial phase: %lf\nPhase Change: %f +/- %f\n\n",
-		 StokesSubHdr.DumpRefPhase[i_chan], 
-		 PhaseChange, EShift/StdBins);
-
-	/* Determine new fractional MJD: 
-	   new time = old time + (pulse period)*(phase diff) */
-	MJD0 = Hdr.obs.IMJDStart;
-	FracMJD = (StokesSubHdr.DumpMiddleSecs + 
-		   StokesSubHdr.DumpRefPeriod[i_chan]*PhaseChange)/86400.0;
-	/* Adjust integer MJD if FracMJD is < 0.0 or >= 1.0; also adjust 
-	   FracMJD so it is between 0.0 and 1.0 */
-	if(FracMJD < 0.0){
-	  MJD0 -= 1;
-	  FracMJD += 1.0;
-	}
-	if(FracMJD >= 1.0){
-	  MJD0 += 1;
-	  FracMJD -= 1.0;
-	}
-	
-	TOAErr = StokesSubHdr.DumpRefPeriod[i_chan] *1.e6 *EShift/StdBins;
-	
-	//	MJDPaste(MJD0,FracMJD,TOA);
-
-	/* Past together MJD into a string */
-
-	if (Cmd->Tempo2P) { // can afford more decimal places :)
-	  sprintf(frac,"%18.16lf",FracMJD);
-	  sprintf(TOA,"%5d%17s",MJD0,&frac[1]);
-	}
-	else {
-	  sprintf(frac,"%15.13lf",FracMJD);
-	  sprintf(TOA,"%5d%14s",MJD0,&frac[1]);
-	}
-	NToa++; // count up TOAs
-	//	TotToa++;
-
-	strncpy(Source,Hdr.target.PSRName,7);
-	strncpy(&Source[7],"\0",1);
-
-	/* If writing in tempo2 format, set up flags */
-	if (Cmd->Tempo2P) {
-	  strcpy(AllT2Flags,"\0");
-	  if(Cmd->MJDFlagP) {
-	    /* Make MJD flag argument have two decimal places */
-	    strncpy(tempMJD, TOA, 8);
-	    //	    strncpy(&tempMJD[8],"\0",1);
-	    sprintf(AllT2Flags,"-mjd %8s",tempMJD);
-	    
+	  /* Bad scans are zeroed so if summ of the profile is zero, it's 
+	     not to be used in summation */
+	ProfSum = FSum(&Profiles[i_chan].rstds[0], NPtsProf);
+	if(ProfSum != 0.0) { // i.e. good data
+	  
+	  
+	  memcpy(profs,Profiles[i_chan].rstds,sizeof(float)*NBINMAX);
+	  
+	  /* Now fftfit to find shift required in second profile */
+	  fftfit_(profs,&stdamps[1],&stdphas[1],
+		  &StdBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);  
+	  
+	  /** Determine difference between read-in profile and standard 
+	      profile **/
+	  if (Cmd->VerboseP) 
+	    printf("Shift, b: %f +/- %f, %f +/- %f\n\n",Shift,EShift,b,errb);
+	  
+	  /* Convert shift to phase (0,1) and radians (0,2pi) */
+	  PhaseShift = (double)(-Shift/(double)StdBins);
+	  AngleShift = (double)(-Shift/(double)StdBins*TWOPI);
+	  
+	  if(Cmd->VerboseP){
+	    printf("Dump %d, Channel %d:\n",i_scan, i_chan);
+	    printf("----------------------\n");
+	    printf("Shift: %f +/- %f bins\n", Shift, EShift);
+	    printf("          %lf +/- %lf rad\n",
+		   AngleShift,EShift/StdBins*TWOPI);
+	    printf("          %lf +/- %lf phase\n",PhaseShift, EShift/StdBins);
+	    printf("Scale factor: %f +- %f \n\n",b,errb);
 	  }
-	  if(Cmd->BEFlagP) {
-	    if (!strcmp(NObs,"1")) {
-	      sprintf(AllT2Flags, "%s -be gasp", AllT2Flags); 
-	    } 
-	    else if (!strcmp(NObs,"3")) {
-	      sprintf(AllT2Flags, "%s -be asp", AllT2Flags); 	      
-	    }
-	    else if (!strcmp(NObs,"f")) {
-	      sprintf(AllT2Flags, "%s -be bon", AllT2Flags); 	      
-	    }
-	    else {
-	      printf("Unrecognized observatory code %s. ", NObs);
-	      printf("Not implementing this flag\n");
-	    }
+	  
+	  /*********** PHASE DIFF COMPLETED ***********/
+	  
+	  /*** Calculate time to add to time stamp of scan:  ***/
+	  
+	  /* First make shift positive if it is not: */
+	  if(Shift < 0.0) Shift +=StdBins;
+	  
+	  /* Change in rot. phase = (phase shift) - (initial phase of profile) */
+	  PhaseChange = Shift/(double)StdBins-StokesSubHdr.DumpRefPhase[i_chan];
+	  /* Make sure it's positive */
+	  if (PhaseChange < 0.0) PhaseChange += 1.0;
+	  
+	  if(Cmd->VerboseP) 
+	    printf("Initial phase: %lf\nPhase Change: %f +/- %f\n\n",
+		   StokesSubHdr.DumpRefPhase[i_chan], 
+		   PhaseChange, EShift/StdBins);
+	  
+	  /* Determine new fractional MJD: 
+	     new time = old time + (pulse period)*(phase diff) */
+	  MJD0 = Hdr.obs.IMJDStart;
+	  FracMJD = (StokesSubHdr.DumpMiddleSecs + 
+		     StokesSubHdr.DumpRefPeriod[i_chan]*PhaseChange)/86400.0;
+	  /* Adjust integer MJD if FracMJD is < 0.0 or >= 1.0; also adjust 
+	     FracMJD so it is between 0.0 and 1.0 */
+	  if(FracMJD < 0.0){
+	    MJD0 -= 1;
+	    FracMJD += 1.0;
 	  }
-	  /* Now stitch all the flags together, adding the extra 
-	     user-definied flags if they exist */
-	  if(Cmd->T2FlagsP){
-	    sprintf(AllT2Flags, "%s %s", AllT2Flags, Cmd->T2Flags);
+	  if(FracMJD >= 1.0){
+	    MJD0 += 1;
+	    FracMJD -= 1.0;
 	  }
-	}
-
-	freqwrite=mjdwrite=0;
-
-	/* If user did not restrict frequencies OR user did restrict 
-	   frequencies AND frequency of current TOA is within restricted
-	   range, then allow writing based on frequency */
-	if (!Cmd->FreqRangeP || ( Cmd->FreqRangeP && 
-	    (Hdr.obs.ChanFreq[i_chan] >= Cmd->FreqRange[0] && 
-	     Hdr.obs.ChanFreq[i_chan] <= Cmd->FreqRange[1]) ) )
-	  freqwrite=1;
-
-	if  (!Cmd->MJDRangeP || ( Cmd->MJDRangeP && 
-	     ((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
-	      (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
-	  mjdwrite=1;
-
-	/*** write each new TOA to file in the correct tempo format ***/
-
-	/* If it passes frequency and MJD restriction parameters then write */
-	if (freqwrite && mjdwrite) {
-	  NWrtToa++;
-	  if (Cmd->Tempo2P) {
-	    fprintf(Ftoa, "%s %8.3lf %22s %8.3f %3s %s\n",
-	       Infile, Hdr.obs.ChanFreq[i_chan],TOA, TOAErr, NObs, AllT2Flags);
+	  
+	  TOAErr = StokesSubHdr.DumpRefPeriod[i_chan] *1.e6 *EShift/StdBins;
+	  
+	  //	MJDPaste(MJD0,FracMJD,TOA);
+	  
+	  /* Past together MJD into a string */
+	  
+	  if (Cmd->Tempo2P) { // can afford more decimal places :)
+	    sprintf(frac,"%18.16lf",FracMJD);
+	    sprintf(TOA,"%5d%17s",MJD0,&frac[1]);
 	  }
 	  else {
-	    if (Cmd->NoIncrementP)
-	      fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
-		      NObs,1,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
-	    else
-	      fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
-		      NObs,TotWrtToa+NWrtToa,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
+	    sprintf(frac,"%15.13lf",FracMJD);
+	    sprintf(TOA,"%5d%14s",MJD0,&frac[1]);
+	  }
+	  NToa++; // count up TOAs
+	  //	TotToa++;
+	  
+	  strncpy(Source,Hdr.target.PSRName,7);
+	  strncpy(&Source[7],"\0",1);
+	  
+	  /* If writing in tempo2 format, set up flags */
+	  if (Cmd->Tempo2P) {
+	    strcpy(AllT2Flags,"\0");
+	    if(Cmd->MJDFlagP) {
+	      /* Make MJD flag argument have two decimal places */
+	      strncpy(tempMJD, TOA, 8);
+	      //	    strncpy(&tempMJD[8],"\0",1);
+	      sprintf(AllT2Flags,"-mjd %8s",tempMJD);
+	      
+	    }
+	    if(Cmd->BEFlagP) {
+	      if (!strcmp(NObs,"1")) {
+		sprintf(AllT2Flags, "%s -be gasp", AllT2Flags); 
+	      } 
+	      else if (!strcmp(NObs,"3")) {
+		sprintf(AllT2Flags, "%s -be asp", AllT2Flags); 	      
+	      }
+	      else if (!strcmp(NObs,"f")) {
+		sprintf(AllT2Flags, "%s -be bon", AllT2Flags); 	      
+	      }
+	      else {
+		printf("Unrecognized observatory code %s. ", NObs);
+		printf("Not implementing this flag\n");
+	      }
+	    }
+	    /* Now stitch all the flags together, adding the extra 
+	       user-definied flags if they exist */
+	    if(Cmd->T2FlagsP){
+	      sprintf(AllT2Flags, "%s %s", AllT2Flags, Cmd->T2Flags);
+	    }
+	  }
+	  
+	  freqwrite=mjdwrite=0;
+	  
+	  /* If user did not restrict frequencies OR user did restrict 
+	     frequencies AND frequency of current TOA is within restricted
+	     range, then allow writing based on frequency */
+	  if (!Cmd->FreqRangeP || ( Cmd->FreqRangeP && 
+			   (Hdr.obs.ChanFreq[i_chan] >= Cmd->FreqRange[0] && 
+			    Hdr.obs.ChanFreq[i_chan] <= Cmd->FreqRange[1]) ) )
+	    freqwrite=1;
+	  
+	  if  (!Cmd->MJDRangeP || ( Cmd->MJDRangeP && 
+				((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
+				 (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
+	    mjdwrite=1;
+	  
+	  /*** write each new TOA to file in the correct tempo format ***/
+	  
+	  /* If it passes frequency and MJD restriction parameters then write */
+	  if (freqwrite && mjdwrite) {
+	    NWrtToa++;
+	    if (Cmd->Tempo2P) {
+	      fprintf(Ftoa, "%s %8.3lf %22s %8.3f %3s %s\n",
+		      Infile, Hdr.obs.ChanFreq[i_chan],
+		      TOA, TOAErr, NObs, AllT2Flags);
+	    }
+	    else {
+	      if (Cmd->NoIncrementP)
+		fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
+			NObs,1,Source,Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
+	      else
+		fprintf(Ftoa, "%s%5d%8s%10.3f %19s%9.2f\n",
+			NObs,TotWrtToa+NWrtToa,Source,
+			Hdr.obs.ChanFreq[i_chan],TOA,TOAErr);
+	    }
 	  }
 	}
-
+	else { // found an omitted scan
+	  NOmit++;
+	}
       }
       
       if(Cmd->VerboseP) printf("\n");fflush(stdout);
     }
-
+    
     /* Free memory used by Profiles structure since we will be re-malloc'ing
        it in the next loop-around */
     free(Profiles);
-
-
+    
+    
     //  for (i=0;i<Cmd->NFiles;i++)
     fits_close_file(Fstokes, &status);
     TotToa+=NToa;
     TotWrtToa+=NWrtToa;
-
+    
     printf("%d TOAs found\n", NToa);
     if (Cmd->FreqRangeP || Cmd->MJDRangeP)
-      printf("%d TOAs written based on command-line restrictions\n\n",NWrtToa);
-    
+      printf("%d TOAs written based on command-line restrictions\n",NWrtToa);
+    if (NOmit > 0) 
+      printf("%d input scans were omitted from TOA calculation\n\n",NOmit);
+    else
+      printf("\n\n");
   }
-    
+  
   /******* END LOOP OVER FILES ********/
-
+  
   /** close TOA file **/
   printf("\n+===========================================================+\n\n");
   printf("Completed successfully.  Found %d TOAs.\n", TotToa);
   if (Cmd->FreqRangeP || Cmd->MJDRangeP)
     printf("Wrote %d to file based on command-line restrictions\n",TotWrtToa);
   printf("Output TOA file: %s \n\n",Toafile);fflush(stdout);
-    
+  
   fclose(Ftoa);
-
-
+  
+  
   exit(0);
 
 }
