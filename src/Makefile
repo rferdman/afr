@@ -24,7 +24,7 @@ F77 = g77
 F77FLAGS = -c -I$(ASP_INCLUDE_DIR)
 
 ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
-	ASPToa ASPMatch ASPHead ASPAdd ASPRotateAsc
+	ASPToa ASPMatch ASPHead ASPAdd ASPTemplate ASPRotateAsc
 
 
 # Object file names:
@@ -64,8 +64,12 @@ MATCHOBJS = ASPMatch.o MatchCmdLine.o ReadASPAsc.o RotateProf.o cprofc.o \
 
 HEADOBJS = ASPHead.o HeadCmdLine.o
 
-ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o ReadASPStokes.o Sum.o MakePol.o \
-	Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
+ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o ReadASPStokes.o ArrayZero.o \
+	MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
+
+TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o ReadASPAsc.o \
+	cprofc.o ReadASPStokes.o ArrayZero.o RotateProf.o MakePol.o Zero.o \
+	Median.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \
 	Sum.o cprofc.o
@@ -120,6 +124,10 @@ ASPAdd: ${ADDOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPAdd ${ADDOBJS} \
 	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
 
+ASPTemplate: ${TEMPLATEOBJS} ${OBJS2} ${ASP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/ASPTemplate ${TEMPLATEOBJS} ${OBJS2} \
+	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+
 ASPToa: ${TOAOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPToa ${TOAOBJS} ${OBJS2} \
 	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
@@ -160,6 +168,10 @@ AddCmdLine.c AddCmdLine.h: AddCmdLine.cli
 	clig -d AddCmdLine.cli
 	mv AddCmdLine.h $(ASP_INCLUDE_DIR)
 
+TemplateCmdLine.c TemplateCmdLine.h: TemplateCmdLine.cli
+	clig -d TemplateCmdLine.cli
+	mv TemplateCmdLine.h $(ASP_INCLUDE_DIR)
+
 ToaCmdLine.c ToaCmdLine.h: ToaCmdLine.cli
 	clig -d ToaCmdLine.cli
 	mv ToaCmdLine.h $(ASP_INCLUDE_DIR)
@@ -183,6 +195,8 @@ ASPMatch.o: ASPMatch.c MatchCmdLine.h
 ASPHead.o: ASPHead.c HeadCmdLine.h
 
 ASPAdd.o: ASPAdd.c AddCmdLine.h
+
+ASPTemplate.o: ASPTemplate.c TemplateCmdLine.h
 
 ASPToa.o: ASPToa.c ToaCmdLine.h
 
@@ -222,6 +236,9 @@ headclean:
 addclean:
 	/bin/rm -f ${ADDOBJS} $(ASP_BIN_DIR)/ASPAdd core* *~ AddCmdLine.[ch]
 
+templateclean:
+	/bin/rm -f ${TEMPLATEOBJS} ${OBJS2} $(ASP_BIN_DIR)/ASPTemplate core* *~ TemplateCmdLine.[ch]
+
 toaclean:
 	/bin/rm -f ${TOAOBJS} $(ASP_BIN_DIR)/ASPToa core* *~ ToaCmdLine.[ch]
 
@@ -232,7 +249,7 @@ oneclean:
 	/bin/rm -f *.1
 
 clean:
-	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 matchclean headclean addclean toaclean includeclean oneclean
+	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 matchclean headclean addclean templateclean toaclean includeclean oneclean
 
 #distclean:
 #	/bin/rm -f Makefile config.h config.status config.cache config.log
