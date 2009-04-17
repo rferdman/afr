@@ -1,0 +1,74 @@
+## The Name specified is only used in/for the manual page
+Name ASPTemplate
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP .stokes.fits (or .rot.fits) data files, and create a standard profile, optionally providing an ascii profile to which to add input fits file profiles.}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Turn off baseline subtraction
+Flag -nobase NoBase {Turn off baseline subtraction}
+
+## Do not weight average by SNRrms noise
+Flag -noweight NoWeight {Do not weight averaging by (peak-baseline)/(rms baseline noise) of each profile}
+
+## Do not scale each profile by the input template
+Flag -scale Scale {Scale each profile by the template profile before adding}
+
+## Rotate input profiles to match standard profile (or current standard reference)
+Flag -rotate Rotate {Rotate input profiles to match template profile before adding}
+
+## Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noiweight is used)
+Flag -norm Normalize {Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noweight is used)}
+
+## Output file that lists all omitted scans for checking purposes
+Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking purposes}
+
+
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input ASP ascii file(s)
+String -infile Infile {Input ASP format .stokes.fits data files} \
+    -c 1 oo
+
+## Input ASP ascii (or .stokes.fits) existing standard profile to which 
+##  we would like to add .stokes.fits files (soon to be ascii files) 
+String -stdfile Stdfile {Existing standard profile to build on} \
+    -c 1 1
+
+String -psr Pulsar {Pulsar name for which to create standard profile} \
+    -c 1 1
+
+## Output ASP ascii standard profile file
+String -outfile Outfile {Output ASP ascii standard profile file} \
+    -c 1 1
+
+########################################################################
+## FLOAT OPTIONS
+########################################################################
+
+## Perform Fourier-domain noise cutoff
+Float -noisecut NoiseCut {Perform Fourier-domain noise cutoff. Argument determines degree of cutoff: 0.0 truncates at minimum of minimizing function, 1.0 does no truncation, and negative arguments cuts at the largest step between bins in the minimizing function.  Default value is 0.0} \
+    -c 0 1 \
+    -r -oo 1.0
