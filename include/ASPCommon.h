@@ -86,7 +86,7 @@ struct CalVars {
   double Tcal[2];
   double JyPerCal[2];
   double Gain;
-  double Gainonpulsar;
+  double GainOnPulsar;
   double AddAngle;
   double ForcePhase;
   double FOmit[NCHMAX];
@@ -170,6 +170,7 @@ void   IZero(int *, int);
 int    ISum(int *, int);
 float  FSum(float *, int);
 double DSum(double *, int);
+int    ArrayZero(float *, int);
 double FindPeak(float *, int *, int *);
 double Max(double *,int , int *);
 double Min(double *,int , int *);
@@ -193,4 +194,5 @@ int    FitThetaBB(struct RunVars *, struct ASPHdr *, struct StdProfs *,
 		  int, int);
 int    GetMueller(char *, float *, struct ASPHdr *);
 int    FitMueller(struct RunVars *, struct ASPHdr *, struct StdProfs *, int);
-void    MJDPaste(int, double, char *);
+void   MJDPaste(int, double, char *);
+void   TemplateCutoff(struct StdProfs *, int, float);
