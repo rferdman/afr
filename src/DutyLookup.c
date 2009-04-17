@@ -33,7 +33,9 @@ double DutyLookup(char *Source)
   if(strncmp(Source,"1730-23",7) == 0) Duty = 0.78;
   if(strncmp(Source,"1744-11",7) == 0) Duty = 0.93;
   if(strncmp(Source,"1744-24",7) == 0) Duty = 0.91;
+  if(strncmp(Source,"1756-2251",9) == 0) Duty = 0.80; // estimation RDF
   if(strncmp(Source,"1820-30",7) == 0) Duty = 0.83;
+  if(strncmp(Source,"1802-2124",9) == 0) Duty = 0.90; // estimation RDF
   if(strncmp(Source,"1821-24",7) == 0) Duty = 0.50;
   if(strncmp(Source,"1855+09",7) == 0) Duty = 0.50;
   if(strncmp(Source,"1911-11",7) == 0) Duty = 0.91;
