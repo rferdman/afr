@@ -14,12 +14,12 @@ int main(int argc, char **argv)
 
   int             i_file,i_scan,i_chan,i_bin,n_omit,status=0;
   int             NFirstTable, NumHDU, NDumps, TotDumps=0, hdutype;
-  int             OutChans;
+  // int             OutChans;
   int             spk;
-  int             got_bins=0, got_mjd1=0, zeroed_outprofs=0;
+  int             got_bins=0, got_mjd1=0; //, zeroed_outprofs=0;
   long            NPtsProf=0, FirstNPtsProf=0;
   float           Weight=1.0, TotWeight=0.;
-  float           ProfSum;
+  // int             ProfSum=0;
   double          x, ptype;
   double          MJD_first=0., MJD_last=0., MJD_mid;
   double          IMJDMid, MJDSecsMid;
@@ -33,7 +33,7 @@ int main(int argc, char **argv)
   struct StdProfs *InProfile, OutProfile;
   struct RunVars  RunMode;
   fitsfile        **Fin;
-  FILE            *Fout;
+  FILE            *Fout, *Fcheck;
   Cmdline         *Cmd;
 
 
@@ -53,7 +53,7 @@ int main(int argc, char **argv)
 	     OutChans=Hdr[0].obs.NChan;
 	     } 
 	     else{ */
-  OutChans=1;
+  // OutChans=1;
   // }
   // OutProfile=(struct StdProfs *)malloc(OutChans*sizeof(struct StdProfs));
   // TotWeight=(float *)malloc(OutChans*sizeof(float));
@@ -65,9 +65,14 @@ int main(int argc, char **argv)
   FZero(OutProfile.rstdu,NBINMAX);
   FZero(OutProfile.rstdv,NBINMAX);
   // }
-  zeroed_outprofs=1;
+  //zeroed_outprofs=1;
       //    }
 
+  /* Create an output file to check omissions if in vebose mode */
+  if (Cmd->VerboseP || Cmd->CheckOmitP){
+    if((Fcheck = fopen("check_omit.dat","w")) == 0)
+       { printf("Cannot open %s. Exiting...\n",Outfile); exit(1); }   
+  }
 
 
   /* read in all input files and add each to the final profile */
@@ -86,6 +91,10 @@ int main(int argc, char **argv)
 	     ProgName,Cmd->Infile[i_file]);
       exit(1);
     }
+
+    /* Write file name in verbose-mode omit check file */
+    if(Cmd->VerboseP || Cmd->CheckOmitP) 
+      fprintf(Fcheck, "\n%s\n",Cmd->Infile[i_file]);
 
 
     /* for now just check if all files have same number of channels */
@@ -128,13 +137,13 @@ int main(int argc, char **argv)
     fits_get_hdu_num(Fin[i_file], &NFirstTable);
 
     /* Set up Profile structure size */
-    InProfile=(struct StdProfs *)malloc(Hdr[i_file].obs.NChan*
-					sizeof(struct StdProfs));
 
 
     for(i_scan=0;i_scan<NDumps;i_scan++){
       
-      /* move to next dump's data */
+      InProfile=(struct StdProfs *)malloc(Hdr[i_file].obs.NChan*
+					sizeof(struct StdProfs));
+     /* move to next dump's data */
       if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0")){
 	fits_movabs_hdu(Fin[i_file], NFirstTable+i_scan, &hdutype, &status); 
       }
@@ -168,17 +177,6 @@ int main(int argc, char **argv)
 	ReadASPStokes(&Hdr[i_file], &Subhdr, Fin[i_file], NPtsProf, 
 		      InProfile, i_scan, Cmd->VerboseP);
 	
-	if (got_mjd1==0) {
-	  MJD_first = (double)Hdr[i_file].obs.IMJDStart + 
-	    Subhdr.DumpMiddleSecs/86400.;
-	  got_mjd1=1;
-	}
-	if (i_scan==NDumps-1) {
-	/* Just keep overwriting MJD_last every i_file -- that way we 
-	   ensure getting the last MJD of the FINAL file used */
-	  MJD_last = (double)Hdr[i_file].obs.IMJDStart + 
-	    Subhdr.DumpMiddleSecs/86400.;
-	}
 	
 	/* Add this profile onto running output profile */
 	
@@ -186,10 +184,29 @@ int main(int argc, char **argv)
 	  
 	  /* Bad scans are zeroed so if summ of the profile is zero, it's 
 	     not to be used in summation */
-	  ProfSum = FSum(&InProfile[i_chan].rstds[0], NPtsProf);
-	  if(ProfSum != 0.0) { // i.e. good data
+	  //	  ProfSum = FSum(&InProfile[i_chan].rstds[0], NPtsProf);
+	  //	  ProfSum = 0;
+	  // ProfSum = ArrayZero(InProfile[i_chan].rstds, NPtsProf);
+	  //	  if(ProfSum != 0.0) { // i.e. good data
+	  /* Test that all bins in current profile are not zeroed */
+	  if(!ArrayZero(InProfile[i_chan].rstds, NPtsProf)) { // i.e. good data
 	    //	  if(InProfile[i_chan].rstds[0] > -99998.) { // i.e. good data
 	    
+	    /* If first MJD has not been registered, then do so since this 
+	       would be the first non-omitted scan */
+	    if (got_mjd1==0) {
+	      MJD_first = (double)Hdr[i_file].obs.IMJDStart + 
+		Subhdr.DumpMiddleSecs/86400.;
+	      got_mjd1=1;
+	    }
+	    if (i_scan==NDumps-1) {
+	      /* Just keep overwriting MJD_last every i_file -- that way we 
+		 ensure getting the last MJD of the FINAL non-omitted scan 
+		 used */
+	      MJD_last = (double)Hdr[i_file].obs.IMJDStart + 
+		Subhdr.DumpMiddleSecs/86400.;
+	    }
+
 	    /* Get SNR for each Profile if we want to use weighting; 
 	       otherwise weights will all be 1.0 */
 	    if(Cmd->WeightP) {
@@ -243,9 +260,13 @@ int main(int argc, char **argv)
 	  }
 	  else {
 	    n_omit++;
+	    if(Cmd->VerboseP || Cmd->CheckOmitP){
+	      fprintf(Fcheck, "%6d     %.1lf\n",
+		      i_scan,Hdr[i_file].obs.ChanFreq[i_chan]);
 	 /* printf("File %d, Dump %d, Channel %d (%lf MHz) were found to be\n",
 		   i_file,i_scan,i_chan,Hdr[i_file].obs.ChanFreq[i_chan]);
 	    printf("  zeroed and so are not included.\n");fflush(stdout); */
+	    }
 	  }
 	  //    if(i_chan==0) {for(i=0;i<50;i++) printf("%lf  ",OutProfile[0].rstds[i]);printf("\n\n");fflush(stdout);};
 	}
@@ -256,19 +277,21 @@ int main(int argc, char **argv)
 	
 	
       } /* else from positive check on NPtsProf */
-    }
-    
+     free(InProfile);
+    }    
     /****** maybe bring this inside the ELSE where entire scans aren't being omitted ******/
     /* if (Cmd->SortChansP) 
       TotDumps += (NDumps - n_omit);
       else */ 
     TotDumps += (NDumps*Hdr[i_file].obs.NChan - n_omit); 
-    free(InProfile);
+    //free(InProfile);
     
     printf("Reading of file %s complete and successful.\n",
 	     Cmd->Infile[i_file]);
     printf("%d scans omitted.\n\n",n_omit);fflush(stdout);
   }
+
+  if(Cmd->VerboseP || Cmd->CheckOmitP) fclose(Fcheck);
 
   /* Appease the format of the MakePol routine by making up these RunMode 
      structure members */
@@ -356,3 +379,4 @@ int main(int argc, char **argv)
   exit(0);
 
 }
+

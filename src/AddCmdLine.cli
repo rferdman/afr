@@ -30,6 +30,9 @@ Flag -nobase NoBase {Turn off baseline subtraction}
 ## Weight average by SNR
 Flag -weight Weight {Weight averaging by rms noise of each profile}
 
+## Output file that lists all omitted scans for checking purposes
+Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking purposes}
+
 ## Sort out channels, and give a total profile for each channel
 ###Flag -sortchans SortChans {Give total profile for each channel}
 
