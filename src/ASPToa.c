@@ -47,7 +47,7 @@ int main(int argc, char *argv[])
   struct SubHdr StokesSubHdr; // SubHeader from *.stokes.fits files
   struct StdProfs StdProfile, *Profiles; // stores profile data
 
-  FILE *Ftoa; // output TOA file
+  FILE *Ftoa, *Fcheck; // output TOA file
 
   fitsfile *Fstokes; // file pointer for ASP *.stokes.fits file
 
@@ -63,6 +63,12 @@ int main(int argc, char *argv[])
 
   /* Store program name */
   strcpy(ProgName, argv[0]);  
+
+  /* Create an output file to check omissions if in vebose mode */
+  if (Cmd->VerboseP || Cmd->CheckOmitP){
+    if((Fcheck = fopen("check_omit.dat","w")) == 0)
+      { printf("Cannot open check_omit.dat. Exiting...\n"); exit(1); }   
+  }
 
   /** read in standard profile (ascii) and get phase info to 
       compare with each fits file scan **/
@@ -167,6 +173,10 @@ int main(int argc, char *argv[])
     NOmit=0;
 
     strcpy(FitsFile, Cmd->Infiles[i_file]);
+
+    /* Write file name in verbose-mode omit check file */
+    if(Cmd->VerboseP || Cmd->CheckOmitP) 
+      fprintf(Fcheck, "\n%s\n",Cmd->Infiles[i_file]);
   
     LastSlashIndex = -1;
     for(i_char=0;i_char<strlen(FitsFile);i_char++){
@@ -336,7 +346,7 @@ int main(int argc, char *argv[])
 	  /* First make shift positive if it is not: */
 	  if(Shift < 0.0) Shift +=StdBins;
 	  
-	  /* Change in rot. phase = (phase shift) - (initial phase of profile) */
+	 /* Change in rot. phase = (phase shift) - (initial phase of profile) */
 	  PhaseChange = Shift/(double)StdBins-StokesSubHdr.DumpRefPhase[i_chan];
 	  /* Make sure it's positive */
 	  if (PhaseChange < 0.0) PhaseChange += 1.0;
@@ -452,6 +462,10 @@ int main(int argc, char *argv[])
 	}
 	else { // found an omitted scan
 	  NOmit++;
+	  if(Cmd->VerboseP || Cmd->CheckOmitP){
+	    fprintf(Fcheck, "%6d     %.1lf\n",
+		    i_scan,Hdr.obs.ChanFreq[i_chan]);
+	  }
 	}
       }
       
@@ -478,7 +492,8 @@ int main(int argc, char *argv[])
   }
   
   /******* END LOOP OVER FILES ********/
-  
+  if(Cmd->VerboseP || Cmd->CheckOmitP) fclose(Fcheck);
+ 
   /** close TOA file **/
   printf("\n+===========================================================+\n\n");
   printf("Completed successfully.  Found %d TOAs.\n", TotToa);

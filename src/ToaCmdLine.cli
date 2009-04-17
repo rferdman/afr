@@ -37,6 +37,9 @@ Flag -beflag BEFlag {Append backend flag to TOA line if using tempo2 format}
 ## Choose not to increment toa number
 Flag -noinc NoIncrement {Do not increment TOA number (may be useful for tempo1 where, if n_toa > 9999, formatting fails)}
 
+## Output file that lists all omitted scans for checking purposes
+Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking purposes}
+
 ########################################################################
 ## STRING OPTIONS
 ########################################################################
