@@ -44,8 +44,8 @@ Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking
 ## STRING OPTIONS
 ########################################################################
 
-## Input standard profile asci file
-String -stdfile StdFile {Input ascii standard profile in pspmtoa format} \
+## Input template profile asci file
+String -template Template {Input ascii template profile in pspmtoa format} \
     -m \
     -c 1 1
 
@@ -75,3 +75,8 @@ Double -mjd MJDRange {Choose MJD range(s) for which to calculate TOAs} \
 ## Choose frequency range within data set for which to calculate TOAs
 Double -freq FreqRange {Choose frequency range (in MHz) within which to calculate TOAs} \
     -c 2 2
+
+## Choose TOA uncertainty cut-off value, in microsecs
+Double -errcut ErrCut {Choose TOA uncertainty above which to exclude TOAs writetn to file} \
+    -c 1 1 \
+    -r 0.0 oo

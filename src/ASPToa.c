@@ -22,7 +22,7 @@ int main(int argc, char *argv[])
   int NOmit=0; // keep track of number of scans omitted from each file
   int ngood; // for fftfit
   int MJD0; // integer MJD for output TOA
-  int freqwrite=0, mjdwrite=0; // flags used to signify allowed freq and mjd ranges for TOAs
+  int freqwrite=0, mjdwrite=0, errwrite=0; // flags used to signify allowed freq and mjd ranges for TOAs
 
   long NPtsProf=0; // needs to ba a long for fits routines
 
@@ -73,9 +73,9 @@ int main(int argc, char *argv[])
   /** read in standard profile (ascii) and get phase info to 
       compare with each fits file scan **/
 
-  if ( ReadASPAsc(Cmd->StdFile, Headerline, bin,  
+  if ( ReadASPAsc(Cmd->Template, Headerline, bin,  
 		  &StdProfile, &StdBins) < 0) {
-    printf("Error in reading file %s.\n",Cmd->StdFile);
+    printf("Error in reading file %s.\n",Cmd->Template);
     fflush(stdout);
     exit(1);
   }
@@ -116,7 +116,7 @@ int main(int argc, char *argv[])
   printf("ASPToa  %s\n",Hdr.gen.HdrVer);
   printf("=======\n\n");fflush(stdout);
      
-  printf("Standard profile: %s\n\n",Cmd->StdFile);
+  printf("Standard profile: %s\n\n",Cmd->Template);
   printf("Finding TOAs for %d data files.\n\n",Cmd->InfilesC);
 
   if (Cmd->NoZeroP){
@@ -145,7 +145,8 @@ int main(int argc, char *argv[])
     printf("Including only TOAs with MJDs from %.1lf to %.1lf\n",
 	   Cmd->MJDRange[0], Cmd->MJDRange[1]);
   }
-  printf("\n+===========================================================+\n\n");
+  printf("\n+=========================================================================+\n\n");
+
 
   if(Cmd->Tempo2P){
     printf("Have chosen to output TOAs in tempo2 format\n\n");
@@ -424,7 +425,7 @@ int main(int argc, char *argv[])
 	    }
 	  }
 	  
-	  freqwrite=mjdwrite=0;
+	  freqwrite=mjdwrite=errwrite=0;
 	  
 	  /* If user did not restrict frequencies OR user did restrict 
 	     frequencies AND frequency of current TOA is within restricted
@@ -438,11 +439,18 @@ int main(int argc, char *argv[])
 				((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
 				 (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
 	    mjdwrite=1;
-	  
+
+	  /* If user set a cutoff value for TOA error, then include the TOA 
+	     only if the uncertainty is below the cutoff specified */
+	  if  (!Cmd->ErrCutP || ( Cmd->ErrCutP && 
+				  Cmd->ErrCut > TOAErr ) )
+	    errwrite=1;
+
 	  /*** write each new TOA to file in the correct tempo format ***/
 	  
-	  /* If it passes frequency and MJD restriction parameters then write */
-	  if (freqwrite && mjdwrite) {
+	  /* If it passes frequency, MJD, and toa uncertainty
+	     restriction parameters then write to file */
+	  if (freqwrite && mjdwrite && errwrite) {
 	    NWrtToa++;
 	    if (Cmd->Tempo2P) {
 	      fprintf(Ftoa, "%s %8.3lf %22s %8.3f %3s %s\n",
@@ -483,10 +491,10 @@ int main(int argc, char *argv[])
     TotWrtToa+=NWrtToa;
     
     printf("%d TOAs found\n", NToa);
-    if (Cmd->FreqRangeP || Cmd->MJDRangeP)
+    if (Cmd->FreqRangeP || Cmd->MJDRangeP || Cmd->ErrCutP)
       printf("%d TOAs written based on command-line restrictions\n",NWrtToa);
     if (NOmit > 0) 
-      printf("%d input scans were omitted from TOA calculation\n\n",NOmit);
+      printf("%d input scans were omitted from TOA calculation based on RFI filtering\n\n",NOmit);
     else
       printf("\n\n");
   }
@@ -495,9 +503,9 @@ int main(int argc, char *argv[])
   if(Cmd->VerboseP || Cmd->CheckOmitP) fclose(Fcheck);
  
   /** close TOA file **/
-  printf("\n+===========================================================+\n\n");
+  printf("+=========================================================================+\n\n");
   printf("Completed successfully.  Found %d TOAs.\n", TotToa);
-  if (Cmd->FreqRangeP || Cmd->MJDRangeP)
+  if (Cmd->FreqRangeP || Cmd->MJDRangeP || Cmd->ErrCutP)
     printf("Wrote %d to file based on command-line restrictions\n",TotWrtToa);
   printf("Output TOA file: %s \n\n",Toafile);fflush(stdout);
   

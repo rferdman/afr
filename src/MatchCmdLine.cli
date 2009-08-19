@@ -30,6 +30,9 @@ Flag -nobase NoBase {Turn off baseline subtraction}
 ## Scale Matched Prof to match ref prof
 Flag -scale Scale {Scale rotated profile to match reference profile}
 
+## Output diffference profile after shifting (and scaling) profiles to match
+Flag -diff Diff {Output diffference profile after shifting (and scaling) profiles to match}
+
 ########################################################################
 ## STRING OPTIONS
 ########################################################################

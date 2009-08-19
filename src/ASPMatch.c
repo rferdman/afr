@@ -16,9 +16,9 @@ int main(int argc, char **argv)
   float  profs[NBINMAX],amps[NBINMAX], phas[NBINMAX];
   float Shift,EShift,SNR,ESNR,b,errb;
   double ByAngle;
-  char Headerline[256], Outfile[32], RefOutfile[32];
+  char Headerline[256], Outfile[32], RefOutfile[32], Difffile[32];
   struct RunVars RunMode;
-  struct StdProfs Profile[2];
+  struct StdProfs Profile[2], DiffProf;
 
   Cmdline *Cmd;
 
@@ -33,6 +33,7 @@ int main(int argc, char **argv)
   RunMode.Header=1;
 
   strcpy(Outfile,"MatchedProf.out");
+  strcpy(Difffile,"DiffProf.out");
   strcpy(RefOutfile,"RefMatchedProf.out");
 
   /* Profile 0 = standard prof and profile 1 = "to be fitted" prof */
@@ -100,6 +101,19 @@ int main(int argc, char **argv)
   MakePol(&RunMode,RunMode.NBins,&Profile[1]);
 
   WriteStokes(&RunMode,&Profile[1],Headerline,Outfile);
+
+  /* Calculate and output difference profile is asked for */
+  if(Cmd->DiffP) {
+    MakePol(&RunMode,RunMode.NBins,&Profile[0]);
+    for(i=0;i<RunMode.NBins;i++){
+      DiffProf.rstds[i] = Profile[1].rstds[i] - Profile[0].rstds[i];
+      DiffProf.rstdq[i] = Profile[1].rstdq[i] - Profile[0].rstdq[i];
+      DiffProf.rstdu[i] = Profile[1].rstdu[i] - Profile[0].rstdu[i];
+      DiffProf.rstdv[i] = Profile[1].rstdv[i] - Profile[0].rstdv[i];
+    } 
+    WriteStokes(&RunMode,&DiffProf,Headerline,Difffile);
+
+  }
 
   exit(0);
 
