@@ -1,0 +1,46 @@
+## The Name specified is only used in/for the manual page
+Name ASPDiff
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Read in ASP FITS profile and subtract each scan from a specified ASCII profile}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Switch on verbose program operation}
+
+## Do not rotate input fits file profiles
+Flag -norot NoRot {Do not rotate input fits file profiles}
+
+## Do not scale input fits file profiles
+Flag -noscale NoScale {Do not scale input fits file profiles}
+
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Input file (ASP ascii file for DoRotate and ASP FITS for ASPRotate)
+String -infile Infile {Input ASP data file} \
+    -m \
+    -c 1 1
+
+String -ascfile AscFile {Input ASCII data file} \
+    -m \
+    -c 1 1
+

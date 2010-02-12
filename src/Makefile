@@ -266,7 +266,7 @@ oneclean:
 	/bin/rm -f *.1
 
 clean:
-	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 matchclean headclean addclean templateclean toaclean includeclean oneclean
+	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 matchclean headclean addclean diffclean templateclean toaclean includeclean oneclean
 
 #distclean:
 #	/bin/rm -f Makefile config.h config.status config.cache config.log
