@@ -110,7 +110,14 @@ int main(int argc, char **argv)
 	     CalRunMode.Infile);
       exit(2);
     };
-
+    /* If requested on command line, shift all centre frequencies by the 
+       requested amount in MHz */
+    if (CalCmd->FreqShiftP){
+      CalHdr.obs.FSkyCent += CalCmd->FreqShift;
+      for (i=0; i<CalHdr.obs.NChan; i++)
+	CalHdr.obs.ChanFreq[i] += CalCmd->FreqShift;
+    }
+ 
     if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0")){
       CalRunMode.NDumps += NumHDU-3;  /* the "3" is temporary, depending on how 
 				     many non-data tables we will be using */
@@ -131,6 +138,9 @@ int main(int argc, char **argv)
     printf("Input cal file for PSR %s:\n    %s\n\n",
 	   CalHdr.target.PSRName,CalRunMode.Infile);fflush(stdout);
     
+  if (CalCmd->FreqShiftP)
+    printf("Frequency channels have been shifted by %.1lf MHz.\n",
+	   CalCmd->FreqShift);
     printf("Centre Frequency: %6.1lf MHz\n\n",CalHdr.obs.FSkyCent);fflush(stdout);
     
 
