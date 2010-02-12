@@ -152,6 +152,14 @@ Float -subbw SubBW {Width (in MHz) of each output subband -- to be used with -su
     -c 1 1 \
     -r 0.0 oo
 
+########################################################################
+## DOUBLE OPTIONS
+########################################################################
+
+Double -fshift FreqShift {Shift (in MHz) to be applied to all centre frequencies read from FITS file} \
+    -c 1 1 \
+    -r -oo oo
+
 
 ########################################################################
 ## INTEGER OPTIONS

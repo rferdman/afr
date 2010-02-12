@@ -98,6 +98,15 @@ int main(int argc, char **argv)
 	   RunMode.Infile);
     exit(2);
   }
+  /* If requested on command line, shift all centre frequencies by the 
+     requested amount in MHz */
+  if (Cmd->FreqShiftP){
+    InHdr.obs.FSkyCent += Cmd->FreqShift;
+    for (i=0; i<InHdr.obs.NChan; i++)
+      InHdr.obs.ChanFreq[i] += Cmd->FreqShift;
+  }
+  
+
   printf("\n==========================\n");
   printf("ASP FITS Header %s\n",InHdr.gen.HdrVer);
   printf("==========================\n\n");fflush(stdout);
@@ -106,6 +115,10 @@ int main(int argc, char **argv)
 
   printf("PSR %s:\n",InHdr.target.PSRName);
   printf("--------------\n\n");
+  if (Cmd->FreqShiftP)
+    printf("Frequency channels have been shifted by %.1lf MHz.\n",
+	   Cmd->FreqShift);
+
   printf("Centre Frequency: %6.1lf MHz\n\n",InHdr.obs.FSkyCent);fflush(stdout);
   printf("Start MJD: %.3lf\n\n", 
 	 (double)InHdr.obs.IMJDStart + ((double)InHdr.obs.StartTime/86400.0));

@@ -24,7 +24,7 @@ F77 = g77
 F77FLAGS = -c -I$(ASP_INCLUDE_DIR)
 
 ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
-	ASPToa ASPMatch ASPHead ASPAdd ASPTemplate ASPRotateAsc
+	ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc
 
 
 # Object file names:
@@ -66,6 +66,10 @@ HEADOBJS = ASPHead.o HeadCmdLine.o
 
 ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o ReadASPStokes.o ArrayZero.o \
 	MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
+
+DIFFOBJS = ASPDiff.o DiffCmdLine.o RotateProf.o ReadASPAsc.o ReadASPHdr.o \
+	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o cprofc.o \
+	MakePol.o Zero.o ArrayZero.o WrtASPHdr.o WrtASPStokes.o
 
 TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o ReadASPAsc.o \
 	cprofc.o ReadASPStokes.o ArrayZero.o RotateProf.o MakePol.o Zero.o \
@@ -124,6 +128,10 @@ ASPAdd: ${ADDOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPAdd ${ADDOBJS} \
 	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
 
+ASPDiff: ${DIFFOBJS} ${OBJS2} ${ASP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/ASPDiff ${DIFFOBJS} ${OBJS2}  \
+	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+
 ASPTemplate: ${TEMPLATEOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPTemplate ${TEMPLATEOBJS} ${OBJS2} \
 	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
@@ -168,6 +176,10 @@ AddCmdLine.c AddCmdLine.h: AddCmdLine.cli
 	clig -d AddCmdLine.cli
 	mv AddCmdLine.h $(ASP_INCLUDE_DIR)
 
+DiffCmdLine.c DiffCmdLine.h: DiffCmdLine.cli
+	clig -d DiffCmdLine.cli
+	mv DiffCmdLine.h $(ASP_INCLUDE_DIR)
+
 TemplateCmdLine.c TemplateCmdLine.h: TemplateCmdLine.cli
 	clig -d TemplateCmdLine.cli
 	mv TemplateCmdLine.h $(ASP_INCLUDE_DIR)
@@ -195,6 +207,8 @@ ASPMatch.o: ASPMatch.c MatchCmdLine.h
 ASPHead.o: ASPHead.c HeadCmdLine.h
 
 ASPAdd.o: ASPAdd.c AddCmdLine.h
+
+ASPDiff.o: ASPDiff.c DiffCmdLine.h
 
 ASPTemplate.o: ASPTemplate.c TemplateCmdLine.h
 
@@ -235,6 +249,9 @@ headclean:
 
 addclean:
 	/bin/rm -f ${ADDOBJS} $(ASP_BIN_DIR)/ASPAdd core* *~ AddCmdLine.[ch]
+
+diffclean:
+	/bin/rm -f ${DIFFOBJS} $(ASP_BIN_DIR)/ASPDiff core* *~ DiffCmdLine.[ch]
 
 templateclean:
 	/bin/rm -f ${TEMPLATEOBJS} ${OBJS2} $(ASP_BIN_DIR)/ASPTemplate core* *~ TemplateCmdLine.[ch]

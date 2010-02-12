@@ -39,6 +39,10 @@ Flag -rotate Rotate {Rotate input profiles to match template profile before addi
 ## Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noiweight is used)
 Flag -norm Normalize {Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noweight is used)}
 
+Flag -scalebefore ScaleBefore {Scale each input profile to lie between values of zero and one}
+
+Flag -scaleafter ScaleAfter {Scale the final output profile to lie between values of zero and one}
+
 ## Output file that lists all omitted scans for checking purposes
 Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking purposes}
 

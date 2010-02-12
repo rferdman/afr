@@ -176,6 +176,9 @@ int main(int argc, char **argv)
       else {
 	Weight = 1.0;
       }
+      /* Normalize to have a value between 0 and 1 if asked for by user */
+      if (Cmd->ScaleBeforeP) Zero2One(&StdProfile, NStdBins, PSRName);
+	      
       for(i_bin=0;i_bin<NStdBins;i_bin++) {
 	OutProfile.rstds[i_bin] += 
 	  Weight*StdProfile.rstds[i_bin];
@@ -395,6 +398,8 @@ int main(int argc, char **argv)
 		//Weight = Srms; // which is actually 1/RMS.
 		//printf("Weight = %.2f\n", Weight);
 	      }
+	      if (Cmd->ScaleBeforeP) Zero2One(&InProfile[i_chan], NPtsProf, 
+					      PSRName);
 
 	      /* Now add onto accumulating output profile */
 	      for(i_bin=0;i_bin<NPtsProf;i_bin++) {
@@ -499,6 +504,7 @@ int main(int argc, char **argv)
     }
   
     MakePol(&RunMode, (int)NPtsProf, &OutProfile);
+    if (Cmd->ScaleAfterP) Zero2One(&OutProfile, NPtsProf, PSRName);
 
   
     /* take average MJD of first to last scan */
@@ -586,6 +592,48 @@ int main(int argc, char **argv)
   exit(0);
 
 }
+
+/* Little subroutine that takes a profile and scales it to have a baseline of zero and a maximum value of 1 */
+void Zero2One(struct StdProfs *Profile, int NBins, char *PSRName)
+{
+
+  int     i_bin, ngood, spk;
+  float   profs[NBINMAX], amps[NBINMAX], phas[NBINMAX];
+  float   Shift, EShift, SNR, ESNR, b, errb;
+  double  SBase, QBase, UBase, VBase;
+  double  Srms, Qrms, Urms, Vrms;
+  double  Duty, SPeak, FinalMask[NBINMAX];
+
+  cprofc(Profile->rstds, NBins, amps, phas);
+  memcpy(profs, Profile->rstds, sizeof(float)*NBINMAX);
+  /* Now fftfit to find scale factor */
+  fftfit_(profs,&amps[1],&phas[1],
+	  &NBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);
+  /* Get Baseline value*/
+  Duty = DutyLookup(PSRName);
+  BMask(Profile->rstds, &NBins, &Duty, FinalMask);
+  Baseline(Profile->rstds, FinalMask, &NBins, &SBase, &Srms);
+  Baseline(Profile->rstdq, FinalMask, &NBins, &QBase, &Qrms);
+  Baseline(Profile->rstdu, FinalMask, &NBins, &UBase, &Urms);
+  Baseline(Profile->rstdv, FinalMask, &NBins, &VBase, &Vrms);
+  SPeak =  FindPeak(Profile->rstds, &NBins, &spk); 
+
+  printf("%f,   %f,  %f,  %f,  %f\n", Duty, SBase, QBase, UBase, VBase);
+  printf("%f \n",amps[1]);
+
+  /* Subtract baseline and scale by (peak-baseline) */
+  /* Will remove baseline of each pol'n but scale factor is always b from 
+    fftfit of total power profile */
+  for(i_bin=0;i_bin<NBins;i_bin++) {
+    Profile->rstds[i_bin] = (Profile->rstds[i_bin] - SBase)/(SPeak - SBase) ;
+    Profile->rstdq[i_bin] = (Profile->rstdq[i_bin] - QBase)/(SPeak - SBase) ;
+    Profile->rstdu[i_bin] = (Profile->rstdu[i_bin] - UBase)/(SPeak - SBase) ;
+    Profile->rstdv[i_bin] = (Profile->rstdv[i_bin] - VBase)/(SPeak - SBase) ;
+  }
+
+}
+
+
 
 
 

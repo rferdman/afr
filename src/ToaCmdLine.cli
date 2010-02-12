@@ -44,7 +44,7 @@ Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking
 ## STRING OPTIONS
 ########################################################################
 
-## Input template profile asci file
+## Input template profile ascii file
 String -template Template {Input ascii template profile in pspmtoa format} \
     -m \
     -c 1 1
