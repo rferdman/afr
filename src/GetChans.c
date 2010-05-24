@@ -18,7 +18,8 @@ int GetChans(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
   FILE *Ftest;
 
 
-  BW = DSum(hdr->obs.ChanWidth, hdr->obs.NChan);
+  //  BW = DSum(hdr->obs.ChanWidth, hdr->obs.NChan);
+  BW = hdr->obs.ChanWidth*((double)hdr->obs.NChan);
 
   /* START OF CHANNEL ADDING OPTION PARSING */
   /* Check to see if there are chans to add: */
@@ -422,6 +423,14 @@ int GetChans(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 	   RunMode->NumEffChans);fflush(stdout);
   }
 
+
+  /* Finally, test that number of output channels does not exceed fits 
+     column limit */
+  if (RunMode->NOutChans > NCHOUTMAX){
+    fprintf(stderr, "GetChans ERROR:  Number of output channels exceeds ");
+    printf("cfitsio table column number limit.\n");
+    return -1;
+  }
 
   /*  test file to check chan assignments */
   if (test_chan_file) {

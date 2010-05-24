@@ -19,6 +19,7 @@ void InitPars(struct ASPHdr *hdr)
   strcpy(hdr->gen.Platform, "0");
   strcpy(hdr->gen.CommentOper, "\0");
   strcpy(hdr->gen.HdrVer, "\0");
+  strcpy(hdr->gen.FitsType, "\0");
   strcpy(hdr->gen.Observer, "\0");
   strcpy(hdr->gen.ProjID, "\0");
   strcpy(hdr->gen.FEName, "\0");
@@ -33,10 +34,14 @@ void InitPars(struct ASPHdr *hdr)
   hdr->target.Dec                        = 0.0;
   hdr->target.Epoch                      = 0.0;
   strcpy(hdr->target.CoordMode, "\0");
-  hdr->target.StartCrd1                  = 0.0;
-  hdr->target.StartCrd2                  = 0.0;
-  hdr->target.StopCrd1                   = 0.0;
-  hdr->target.StopCrd2                   = 0.0;
+  //  hdr->target.StartCrd1                  = 0.0;
+  //  hdr->target.StartCrd2                  = 0.0;
+  strcpy(hdr->target.StartCrd1, "\0");
+  strcpy(hdr->target.StartCrd2, "\0");
+  //  hdr->target.StopCrd1                   = 0.0;
+  //  hdr->target.StopCrd2                   = 0.0;
+  strcpy(hdr->target.StopCrd1, "\0");
+  strcpy(hdr->target.StopCrd2, "\0");
   strcpy(hdr->target.TrackMode, "\0");
 
   hdr->obs.ObsLength                     = 0.0;
@@ -65,10 +70,10 @@ void InitPars(struct ASPHdr *hdr)
   hdr->obs.RM                            = 0.0;
   hdr->obs.RMMethod                      = 0;
 
-  hdr->redn.RIMJDFirstSamp              = 0.0;
+  hdr->redn.RIMJDFirstSamp              = 0;
   hdr->redn.RfMJDFirstSamp              = 0.0;
   hdr->redn.RNTimeDumps                 = 0;
-  hdr->redn.RLenTimeDump                = 0.0;
+  hdr->redn.TDump                       = 0.0;
   hdr->redn.RNBinTimeDump               = 0;
   hdr->redn.RChanNum                    = 0;
   hdr->redn.RChanWidth                  = 0.0;

@@ -4,24 +4,11 @@
 #include <string.h>
 #include <math.h>
 #include <stdlib.h>
-#include "fitsio.h"
+#include "ASPDefs.h"
 #include "ASPHeader.h"
+#include "fitsio.h"
 #include "polyco.h"
 
-#define NBINMAX 4096
-#define NB      128
-#define MAXSPLIT 32
-#define NFILEMAX 1000
-#define MAXDUMPS 512
-#define MAXOMIT  8192
-/* #define NCHMAX 32 */
-
-//#define TWOPI 6.2831853071795864
-/* MORE DECIMALS...!  */
-#define TWOPI 6.2831853071795864769252867665590057683943387987502
-#define PI    3.1415926535897932384626433832795028841971693993751
-
-#define DFFAC 2.410e-4
 
 
 struct RunVars {
@@ -38,6 +25,7 @@ struct RunVars {
   int    Header;
   int    Verbose;
   int    Swap;
+  int    Dedisp;
   int    OldFits;
   int    Cal;
   int    ThetaBBFlag;
@@ -51,22 +39,37 @@ struct RunVars {
   int    NumEffDumps;
   int    NOutDumps;
   int    NOutChans;
-  int    FirstChanAdd[NCHMAX];
-  int    LastChanAdd[NCHMAX];
-  int    MinChans2Add[NCHMAX];
-  int    MaxChans2Add[NCHMAX];
-  int    NumChans2Add[NCHMAX];
-  int    CurZapChan[NCHMAX];
-  int    ZapChan[NCHMAX];
-  int    DumpOmit[MAXOMIT];
-  int    ChanOmit[MAXOMIT];
-  int    TotScans[MAXDUMPS*NCHMAX];
-  int    TotOmit[MAXDUMPS*NCHMAX];
-  int    AllDumpOmit[MAXOMIT];
-  int    OmitFlag[MAXDUMPS*NCHMAX];
-  float  MM[16*NCHMAX];
+  int    *FirstChanAdd;
+  //  int    FirstChanAdd[NCHMAX];
+  int    *LastChanAdd;
+  //  int    LastChanAdd[NCHMAX];
+  int    *MinChans2Add;
+  //  int    MinChans2Add[NCHMAX];
+  int    *MaxChans2Add;
+  //  int    MaxChans2Add[NCHMAX];
+  int    *NumChans2Add;
+  //  int    NumChans2Add[NCHMAX];
+  int    *CurZapChan;
+  //  int    CurZapChan[NCHMAX];
+  int    *ZapChan;
+  //  int    ZapChan[NCHMAX];
+  int    *DumpOmit;
+  //  int    DumpOmit[MAXOMIT];
+  int    *ChanOmit;
+  //  int    ChanOmit[MAXOMIT];
+  int    *TotScans;
+  //int    TotScans[MAXDUMPS*NCHMAX];
+  int    *TotOmit;
+  //int    TotOmit[MAXDUMPS*NCHMAX];
+  int    *AllDumpOmit;
+  //  int    AllDumpOmit[MAXOMIT];
+  int    *OmitFlag;
+  //int    OmitFlag[MAXDUMPS*NCHMAX];
+  float  *MM;
+  //  float  MM[16*NCHMAX];
   double FSky;
-  double ThetaBB[NCHMAX];
+  double *ThetaBB;
+  //  double ThetaBB[NCHMAX];
 /*   double CalValue[2]; */
   char   Infile[256];
   char   OutfileRoot[256];
@@ -134,6 +137,11 @@ struct StdProfs {
   double Linrms;
 };
 
+struct Telescope {
+  double Lat;
+  double Long;
+};
+
 /* Functions */
 void   cprofc(float *, int, float *, float *);
 void   uncprofc(float *, float *, int, float *);
@@ -142,19 +150,33 @@ void   fftfit_(float *, float *, float *, int *, float *, float *, float *,
 	       float *, float *, float *, int *);
 
 void   InitPars(struct ASPHdr *);
+int    AllocRunMode(struct RunVars *);
+int    ReadHdr(struct ASPHdr *, fitsfile *);
 int    ReadASPHdr(struct ASPHdr *, fitsfile *);
+int    ReadPSRFITSHdr(struct ASPHdr *, fitsfile *);
+int    GetTelescope(struct ASPHdr *, struct Telescope *Tel);
 void   GetCal(struct ASPHdr *, struct RunVars *, double **);
 int    GetCalPhases(double *, int , int *);
 double GetCalHeight(double *, int , int *, int *, double *, double *);
 int    QuickPlot(double *, int);
 int    Median(double *, double *, int, int);
-void   ReadASPData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
-		   fitsfile *, int, long, double **, double **, double **, 
+int    ReadData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
+		fitsfile *, int, int, 
+		double **, double **, double **, double **,
+		int **, char **);
+int    ReadASPData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
+		   fitsfile *, int, int, double **, double **, double **, 
 		   double **, int **, char **);
+int    ReadPSRFITSData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
+		       fitsfile *, int, int, 
+		       double **, double **, double **, double **);
 void   MakeStokes(struct ASPHdr *,struct RunVars *, struct StdProfs *,double *,
 		  double *, double *, double *, double *);
+int    Dedisperse(struct StdProfs *, struct RunVars *, 
+		  struct ASPHdr *, struct SubHdr *, 
+		  int i_chan);
 int    PhaseShift(struct Polyco *, int , struct StdProfs *, struct RunVars *, 
-	       struct ASPHdr *, struct SubHdr *, int );
+		  struct ASPHdr *, struct SubHdr *, int );
 void   BinDown(struct RunVars *, struct StdProfs *, struct StdProfs *);
 double DutyLookup(char *);
 void   BMask(float *,int *,double *,double *);
@@ -179,8 +201,8 @@ int    IMin(int *, int, int *);
 void   WriteStokes(struct RunVars *, struct StdProfs *, char *, char *);
 void   RotateProf(struct RunVars *, struct StdProfs *, double);
 void   FitAngle(struct RunVars *, struct ASPHdr *, struct SubHdr *, 
-		struct StdProfs *);
-double GetChi(char *, double, char *, double, double);
+		struct StdProfs *, struct Telescope *);
+double GetChi(double, char *, double, double, struct Telescope *);
 double ratorad(char *);
 double dectorad(char *);
 int    WrtASPHdr(struct ASPHdr *, fitsfile *);
@@ -196,3 +218,4 @@ int    GetMueller(char *, float *, struct ASPHdr *);
 int    FitMueller(struct RunVars *, struct ASPHdr *, struct StdProfs *, int);
 void   MJDPaste(int, double, char *);
 void   TemplateCutoff(struct StdProfs *, int, float);
+void   Zero2One(struct StdProfs *, int, char *);

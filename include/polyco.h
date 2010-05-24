@@ -3,7 +3,7 @@
 #define _POLYCO_H
 
 #define MAX_PC_COEFF 15
-#define MAX_PC_SETS   200
+#define MAX_PC_SETS  2048
 
 //#include "asp_params.h"
 // #include "misc.h"
@@ -13,6 +13,7 @@ struct Polyco {
   int NMinutes;                /* Number of minutes' validity */
   int NCoeff;                  /* Number of coefficients (max 15) */
   double DM;                   /* DM of this pulsar */
+  double FSkyRef;              /* Reference rotational frequency */
   double FRotRef;              /* Reference rotational frequency */
   double PhRotRef;             /* Reference rotational phase */
   double EarthZ4;              /* Earth motion correction to DM */

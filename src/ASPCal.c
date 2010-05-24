@@ -35,6 +35,7 @@ int main(int argc, char **argv)
   struct SubHdr  *CalSubHdr, *ContSubHdr[2];
   struct RunVars CalRunMode, ContRunMode[2];
   struct CalVars CalMode;
+  struct Telescope Tel;
 
 
   //  int            PhaseBin[2], ContPhaseBin[2][2];
@@ -56,6 +57,7 @@ int main(int argc, char **argv)
   // double         ThetaBB;
 
   char           ProgName[256];
+
   char           OutfileRoot[256];
   char           TempChar[20];
   Cmdline        *CalCmd;
@@ -89,9 +91,14 @@ int main(int argc, char **argv)
     /* Initialize header variables */
     InitPars(&CalHdr);
 
-    /* Grab pulsar cal file name */
-    strcpy(CalRunMode.Infile,CalCmd->Calfile);
-
+    /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&CalRunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  /* Grab pulsar cal file name */
+  strcpy(CalRunMode.Infile,CalCmd->Calfile);
+  
     /* Open pulsar cal fits file */
     status=0;
 
@@ -105,11 +112,17 @@ int main(int argc, char **argv)
     //    CalRunMode.NDumps = NumHDU-3;  
 
     /* Read in values for header variables */
-    if(ReadASPHdr(&CalHdr, Fcal) < 0){
+    if(ReadHdr(&CalHdr, Fcal) < 0){
       printf("Unable to read Header from CAL file %s.  Exiting...\n",
 	     CalRunMode.Infile);
       exit(2);
     };
+    /* Load telescope information */
+    if (GetTelescope(&CalHdr, &Tel) < 0){
+      fprintf(stderr, "ERROR:  Could not get telescope data.\n");
+      exit(2);
+    }
+    
     /* If requested on command line, shift all centre frequencies by the 
        requested amount in MHz */
     if (CalCmd->FreqShiftP){
@@ -118,6 +131,7 @@ int main(int argc, char **argv)
 	CalHdr.obs.ChanFreq[i] += CalCmd->FreqShift;
     }
  
+  if(!strcmp(CalHdr.gen.BEName, "xASP")) {
     if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0")){
       CalRunMode.NDumps += NumHDU-3;  /* the "3" is temporary, depending on how 
 				     many non-data tables we will be using */
@@ -130,19 +144,37 @@ int main(int argc, char **argv)
       printf("This header %s. Exiting...\n",CalHdr.gen.HdrVer);fflush(stdout);
       exit(3);
     }
+  }
+  else {      
+    if(!strcmp(CalHdr.gen.FitsType, "PSRFITS")) {
+      /* Set to dedisperse input profiles before processing */
+      CalRunMode.NDumps = CalHdr.redn.RNTimeDumps;
+    }
+    else {
+      /* Do not recognize data format! */
+      fprintf(stderr, "ASPFitsReader ERROR: Unrecognized file format.\n");
+      exit(1);
+    }
+  }    
+  
 
-    printf("\n==========================\n");
+  printf("\n==========================\n");
+  if(!strcmp(CalHdr.gen.BEName, "xASP")) 
     printf("ASP FITS Header %s\n",CalHdr.gen.HdrVer);
-    printf("==========================\n\n");fflush(stdout);
-    
-    printf("Input cal file for PSR %s:\n    %s\n\n",
-	   CalHdr.target.PSRName,CalRunMode.Infile);fflush(stdout);
-    
+  else if(!strcmp(CalHdr.gen.FitsType, "PSRFITS"))
+    printf("PSRFITS Header %s\n", CalHdr.gen.HdrVer);
+  else
+    printf("Unknown FITS Header %s\n", CalHdr.gen.HdrVer);
+  printf("==========================\n\n");fflush(stdout);
+  
+  printf("Input cal file for PSR %s:\n    %s\n\n",
+	 CalHdr.target.PSRName,CalRunMode.Infile);fflush(stdout);
+  
   if (CalCmd->FreqShiftP)
     printf("Frequency channels have been shifted by %.1lf MHz.\n",
 	   CalCmd->FreqShift);
-    printf("Centre Frequency: %6.1lf MHz\n\n",CalHdr.obs.FSkyCent);fflush(stdout);
-    
+  printf("Centre Frequency: %6.1lf MHz\n\n",CalHdr.obs.FSkyCent);fflush(stdout);
+  
 
 
     /* Get options */
@@ -166,15 +198,21 @@ int main(int argc, char **argv)
       sprintf(CalOutFile,"%s.cal",CalCmd->OutfileRoot);
     }
     else{
-      LastSlashIndex = -1;
-      for(i=0;i<strlen(CalRunMode.Infile);i++){
-	if(!strncmp(&CalRunMode.Infile[i],"/",1))
-	  LastSlashIndex = i;
+      if(!strcmp(CalHdr.gen.BEName, "xASP")){
+	LastSlashIndex = -1;
+	for(i=0;i<strlen(CalRunMode.Infile);i++){
+	  if(!strncmp(&CalRunMode.Infile[i],"/",1))
+	    LastSlashIndex = i;
+	}
+	strncpy(TempChar, &CalRunMode.Infile[LastSlashIndex+1],12);
+	strcpy(&TempChar[12],"\0");
+	
+	sprintf(OutfileRoot,"%s.%s.%s",&CalRunMode.Source[1],TempChar,CalHdr.obs.ObsvtyCode);
       }
-      strncpy(TempChar, &CalRunMode.Infile[LastSlashIndex+1],12);
-      strcpy(&TempChar[12],"\0");
-     
-      sprintf(OutfileRoot,"%s.%s.%s",&CalRunMode.Source[1],TempChar,CalHdr.obs.ObsvtyCode);
+      else{
+	strcpy(OutfileRoot, CalRunMode.OutfileRoot);
+      }
+      
       if(CalRunMode.Verbose)
 	printf("Infile is %s, OutFileRoot is %s\n",CalRunMode.Infile, 
 	       OutfileRoot);fflush(stdout);      
@@ -193,8 +231,10 @@ int main(int argc, char **argv)
     /* Find ranges of bins for on and off for each channel -- default is all */
     if (GetPhases(&CalHdr, &CalRunMode, &CalMode, 
 		  &ASquared[0], &BSquared[0], &OnBin[0], &OffBin[0]) <0){
-      printf("Problem getting on/off phases for cal file %s. Exiting...\n",
-	     CalRunMode.Infile);fflush(stdout);
+      printf("ERROR:  Problem getting on/off phases for cal file %s. ",
+	     CalRunMode.Infile);
+      printf("Try setting a on/off switch phase using the -force option. \n");
+      fflush(stdout);
       exit(5);
     }
 
@@ -247,18 +287,18 @@ int main(int argc, char **argv)
 	/* Calculate and print to file only if channel is good and not being
 	   skipped */
 	if (!SkipChan[i]){
-	JyPerCount[i][2] = JyPerCount[i][3] 
-	  = sqrt(JyPerCount[i][0]*JyPerCount[i][1]);          
-
-	if(CalRunMode.Verbose)
-	  printf("JyPerCal: %lf  %lf  %lf  %lf\n\n",
-		 JyPerCount[i][0],JyPerCount[i][1],
-		 JyPerCount[i][2],JyPerCount[i][3]);
-      
-	/* write cal factors to file */
-	fprintf(Fcalout,"%lf  %e  %e  %e  %e\n",CalHdr.obs.ChanFreq[i],
-		JyPerCount[i][0],JyPerCount[i][1],
-		JyPerCount[i][2],JyPerCount[i][3] );
+	  JyPerCount[i][2] = JyPerCount[i][3] 
+	    = sqrt(JyPerCount[i][0]*JyPerCount[i][1]);          
+	  
+	  if(CalRunMode.Verbose)
+	    printf("JyPerCal: %lf  %lf  %lf  %lf\n\n",
+		   JyPerCount[i][0],JyPerCount[i][1],
+		   JyPerCount[i][2],JyPerCount[i][3]);
+	  
+	  /* write cal factors to file */
+	  fprintf(Fcalout,"%lf  %e  %e  %e  %e\n",CalHdr.obs.ChanFreq[i],
+		  JyPerCount[i][0],JyPerCount[i][1],
+		  JyPerCount[i][2],JyPerCount[i][3] );
 	}
       }
     }
@@ -284,7 +324,12 @@ int main(int argc, char **argv)
       /* Initialize header variables */
       InitPars(&ContHdr[i]);
 
-      /* Grab continuum cal file name */
+      /* Dynamically allocate RunMode variables */
+      if (AllocRunMode(&ContRunMode[i]) < 0){
+	printf("Could not allocate RunMode structure.  Exiting...\n");
+	exit(2);
+      }
+     /* Grab continuum cal file name */
       strcpy(ContRunMode[i].Infile,"\0");
       strcpy(ContRunMode[i].Infile,CalCmd->Contfile[i]);
      
@@ -349,8 +394,9 @@ int main(int argc, char **argv)
     if (GetPhases(&ContHdr[i], &ContRunMode[i], &CalMode, 
 		  &ASquared[i*NCHMAX], &BSquared[i*NCHMAX], 
 		  ContOnBin[i], ContOffBin[i]) < 0){
-      printf("Problem obtaining on/off phases for cal file %s. Exiting...\n",
+      printf("Problem obtaining on/off phases for cal file %s.  ",
 	     ContRunMode[i].Infile);fflush(stdout);
+      printf("Try setting a on/off switch phase using the -force option. \n");
       exit(5);
     }
     

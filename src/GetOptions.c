@@ -30,6 +30,12 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
   RunMode->Swap         = Cmd->SwapP;
   RunMode->OldFits      = Cmd->OldFitsP;
   RunMode->NoBase       = Cmd->NoBaseP;
+  /* Set to dedisperse input profiles before processing,
+     unless we are inputting polycos to align anyway */
+  if (Cmd->PolyfileP) 
+    RunMode->Dedisp = 0;
+  else 
+    RunMode->Dedisp = Cmd->DedispP;
   
 
   /**** String Options ****/  
@@ -73,7 +79,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
     strncpy(TempChar, &RunMode->Infile[LastSlashIndex+1],12);
     strcpy(&TempChar[12],"\0");
     //    sprintf(RunMode->OutfileRoot,"%s.%s",RunMode->Source,TempChar);
-    sprintf(RunMode->OutfileRoot,"%s.%s.%s",RunMode->Source,TempChar,hdr->obs.ObsvtyCode);
+    sprintf(RunMode->OutfileRoot,"%s.%s.%s",RunMode->Source,TempChar,hdr->obs.ObsvtyCode); 
     if(RunMode->Verbose)
       printf("Infile is %s, OutFileRoot is %s\n",RunMode->Infile, 
 	     RunMode->OutfileRoot);fflush(stdout); 

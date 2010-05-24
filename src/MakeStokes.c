@@ -81,8 +81,9 @@ void MakeStokes(struct ASPHdr *hdr, struct RunVars *RunMode,
     ReAconjB[i] *= JyPerCount[2];
     ImAconjB[i] *= JyPerCount[3];
 
-    /* if lower sideband, do Im(L*R) --> -Im(L*R)*/
-    ImAconjB[i] *= RunMode->Sideband;
+    /* if GASP data and lower sideband, do Im(L*R) --> -Im(L*R)*/
+    if(!strcmp(hdr->gen.BEName, "xASP"))
+       ImAconjB[i] *= RunMode->Sideband;
 
     /* Make Stokes parameters, depending on whether linear or circular basis */
     StdProfiles->rstds[i] = (float)(ASquared[i]+BSquared[i])/2.;
@@ -140,5 +141,6 @@ void MakeStokes(struct ASPHdr *hdr, struct RunVars *RunMode,
     }
 
   }
+
 
 }

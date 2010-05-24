@@ -29,7 +29,8 @@ double dectorad(char *dec)
 
 void FitAngle(struct RunVars *RunMode, 
 	      struct ASPHdr *hdr, struct SubHdr *subhdr,
-	      struct StdProfs *Profile)
+	      struct StdProfs *Profile,
+	      struct Telescope *Tel)
 {
 
   int i;//, NObs;
@@ -109,12 +110,12 @@ void FitAngle(struct RunVars *RunMode,
       hdr->target.Dec,Dec);fflush(stdout); */
 
   //  sscanf(hdr->obs.ObsvtyCode,"%d",&NObs);
-  sscanf(hdr->obs.ObsvtyCode,"%s",NObs);
+  // sscanf(hdr->obs.ObsvtyCode,"%s",NObs);
 
   // printf("NObs = %d\n",NObs);fflush(stdout);
 
 
-  AngRot = -1.0*GetChi(RunMode->Source,MJD,NObs,RA,Dec);
+  AngRot = -1.0*GetChi(MJD, hdr->obs.ObsvtyCode, RA, Dec, Tel);
   //  getchi_(RunMode->Source,&MJD,&ChiInt,&TSky,&NObs,&RA,&Dec,8L);
 
   /* Assume Circular feeds for now */

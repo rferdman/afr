@@ -24,6 +24,7 @@ int GetCalOpt(struct RunVars *RunMode, struct CalVars *CalMode,
   RunMode->Verbose  = CalCmd->VerboseP; 
   RunMode->AddDumps = CalCmd->AddDumpsP;
   RunMode->OldFits = 0;
+  RunMode->Dedisp  = 0;
 
   /* Make sure that user has given Tcal if Contfile is not given */
   if (!CalCmd->ContfileP) {
@@ -222,6 +223,7 @@ int GetContOpt(struct RunVars *RunMode, struct CalVars *CalMode,
 
   RunMode->NBinsOut = RunMode->NBins;
   RunMode->OldFits = 0;
+  RunMode->Dedisp  = 0;
 
 
   /* Make sure that number of dumps is greater than zero!  And that it

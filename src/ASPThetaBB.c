@@ -71,6 +71,12 @@ int main(int argc, char **argv)
   strcpy(ProgName,argv[0]); 
   /* Store input file name */ 
   //  strcpy(RunMode.Infile,argv[1]);
+
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
   strcpy(RunMode.Infile,Cmd->Infile);
 
 

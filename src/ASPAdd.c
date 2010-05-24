@@ -48,7 +48,15 @@ int main(int argc, char **argv)
   Fin = (fitsfile **)malloc(Cmd->InfileC*sizeof(fitsfile));
   Hdr = (struct ASPHdr *)malloc(Cmd->InfileC*sizeof(struct ASPHdr));
 
-  //    if(!zeroed_outprofs) {
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  strcpy(RunMode.Infile,Cmd->Infile); 
+  
+
+ //    if(!zeroed_outprofs) {
       /*     if(Cmd->SortChansP){
 	     OutChans=Hdr[0].obs.NChan;
 	     } 

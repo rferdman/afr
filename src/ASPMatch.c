@@ -28,6 +28,11 @@ int main(int argc, char **argv)
   /* Normally use this somewhere, and not showOptionValues */
   Cmd->tool = Cmd->tool;
 
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
   RunMode.Verbose=Cmd->VerboseP;
   RunMode.NoBase=Cmd->NoBaseP;
   RunMode.Header=1;

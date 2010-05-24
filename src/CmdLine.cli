@@ -51,6 +51,9 @@ Flag -pangleoff PAngleOff {Turn off corrections for parallactic angle}
 ## Turn off baseline subtraction
 Flag -nobase NoBase {Turn off baseline subtraction}
 
+## Dediperse input profiles to centre frequency before processing
+Flag -dedisp Dedisp {Dediperse input profiles to centre frequency before processing}
+
 ## Don't write zeroed profiles (i.e. in which all scans were omitted) 
 ## if they exist.  I keep writing them as default for now for omission 
 ## purposes, so all scan numbers are the same as original .asp file.
@@ -122,7 +125,7 @@ String -polyco Polyfile {Use polyco file to adjust pulsar phases} \
 #     -r 0.0 100000.0
 
 Float -chanomit ChanOmit {Choose to omit all scans taken at these frequency channels} \
-    -c 1 128 \
+    -c 1 2048 \
     -r 0.0 100000.0
 
 ## Rotate TO phase in degrees

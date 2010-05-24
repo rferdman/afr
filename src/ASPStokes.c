@@ -20,6 +20,7 @@ int main(int argc, char *argv[])
   struct ASPHdr StokesHdr;
   struct SubHdr StokesSubHdr;
 
+  struct Telescope Tel;
   struct StdProfs *StokesProfs;
   char StokesHead[256];
   int OutRootIndex=0, LastSlashIndex=0, FileNo;
@@ -42,7 +43,7 @@ int main(int argc, char *argv[])
   double FinalMask[NBINMAX];
   int spk, RefBin;
   double x,ptype;
-  Cmdline         *StokesCmd;
+  Cmdline   *StokesCmd;
 
   /* Get command line variables */
   StokesCmd = parseCmdline(argc, argv);
@@ -111,6 +112,11 @@ int main(int argc, char *argv[])
 	   ProgName,FitsFile);
     exit(1);
   }
+  /* Load telescope information */
+  if (GetTelescope(&StokesHdr, &Tel) < 0){
+    fprintf(stderr, "ERROR:  Could not get telescope data.\n");
+    exit(2);
+  }
 
   printf("\n==========================\n");
   printf("ASP FITS Header %s\n",StokesHdr.gen.HdrVer);
@@ -177,7 +183,7 @@ int main(int argc, char *argv[])
   }
 
   /* Get observatory code */
-  sscanf(StokesHdr.obs.ObsvtyCode,"%s",NObs);
+  //  sscanf(StokesHdr.obs.ObsvtyCode,"%s",NObs);
 
   /* Move to the first data table HDU in the fits file */
   if(!strcmp(StokesHdr.gen.HdrVer,"Ver1.0"))
@@ -357,7 +363,7 @@ int main(int argc, char *argv[])
 	  /* Now calculate parallactic angle */
 	  MJD = (double)StokesHdr.obs.IMJDStart + 
 	    (StokesSubHdr.DumpMiddleSecs)/86400.;
-	  ParAng = GetChi(StokesHdr.target.PSRName,MJD,NObs,RA,Dec);
+	  ParAng = GetChi(MJD, StokesHdr.obs.ObsvtyCode, RA, Dec, &Tel);
 	  fprintf(fpParAng[i],"%14.5lf%15.7f%15.7f%15.7f%15.7f%15.7f\n", 
 		  MJD, ParAng*180.0/TWOPI,
 		  StokesProfs[i].rstds[RefBin],StokesProfs[i].rstdq[RefBin],

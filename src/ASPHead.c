@@ -184,7 +184,7 @@ int main(int argc, char **argv)
 
     
     }
-    else
+    // else
 
 
 
@@ -293,7 +293,7 @@ int main(int argc, char **argv)
 	      !strcasecmp(Cmd->Keyword[i],"TDUMP") ||  // dump length in secs
 	      !strcasecmp(Cmd->Keyword[i],"SCANLEN")){  // length of scans in secs
 
-	/* Get the number of dumps.  this depend on version of asp file code */
+	/* Get the number of dumps.  this depensd on version of asp file code */
 	fits_get_num_hdus(Fin, &NumHDU, &status);
 	fits_read_key(Fin, TSTRING, "HDRVER", HdrVer, NULL, &status); 
 	status=0;

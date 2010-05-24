@@ -173,7 +173,14 @@ int main(int argc, char *argv[])
     exit(5);
   }
   
-  /* Set up RunMode structure to be compatible with WrtASPStokes */
+   /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  strcpy(RunMode.Infile,Cmd->Infile); 
+
+ /* Set up RunMode structure to be compatible with WrtASPStokes */
   RunMode.AddChans = 0;
   RunMode.AddDumps = 0;
   RunMode.NScanOmit = 0;

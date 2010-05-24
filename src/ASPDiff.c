@@ -58,6 +58,14 @@ int main(int argc, char *argv[])
   strcpy(ProgName, argv[0]);
 
 
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+
+
+
   /* read in ascii profile */
   if (Cmd->AscFileP){
     

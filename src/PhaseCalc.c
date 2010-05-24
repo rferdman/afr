@@ -44,6 +44,8 @@ int PhaseCalc(struct Polyco *pc, int num_pc, double imjd, double fmjd,
         }
     }
 
+    //printf("")
+
     /* If no valid polyco set found, return error */
     if (pc_set_used == -1) {
         printf("MJD %9.3f out of valid polyco range.\n", imjd+fmjd);

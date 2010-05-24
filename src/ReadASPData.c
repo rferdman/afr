@@ -3,9 +3,9 @@
 /* #include "fitsio.h" */
 #include "ASPCommon.h"
 
-void ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr, 
+int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr, 
 		 struct RunVars *RunMode, fitsfile *Fin, int nscan, 
-		 long NPtsProf, double **ASquared, double **BSquared, 
+		 int NPtsProf, double **ASquared, double **BSquared, 
 		 double **ReAconjB, double **ImAconjB, int **SampleCount,
 		 char **HeadLine)
 {
@@ -146,5 +146,6 @@ void ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 
   }
 
+  return 1;
 
 }

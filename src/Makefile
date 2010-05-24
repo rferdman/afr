@@ -15,11 +15,16 @@ FITS_LIB_DIR = /sw/lib
 #FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
 #FITS_LIB_DIR = /astro/mahler/gonzalez/lib
 
+#### Set up directories and libraries for pgplot ####
+PGPLOT_INCLUDE_DIR = /usr/local/lib/pgplot
+PGPLOT_LIB_DIR = /usr/local/lib/pgplot
+LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L/usr/X11R6/lib -lX11 -lpng -L/sw/lib -lg2c -pg
 
 CC = gcc
-CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
-CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
-CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
+CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
+CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
+CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR)  -I$(PGPLOT_INCLUDE_DIR)
+
 F77 = g77
 F77FLAGS = -c -I$(ASP_INCLUDE_DIR)
 
@@ -30,53 +35,66 @@ ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
 # Object file names:
 #-------------------
 
-OBJS1 = ASPFitsReader.o CmdLine.o GetOptions.o GetChans.o GetOmit.o Sum.o \
-	Freq2Chan.o InitPars.o ReadCal.o GetCalData.o ReadASPHdr.o \
-	GetPoly.o cprofc.o ReadASPData.o MakeStokes.o PhaseShift.o PhaseCalc.o \
-	BinDown.o MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o \
-	MaxMin.o FindPeak.o RotateProf.o FitAngle.o GetChi.o \
-	FitThetaBB.o FitMueller.o WrtASPHdr.o WrtASPStokes.o \
-	Median.o
+OBJS1 = ASPFitsReader.o CmdLine.o AllocRunMode.o GetOptions.o GetChans.o \
+	GetOmit.o Sum.o Freq2Chan.o InitPars.o ReadCal.o \
+	ReadHdr.o ReadASPHdr.o ReadPSRFITSHdr.o GetTelescope.o GetPoly.o \
+	cprofc.o ReadData.o ReadASPData.o ReadPSRFITSData.o \
+	Dedisperse.o MakeStokes.o PhaseShift.o PhaseCalc.o BinDown.o \
+	MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o MaxMin.o \
+	FindPeak.o RotateProf.o FitAngle.o GetChi.o FitThetaBB.o FitMueller.o \
+	WrtASPHdr.o WrtASPStokes.o Median.o
 
 OBJS2 = ffft.o fftfit.o cprof.o fccf.o brent.o 
 
-STOKESOBJS = ASPStokes.o StokesCmdLine.o ReadASPHdr.o ReadASPStokes.o BMask.o \
-	Sort.o FindPeak.o DutyLookup.o GetChi.o
+STOKESOBJS = ASPStokes.o StokesCmdLine.o ReadASPHdr.o GetTelescope.o \
+	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o GetChi.o
 
-CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadASPHdr.o GetCalOpt.o \
-	GetCalData.o ReadASPData.o Zero.o MaxMin.o Sort.o Median.o
+CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
+	GetTelescope.o ReadPSRFITSHdr.o AllocRunMode.o GetCalOpt.o BMask.o \
+	FindPeak.o DutyLookup.o MakePol.o Zero.o GetCalData.o ReadData.o \
+	ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o Sort.o Median.o
 
-THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadASPHdr.o GetCalData.o \
-	ReadASPData.o MaxMin.o Sort.o Median.o Zero.o  
+THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadASPHdr.o \
+	AllocRunMode.o GetCalData.o ReadASPData.o MaxMin.o Sort.o Median.o \
+	Zero.o  
 
-BINDOWNOBJS = ASPBinDown.o BinDownCmdLine.o BinDown.o MakePol.o Zero.o \
-	WriteStokes.o  DutyLookup.o Sort.o FindPeak.o BMask.o 
+BINDOWNOBJS = ASPBinDown.o BinDownCmdLine.o AllocRunMode.o BinDown.o \
+	MakePol.o Zero.o WriteStokes.o  DutyLookup.o Sort.o FindPeak.o BMask.o 
 
-ROTATEOBJS2 = ASPRotateAsc.o RotateCmdLine.o RotateProf.o cprofc.o MakePol.o \
-	Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o ffft.o
+ROTATEOBJS2 = ASPRotateAsc.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
+	cprofc.o MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o \
+	FindPeak.o BMask.o ffft.o
 
-ROTATEOBJS = ASPRotate.o RotateCmdLine.o RotateProf.o ReadASPHdr.o \
-	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o cprofc.o \
-	MakePol.o Zero.o WrtASPHdr.o WrtASPStokes.o ffft.o
+ROTATEOBJS = ASPRotate.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
+	ReadASPHdr.o ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o \
+	cprofc.o MakePol.o Zero.o WrtASPHdr.o WrtASPStokes.o ffft.o
 
-MATCHOBJS = ASPMatch.o MatchCmdLine.o ReadASPAsc.o RotateProf.o cprofc.o \
-	MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o 
+MATCHOBJS = ASPMatch.o MatchCmdLine.o AllocRunMode.o ReadASPAsc.o \
+	RotateProf.o cprofc.o MakePol.o Zero.o WriteStokes.o DutyLookup.o \
+	Sort.o FindPeak.o BMask.o 
 
 HEADOBJS = ASPHead.o HeadCmdLine.o
 
-ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o ReadASPStokes.o ArrayZero.o \
-	MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
+ADDOBJS = ASPAdd.o AddCmdLine.o ReadASPHdr.o AllocRunMode.o ReadASPStokes.o \
+	ArrayZero.o MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o \
+	FindPeak.o BMask.o
 
-DIFFOBJS = ASPDiff.o DiffCmdLine.o RotateProf.o ReadASPAsc.o ReadASPHdr.o \
-	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o cprofc.o \
-	MakePol.o Zero.o ArrayZero.o WrtASPHdr.o WrtASPStokes.o
+DIFFOBJS = ASPDiff.o DiffCmdLine.o AllocRunMode.o RotateProf.o ReadASPAsc.o \
+	ReadASPHdr.o ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o \
+	cprofc.o MakePol.o Zero.o ArrayZero.o WrtASPHdr.o WrtASPStokes.o
 
-TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o ReadASPAsc.o \
-	cprofc.o ReadASPStokes.o ArrayZero.o RotateProf.o MakePol.o Zero.o \
-	Median.o WriteStokes.o DutyLookup.o Sort.o FindPeak.o BMask.o
+TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o AllocRunMode.o \
+	ReadASPAsc.o cprofc.o ReadASPStokes.o ArrayZero.o RotateProf.o \
+	MakePol.o Zero.o Median.o WriteStokes.o DutyLookup.o Sort.o \
+	FindPeak.o BMask.o
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \
 	Sum.o cprofc.o
+
+TESTOBJS = TestPSRFITS.o TestCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
+	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o ReadData.o \
+	ReadASPData.o ReadPSRFITSData.o Dedisperse.o Zero.o PhaseCalc.o \
+	RotateProf.o cprofc.o plot_profile.o 
 
 %.o: %.f
 	$(F77) $(F77FLAGS) $<
@@ -140,6 +158,10 @@ ASPToa: ${TOAOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPToa ${TOAOBJS} ${OBJS2} \
 	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
 
+TestPSRFITS: ${TESTOBJS} ${OBJS2} ${ASP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/TestPSRFITS ${TESTOBJS} ${OBJS2} \
+	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c $(LCPGPLOT)
+
 CmdLine.c CmdLine.h: CmdLine.cli
 	clig -d CmdLine.cli
 	mv CmdLine.h $(ASP_INCLUDE_DIR)
@@ -188,6 +210,10 @@ ToaCmdLine.c ToaCmdLine.h: ToaCmdLine.cli
 	clig -d ToaCmdLine.cli
 	mv ToaCmdLine.h $(ASP_INCLUDE_DIR)
 
+TestCmdLine.c TestCmdLine.h: TestCmdLine.cli
+	clig -d TestCmdLine.cli
+	mv TestCmdLine.h $(ASP_INCLUDE_DIR)
+
 ASPFitsReader.o: ASPFitsReader.c CmdLine.h
 
 ASPStokes.o: ASPStokes.c StokesCmdLine.h
@@ -213,6 +239,8 @@ ASPDiff.o: ASPDiff.c DiffCmdLine.h
 ASPTemplate.o: ASPTemplate.c TemplateCmdLine.h
 
 ASPToa.o: ASPToa.c ToaCmdLine.h
+
+TestPSRFITS.o: TestPSRFITS.c TestCmdLine.h
 
 $(ASP_BIN_DIR):
 	mkdir $(ASP_BIN_DIR)
@@ -258,6 +286,9 @@ templateclean:
 
 toaclean:
 	/bin/rm -f ${TOAOBJS} $(ASP_BIN_DIR)/ASPToa core* *~ ToaCmdLine.[ch]
+
+testclean:
+	/bin/rm -f ${TESTOBJS} $(ASP_BIN_DIR)/TestPSRFITS core* *~ TestCmdLine.[ch]
 
 includeclean:
 	/bin/rm -f $(ASP_INCLUDE_DIR)/*CmdLine.h

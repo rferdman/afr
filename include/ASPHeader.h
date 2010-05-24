@@ -3,24 +3,13 @@
 /* Header parameter file for ASP machine                                     */
 /*            R. Ramachandran, 22/Jan/03, Berkeley, CA.                      */
 /* ========================================================================= */
+#include "ASPDefs.h"
 
-
-#define STRINGLEN  32
-#define NCHMAX   128    /* Max no. of DFB channels */ 
-#define NDSMAX    4    /* Max no. of data servers */ 
-#ifndef Boolean        /* Define Boolean type definition */ 
-#define Boolean int   
-#endif 
-#ifndef FALSE          /* also defined in "utils.h" */ 
-#define FALSE   0 
-#endif 
-#ifndef TRUE           /* also defined in "utils.h" */ 
-#define TRUE    1 
-#endif 
 
 struct General
 { char     ScanName[STRINGLEN];   /* Scan Name */
   char     SoftVer[STRINGLEN];    /* Software version number */
+  char     FitsType[STRINGLEN];   /* FITS Descrition type */
   char     Platform[STRINGLEN];   /* Platform of the software */
   char     HdrVer[STRINGLEN];     /* Header version */
   char     Observer[STRINGLEN];   /* Observer's name 15 characters! */
@@ -41,10 +30,10 @@ struct Target
   float    Epoch;                 /* Coordinate Epoch 1950.0/2000.0 */
   char     CoordMode[STRINGLEN];  /* Coordinate mode for the following 
 				     4 entries */
-  double   StartCrd1;             /* Coordinate 1 at start time */
-  double   StartCrd2;             /* Coordinate 1 at start time */
-  double   StopCrd1;              /* Coordinate 1 at stop time */
-  double   StopCrd2;              /* Coordinate 1 at stop time */
+  char   StartCrd1[STRINGLEN];    /* Coordinate 1 at start time */
+  char   StartCrd2[STRINGLEN];    /* Coordinate 1 at start time */
+  char   StopCrd1[STRINGLEN];     /* Coordinate 1 at stop time */
+  char   StopCrd2[STRINGLEN];     /* Coordinate 1 at stop time */
   double   StartLST;              /* LST at the start of observation */
   char     TrackMode[STRINGLEN];  /* Track mode TRACK/SLEW/DRIFT etc. */
 };
@@ -59,12 +48,16 @@ struct ObservationMode
   double   ObsLength;             /* Length of Observation (sec) */
   float    IonRM;                 /* Ionospheric Rotation measure correction */
   double   ClockOffset;           /* [Obs.Std - GPS] (microsec) */
-  char     ObsvtyCode[2];         /* Observatory code (TEMPO-compatible) */
+  char     ObsvtyCode[3];         /* Observatory code (TEMPO-compatible) */
+  int      NChanOrig;             /* No. of frequency channels */
   int      NChan;                 /* No. of frequency channels */
+  int      NPoln;                 /* No. of polarizations */
+  char     PolnType[STRINGLEN];   /* Polarization identifier (eg. AABBCRCI, IQUV, etc.) */
   double   FSkyCent;              /* Overall sky centre frequency */
+  double   BW;                    /* Observing bandwidth */
   int      ChanIndx[NCHMAX];      /* Orig channel index in xASP */
   double   ChanFreq[NCHMAX];      /* Sky mid-frequency (MHz) */
-  double   ChanWidth[NCHMAX];     /* Frequency Channel width (MHz) */
+  double   ChanWidth;             /* Frequency Channel width (MHz) */
   float    ChanTSys[NCHMAX];      /* System Temperature (K) of channels */
   float    ChanTCal[NCHMAX];      /* Calibration temperature (K) of channels */
   int      Sideband;              /* Forward/Reverse band? 
@@ -75,7 +68,7 @@ struct ObservationMode
   int      ChanChirpLen[NCHMAX];  /* Chirp length in each channel */
   int      ChanOverlap[NCHMAX];   /* Amount of convolution overlap 
 				     in each channel */
-  float    RM;                    /* Rotation measure */
+  double    RM;                    /* Rotation measure */
   int      RMMethod;              /* [0,not applied], [1,coherent], 
 				     [2,incoherent] */
   double   SampInterval;          /* sampling interval (seconds) */
@@ -125,7 +118,7 @@ struct Reduction
 				     first sample */
   int      RNTimeDumps;           /* No. of time dumps 
 				     [timedump = folded prof; t-series etc.] */
-  double   RLenTimeDump;          /* Length of each time dump */
+  double   TDump;                 /* Length of each time dump */
   int      RNBinTimeDump;         /* No. of bins in each time dump */
   int      RChanNum;              /* No. of frequency channels */
   double   RChanWidth;            /* Width of each frequency channel (MHz) */

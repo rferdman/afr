@@ -48,6 +48,13 @@ int main(int argc, char **argv)
 #endif
 
   strcpy(Outfile,"BinDown.out");
+
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  strcpy(RunMode.Infile,Cmd->Infile); 
   RunMode.Verbose=Cmd->VerboseP;
   RunMode.NBinsOut=Cmd->NBinsOut;
 

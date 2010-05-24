@@ -186,7 +186,7 @@ int WrtASPHdr(struct      ASPHdr *hdr,
     indx++;
   }
   for (i=0; i<hdr->obs.NChan; i++) {
-    fits_write_col(Fin, TDOUBLE, indx, 1, 1, 1, &hdr->obs.ChanWidth[i], &status);
+    fits_write_col(Fin, TDOUBLE, indx, 1, 1, 1, &hdr->obs.ChanWidth, &status);
     indx++;
   }
   for (i=0; i<hdr->obs.NChan; i++) {

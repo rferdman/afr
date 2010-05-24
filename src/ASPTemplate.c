@@ -68,6 +68,11 @@ int main(int argc, char **argv)
     exit(1);
   }
 
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
   RunMode.Verbose = Cmd->VerboseP;
   RunMode.FlipPA = 0;
   RunMode.NoBase = Cmd->NoBaseP;

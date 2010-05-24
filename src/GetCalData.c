@@ -499,7 +499,7 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
 	       double **ReAconjB, double **ImAconjB)
 {
 
-  int    i, nscan;
+  int    i, i_dump;
   int    status=0;
   int    NColumns, NDumps2Use;
   long   NPtsProf=0;
@@ -511,8 +511,9 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
 
   NDumps2Use = 1;
 
-  fits_movnam_hdu(Fcal, BINARY_TBL, "ASPOUT0", 0, &status);   
-
+  if(!strcmp(CalHdr->gen.BEName, "xASP")) 
+    fits_movnam_hdu(Fcal, BINARY_TBL, "ASPOUT0", 0, &status);   
+  
   /* If wish to use all dumps together, set loop to run over all dumps */
   if (RunMode->AddDumps) NDumps2Use = RunMode->NDumps;
 
@@ -530,10 +531,21 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
     }
   }
 
-  for (nscan=0;nscan<NDumps2Use;nscan++){
+  for (i_dump=0;i_dump<NDumps2Use;i_dump++){
 
 
-    fits_get_num_rows(Fcal, &NPtsProf, &status);status=0; /* find NPtsProf */
+    if(!strcmp(CalHdr->gen.BEName, "xASP")) {
+      fits_get_num_rows(Fcal, &NPtsProf, &status);status=0; /* find NPtsProf */
+    }
+    else if (!strcmp(CalHdr->gen.FitsType, "PSRFITS")) {
+      NPtsProf = CalHdr->redn.RNBinTimeDump;
+    }
+    else{
+      fprintf(stderr, "GetCalData ERROR: Unrecognized file format.\n");
+    }
+
+
+
 
     if(RunMode->NBins != NPtsProf) {
       printf("ERROR: Number of bins in profile (%ld)\n",NPtsProf);
@@ -546,16 +558,23 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
     fits_get_num_cols(Fcal, &NColumns, &status);status=0;
 
     /* If newer version of FITS file then move back to first HDU */
-    if(!strcmp(CalHdr->gen.HdrVer,"Ver1.0.1")) {
-      fits_movrel_hdu(Fcal, -1, NULL, &status);
-    }
+    if(!strcmp(CalHdr->gen.BEName, "xASP")) 
+      if(!strcmp(CalHdr->gen.HdrVer,"Ver1.0.1")) {
+	fits_movrel_hdu(Fcal, -1, NULL, &status);
+      }
 
     if(RunMode->Verbose)
       printf("NChan = %d, NPtsProf = %ld\n", CalHdr->obs.NChan,NPtsProf);
 
-    ReadASPData(CalHdr, CalSubHdr, RunMode, Fcal, nscan,  NPtsProf, 
-		ASquared, BSquared, ReAconjB, ImAconjB, SampleCount, 
-		HeadLine);
+    if (ReadData(CalHdr, CalSubHdr, RunMode, Fcal, i_dump,  NPtsProf, 
+		 ASquared, BSquared, ReAconjB, ImAconjB, SampleCount, 
+		 HeadLine) < 0){
+      fprintf(stderr, "ASPCal ERROR: Could not read data from ");
+      fprintf(stderr, "file %s (Error occured when attempting to read ",
+	      RunMode->Infile);
+      fprintf(stderr, "dump %d)", i_dump);
+      return -1;      
+    }
     
 
   }

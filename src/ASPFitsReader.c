@@ -12,6 +12,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "fitsio.h"
+#include "ASPDefs.h"
 #include "ASPCommon.h"
 #include "ASPFitsReader.h"
 #include "polyco.h"
@@ -25,7 +26,7 @@ int main(int argc, char **argv)
   int             RootIndex=0;
   int             NFirstTable, NumHDU, NFilesOut, FileOutNo;
   long            NPtsProf=0;
-  char            ProgName[256], *HeadLine[64];
+  char            ProgName[256], *HeadLine[NCHMAX];
   char            *OutputHead[64];
   char            FitsFile[128], FitsFileOut[128];
   fitsfile        *Fin, **Fout;
@@ -36,17 +37,17 @@ int main(int argc, char **argv)
   struct CalVars  CalMode;
   struct StdProfs *InputProfs, TempOutProfs, StokesProfs;
   struct StdProfs *OutputProfs; 
+  struct Telescope Tel;
   double          **ASquared, **BSquared, **ReAconjB, **ImAconjB;
   int             **SampleCount;
   double          *JyPerCount[NCHMAX];
-  char            Stokesfile[256];
+  //char            Stokesfile[256];
 
   double          StartMJD;
   struct Polyco   *Polycos;
   int             n_poly=0;
 
   Cmdline         *Cmd;
-
 
   /* Get command line variables */
   Cmd = parseCmdline(argc, argv);
@@ -61,8 +62,8 @@ int main(int argc, char **argv)
   /* Initialize header variables */
   InitPars(&InHdr);
 
+
   /* Grab infile name */
-  strcpy(RunMode.Infile,Cmd->Infile); 
 
   /* Malloc fitsfile descriptor to number of data files */
 
@@ -70,18 +71,18 @@ int main(int argc, char **argv)
   /* Open fits data file */
 
   /* Check that file ends in ".asp" */
-  for (i=0;i<strlen(RunMode.Infile);i++){
-    if(!(strcmp(&RunMode.Infile[i],".asp"))){
+  for (i=0;i<strlen(Cmd->Infile);i++){
+    if(!(strcmp(&Cmd->Infile[i],".asp"))){
       RootIndex = i-1;
       break;
     }
   }
   if(RootIndex == 0){
     printf("WARNING: input file does not follow .asp convention.\n");
-    RootIndex = strlen(RunMode.Infile)-1;
+    RootIndex = strlen(Cmd->Infile)-1;
   }
 
-  strcpy(FitsFile,RunMode.Infile);
+  strcpy(FitsFile,Cmd->Infile);
 
   if(fits_open_file(&Fin, FitsFile, READONLY, &status)){
     printf("Error opening FITS file %s !!!\n", FitsFile);
@@ -93,9 +94,15 @@ int main(int argc, char **argv)
   printf("!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"); */
   
   /* Read in values for header variables */
-  if(ReadASPHdr(&InHdr, Fin) < 0){
-    printf("%s> Unable to read Header from file %s.  Exiting...\n",ProgName,
-	   RunMode.Infile);
+  //  if(ReadASPHdr(&InHdr, Fin) < 0){
+  if(ReadHdr(&InHdr, Fin) < 0){
+    printf("%s ERROR: Unable to read Header from file %s.  Exiting...\n",
+	   ProgName, Cmd->Infile);
+    exit(2);
+  }
+  /* Load telescope information */
+  if (GetTelescope(&InHdr, &Tel) < 0){
+    fprintf(stderr, "ERROR:  Could not get telescope data.\n");
     exit(2);
   }
   /* If requested on command line, shift all centre frequencies by the 
@@ -106,12 +113,23 @@ int main(int argc, char **argv)
       InHdr.obs.ChanFreq[i] += Cmd->FreqShift;
   }
   
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  strcpy(RunMode.Infile,Cmd->Infile); 
 
   printf("\n==========================\n");
-  printf("ASP FITS Header %s\n",InHdr.gen.HdrVer);
+  if(!strcmp(InHdr.gen.BEName, "xASP")) 
+    printf("ASP FITS Header %s\n", InHdr.gen.HdrVer);
+  else if(!strcmp(InHdr.gen.FitsType, "PSRFITS"))
+    printf("PSRFITS Header %s\n", InHdr.gen.HdrVer);
+  else
+    printf("Unknown FITS Header %s\n", InHdr.gen.HdrVer);
   printf("==========================\n\n");fflush(stdout);
   
-  printf("Input file:  %s\n\n",RunMode.Infile);fflush(stdout);
+  printf("Input file:  %s\n\n",Cmd->Infile);fflush(stdout);
 
   printf("PSR %s:\n",InHdr.target.PSRName);
   printf("--------------\n\n");
@@ -129,26 +147,42 @@ int main(int argc, char **argv)
   /* Get number of HDUs in fits file */
   fits_get_num_hdus(Fin, &NumHDU, &status);
   
-  if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
-    RunMode.NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
-				   many non-data tables we will be using */
+  if(!strcmp(InHdr.gen.BEName, "xASP")) {
+    if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
+      RunMode.NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
+				     many non-data tables we will be using */
+    }
+    else if(!strcmp(InHdr.gen.HdrVer,"Ver1.0.1")){
+      RunMode.NDumps = (NumHDU-3)/2;
+    }
+    else{
+      printf("Do not recognize ASP FITS file version number in header.\n");
+      printf("This header %s. Exiting...\n",InHdr.gen.HdrVer);fflush(stdout);
+      exit(3);
+    }
+
+    /* Now check last dump to make sure it wrote properly if scan 
+       was ctrl-c'd -- if so, reduce NDumps by 1 to avoid disaster */
+    fits_get_num_hdus(Fin, &NumHDU, &status);
+    fits_movabs_hdu(Fin,NumHDU,&hdutype, &status);
+    /* find NPtsProf */
+    fits_get_num_rows(Fin, &NPtsProf, &status);status=0;    
   }
-  else if(!strcmp(InHdr.gen.HdrVer,"Ver1.0.1")){
-    RunMode.NDumps = (NumHDU-3)/2;
-  }
-  else{
-    printf("Do not recognize FITS file version number in header.\n");
-    printf("This header %s. Exiting...\n",InHdr.gen.HdrVer);fflush(stdout);
-    exit(3);
-  }
-  
+  else {      
+    if(!strcmp(InHdr.gen.FitsType, "PSRFITS")) {
+      /* Set to dedisperse input profiles before processing */
+      Cmd->DedispP = 1;
+      RunMode.NDumps = InHdr.redn.RNTimeDumps;
+      NPtsProf = InHdr.redn.RNBinTimeDump;
+    }
+    else {
+      /* Do not recognize data format! */
+      fprintf(stderr, "ASPFitsReader ERROR: Unrecognized file format.\n");
+      exit(1);
+    }
+  }    
+
  
-  /* Now check last dump to make sure it wrote properly if scan 
-     was ctrl-c'd -- if so, reduce NDumps by 1 to avoid disaster */
-  fits_get_num_hdus(Fin, &NumHDU, &status);
-  fits_movabs_hdu(Fin,NumHDU,&hdutype, &status);
-  /* find NPtsProf */
-  fits_get_num_rows(Fin, &NPtsProf, &status);status=0;    
   
 
   //  if ((RunMode.NBins!=(int)NPtsProf)){
@@ -312,15 +346,17 @@ int main(int argc, char **argv)
   if(Cmd->PAngleOffP)
     printf("Will NOT fit out parallactic angle changes.\n");fflush(stdout);
 
-  /* Move to the first data table HDU in the fits file */
-  if(!strcmp(InHdr.gen.HdrVer,"Ver1.0"))
-    fits_movnam_hdu(Fin, BINARY_TBL, "ASPOUT0", 0, &status);
-  else if (!strcmp(InHdr.gen.HdrVer,"Ver1.0.1"))
-    fits_movnam_hdu(Fin, ASCII_TBL, "DUMPREF0", 0, &status);
-
-  /* Get the current HDU number */
-  fits_get_hdu_num(Fin, &NFirstTable);
-
+  if(!strcmp(InHdr.gen.BEName, "xASP")) {
+    /* Move to the first data table HDU if this is an ASP fits file */
+    if(!strcmp(InHdr.gen.HdrVer,"Ver1.0"))
+      fits_movnam_hdu(Fin, BINARY_TBL, "ASPOUT0", 0, &status);
+    else if (!strcmp(InHdr.gen.HdrVer,"Ver1.0.1"))
+      fits_movnam_hdu(Fin, ASCII_TBL, "DUMPREF0", 0, &status);
+    
+    /* Get the current HDU number */
+    fits_get_hdu_num(Fin, &NFirstTable);
+  }
+  
   if(RunMode.Verbose) {
     printf("\nPSR %s\n",RunMode.Source);
     printf("-----------\n");
@@ -359,22 +395,23 @@ int main(int argc, char **argv)
     for (i_dump_in=MinAddDump; i_dump_in<MaxAddDump; i_dump_in++){
 	
 	
-      /* move to next dump's data */
-      if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
-	fits_movabs_hdu(Fin, NFirstTable+i_dump_in, &hdutype,&status);
-	/* find NPtsProf */
-	fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
-      }
-      else if(!strcmp(InHdr.gen.HdrVer,"Ver1.0.1")){
-	/* if we've reached the end of the FITS file then increase FileNo */
-	fits_movabs_hdu(Fin, NFirstTable+(i_dump_in)*2+1,&hdutype,
-			&status);
-	/* find NPtsProf */
-	fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
-	fits_movrel_hdu(Fin, -1, NULL, &status);
-      }
-	
-
+      if(!strcmp(InHdr.gen.BEName, "xASP")) {
+	/* move to next dump's data if ASP FITS file */
+	if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
+	  fits_movabs_hdu(Fin, NFirstTable+i_dump_in, &hdutype,&status);
+	  /* find NPtsProf */
+	  fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
+	}
+	else if(!strcmp(InHdr.gen.HdrVer,"Ver1.0.1")){
+	  /* if we've reached the end of the FITS file then increase FileNo */
+	  fits_movabs_hdu(Fin, NFirstTable+(i_dump_in)*2+1,&hdutype,
+			  &status);
+	  /* find NPtsProf */
+	  fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
+	  fits_movrel_hdu(Fin, -1, NULL, &status);
+	}
+      }	
+      
       /* Exclude badly written dumps (usually due to ctrl-c)*/
       if (RunMode.NBins != (int)NPtsProf){
 	if(RunMode.OldFits) { /* total hack */
@@ -403,9 +440,16 @@ int main(int argc, char **argv)
 	
 	
       /* Read in data arrays */
-      ReadASPData(&InHdr, &SubInHdr[i_dump_in], &RunMode, Fin, i_dump_in,
+      //      if (ReadASPData(&InHdr, &SubInHdr[i_dump_in], &RunMode, Fin, i_dump_in,
+      if (ReadData(&InHdr, &SubInHdr[i_dump_in], &RunMode, Fin, i_dump_in,
 		  NPtsProf, ASquared, BSquared, ReAconjB, ImAconjB, 
-		  SampleCount, HeadLine);
+		  SampleCount, HeadLine) < 0){
+	fprintf(stderr, "ASPFitsReader ERROR: Could not read data from ");
+	fprintf(stderr, "file %s (Error occured when attempting to read ",
+		Cmd->Infile);
+	fprintf(stderr, "dump %d)", i_dump_in);
+	exit(1);
+      }
 	
 	
       /* Now we have arrays for each channel for this dump */
@@ -438,14 +482,26 @@ int main(int argc, char **argv)
 		     ReAconjB[i_chan_in], ImAconjB[i_chan_in],
 		     JyPerCount[CalMode.CalIndex[i_chan_in]]);
 	  
-	  /* Shift phases by apprpriate amounts if requested on command line 
+	  /* Now dedisperse to the centre frequency before further 
+	     processing, if required */	  
+	  if(RunMode.Dedisp){
+	    if (Dedisperse(&InputProfs[i_chan_in], &RunMode, 
+			   &InHdr, &SubInHdr[i_dump_in], 
+			   i_chan_in) < 0) {
+	      fprintf(stderr,"ERROR: Cannot dedisperse data.\n");
+	      exit(1);
+	    }
+	  }
+	  
+
+/* Shift phases by appropriate amounts if requested on command line 
 	     -- do for each dump and channel */
 	  if(Cmd->PolyfileP){
 	    if(i_dump_in==0 && i_chan_in==0) {
 	      printf("Applying polyco-based phase shifts...\n\n");
 	      fflush(stdout);
 	    }
-	    if(PhaseShift(&Polycos[i_chan_in*MAX_PC_SETS],n_poly, 
+	    if(PhaseShift(&Polycos[i_chan_in*MAX_PC_SETS], n_poly, 
 			  &InputProfs[i_chan_in], &RunMode,
 			  &InHdr, &SubInHdr[i_dump_in], i_chan_in) < 0) {
 	      printf("Unable to shift profile phases.  Exiting...\n");
@@ -459,11 +515,11 @@ int main(int argc, char **argv)
 	  if(!RunMode.OmitFlag[i_dump_in*InHdr.obs.NChan + i_chan_in]) {
 
 	    /* Create filename for un-added profile files */
-	    sprintf(Stokesfile,"%s.%4.4d.%4.4d.prof.asc",RunMode.OutfileRoot,
-		    (int)(InHdr.obs.ChanFreq[i_chan_in]),i_dump_in);
+	    /* sprintf(Stokesfile,"%s.%4.4d.%4.4d.prof.asc",RunMode.OutfileRoot,
+	       (int)(InHdr.obs.ChanFreq[i_chan_in]),i_dump_in); 
 	    
 	    if(RunMode.Verbose)
-	      printf("Stokesfile  = %s\n",Stokesfile);fflush(stdout);
+	      printf("Stokesfile  = %s\n",Stokesfile);fflush(stdout);*/
 	    
 	    
 	    /* Bin Down(if input on command line) and Baseline subtract */
@@ -492,7 +548,7 @@ int main(int argc, char **argv)
 	    /* Correct for parallactic angle -- an option!! */
 	    if (!Cmd->PAngleOffP)
 	      FitAngle(&RunMode, &InHdr, &SubInHdr[i_dump_in], 
-		       &InputProfs[i_chan_in]);  
+		       &InputProfs[i_chan_in], &Tel);  
 	    
 	    
 	    /* Update highest-SNR profile to use as standard prof if 
