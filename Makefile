@@ -8,21 +8,45 @@ endif
 
 ASP_INCLUDE_DIR = ./include
 
-#### Set directories here for fitsio*.h include file and  ####
-#### libcfitsio.a library files, respectively.            ####
-#FITS_INCLUDE_DIR = /usr/include
-#FITS_LIB_DIR = /usr/lib
-FITS_INCLUDE_DIR = /sw/include
-FITS_LIB_DIR = /sw/lib
-#FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
-#FITS_LIB_DIR = /astro/mahler/gonzalez/lib
+### SET TO YOUR PREFERRED BIN DIRECTORY FOR INSTALLING AFR EXECUTABLES ###
+INSTALL_BIN_DIR = /usr/local/bin
 
-CC = gcc 
-CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
-CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
-CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) 
-F77 = g77
-F77FLAGS = -c -I$(ASP_INCLUDE_DIR)
+
+### SPECIFY CFITSIO INCLUDE FILE AND LIBRARY DIRECTORIES HERE ###
+FITS_INCLUDE_DIR = /usr/local/include
+FITS_LIB_DIR = /usr/local/lib
+
+### IF USING GRFORTRAN, UNCOMMENT THE FOLLWOING ###
+LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm 
+ 
+### IF USING G77, UNCOMMENT THE FOLLOWING:
+#LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm -lg2c
+
+
+### SPECIFY PGPLOT INCLUDE AND LIBRARY DIRECTORIES HERE ###
+PGPLOT_INCLUDE_DIR = /usr/local/pgplot
+PGPLOT_LIB_DIR = /usr/local/pgplot
+
+### SPECIFY X11 LIBRARY DIRECTORY HERE ###
+X11_LIB_DIR = /usr/X11R6/lib
+
+LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng # -L/sw/lib -lg2c -pg
+
+
+### C COMPILER AND FLAGS ###
+CC = gcc
+CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
+# CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
+#CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR)  -I$(PGPLOT_INCLUDE_DIR)
+
+
+### GFORTRAN FLAGS ###
+F77 = gfortran
+F77FLAGS = -c -Wall -ffixed-line-length-none -fPIC -O -I$(ASP_INCLUDE_DIR)
+
+### G77 FLAGS ###
+# F77 = g77
+# F77FLAGS = -c -Wall -I$(ASP_INCLUDE_DIR)
 
 
 
@@ -55,3 +79,5 @@ clean:
 #	  || case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac; \
 #	done && test -z "$$fail"
 
+install: $(INSTALL_BIN_DIR)
+	cd $(ASP_BIN_DIR); ln -sf `pwd`/ASP* $(INSTALL_BIN_DIR)

@@ -4,6 +4,7 @@ ifndef ASP_BIN_DIR
 ASP_BIN_DIR = ../bin
 endif
 
+
 ASP_INCLUDE_DIR = ../include
 
 
