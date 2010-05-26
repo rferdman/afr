@@ -42,7 +42,8 @@ CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGP
 
 ### GFORTRAN FLAGS ###
 F77 = gfortran
-F77FLAGS = -c -Wall -ffixed-line-length-none -fPIC -O -I$(ASP_INCLUDE_DIR)
+F77FLAGS = -c -Wall  -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O -I$(ASP_INCLUDE_DIR)
+
 
 ### G77 FLAGS ###
 # F77 = g77
