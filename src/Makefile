@@ -126,11 +126,11 @@ TESTOBJS = TestPSRFITS.o TestCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 
 ASPFitsReader: ${OBJS1} ${OBJS2} $(ASP_BIN_DIR)
 	${CC} -o $(ASP_BIN_DIR)/ASPFitsReader ${OBJS1} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm  
+	${LCFITSIO}  
 
 ASPStokes: ${STOKESOBJS} $(ASP_BIN_DIR)
 	${CC} -o $(ASP_BIN_DIR)/ASPStokes ${STOKESOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm  
+	${LCFITSIO}  
 
 ASPCal: ${CALOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPCal ${CALOBJS} -L${FITS_LIB_DIR} \
@@ -138,47 +138,47 @@ ASPCal: ${CALOBJS} ${ASP_BIN_DIR}
 
 ASPThetaBB: ${THETAOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPThetaBB ${THETAOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPBinDown: ${BINDOWNOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPBinDown ${BINDOWNOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPRotateAsc: ${ROTATEOBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPRotateAsc ${ROTATEOBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPRotate: ${ROTATEOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPRotate ${ROTATEOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPMatch: ${MATCHOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPMatch ${MATCHOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPHead: ${HEADOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPHead ${HEADOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPAdd: ${ADDOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPAdd ${ADDOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPDiff: ${DIFFOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPDiff ${DIFFOBJS} ${OBJS2}  \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPTemplate: ${TEMPLATEOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPTemplate ${TEMPLATEOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 ASPToa: ${TOAOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPToa ${TOAOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   
+	${LCFITSIO}   
 
 TestPSRFITS: ${TESTOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/TestPSRFITS ${TESTOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm   $(LCPGPLOT)
+	${LCFITSIO}   $(LCPGPLOT)
 
 CmdLine.c CmdLine.h: CmdLine.cli
 	clig -d CmdLine.cli
