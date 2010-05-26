@@ -6,27 +6,44 @@ endif
 
 ASP_INCLUDE_DIR = ../include
 
-#### Set directories here for fitstio*.h include file and ####
-#### libcfitsio.a library files, respectively.            ####
-#FITS_INCLUDE_DIR = /usr/include
-#FITS_LIB_DIR = /usr/lib
-FITS_INCLUDE_DIR = /sw/include
-FITS_LIB_DIR = /sw/lib
-#FITS_INCLUDE_DIR = /astro/mahler/gonzalez/include
-#FITS_LIB_DIR = /astro/mahler/gonzalez/lib
 
-#### Set up directories and libraries for pgplot ####
-PGPLOT_INCLUDE_DIR = /usr/local/lib/pgplot
-PGPLOT_LIB_DIR = /usr/local/lib/pgplot
-LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L/usr/X11R6/lib -lX11 -lpng -L/sw/lib -lg2c -pg
+### SPECIFY CFITSIO INCLUDE FILE AND LIBRARY DIRECTORIES HERE ###
+FITS_INCLUDE_DIR = /usr/local/include
+FITS_LIB_DIR = /usr/local/lib
 
+### IF USING GRFORTRAN, UNCOMMENT THE FOLLWOING ###
+LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm 
+ 
+### IF USING G77, UNCOMMENT THE FOLLOWING:
+#LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm -lg2c
+
+
+### SPECIFY PGPLOT INCLUDE AND LIBRARY DIRECTORIES HERE ###
+PGPLOT_INCLUDE_DIR = /usr/local/pgplot
+PGPLOT_LIB_DIR = /usr/local/pgplot
+
+### SPECIFY X11 LIBRARY DIRECTORY HERE ###
+X11_LIB_DIR = /usr/X11R6/lib
+
+LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng # -L/sw/lib -lg2c -pg
+
+
+### C COMPILER AND FLAGS ###
 CC = gcc
 CFLAGS = -Wall -O -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
-CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
-CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR)  -I$(PGPLOT_INCLUDE_DIR)
+# CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
+#CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR)  -I$(PGPLOT_INCLUDE_DIR)
 
-F77 = g77
-F77FLAGS = -c -I$(ASP_INCLUDE_DIR)
+
+### GFORTRAN FLAGS ###
+F77 = gfortran
+F77FLAGS = -c -Wall -ffixed-line-length-none -fPIC -O -I$(ASP_INCLUDE_DIR)
+
+### G77 FLAGS ###
+# F77 = g77
+# F77FLAGS = -c -Wall -I$(ASP_INCLUDE_DIR)
+
+
 
 ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
 	ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc
@@ -50,13 +67,14 @@ STOKESOBJS = ASPStokes.o StokesCmdLine.o ReadASPHdr.o GetTelescope.o \
 	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o GetChi.o
 
 CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
-	GetTelescope.o ReadPSRFITSHdr.o AllocRunMode.o GetCalOpt.o BMask.o \
+	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalOpt.o BMask.o \
 	FindPeak.o DutyLookup.o MakePol.o Zero.o GetCalData.o ReadData.o \
 	ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o Sort.o Median.o
 
-THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadASPHdr.o \
-	AllocRunMode.o GetCalData.o ReadASPData.o MaxMin.o Sort.o Median.o \
-	Zero.o  
+THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
+	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalData.o \
+	ReadData.o ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o \
+	Sort.o Median.o Zero.o  
 
 BINDOWNOBJS = ASPBinDown.o BinDownCmdLine.o AllocRunMode.o BinDown.o \
 	MakePol.o Zero.o WriteStokes.o  DutyLookup.o Sort.o FindPeak.o BMask.o 
@@ -108,59 +126,59 @@ TESTOBJS = TestPSRFITS.o TestCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 
 ASPFitsReader: ${OBJS1} ${OBJS2} $(ASP_BIN_DIR)
 	${CC} -o $(ASP_BIN_DIR)/ASPFitsReader ${OBJS1} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c
+	-L${FITS_LIB_DIR} -lcfitsio -lm  
 
 ASPStokes: ${STOKESOBJS} $(ASP_BIN_DIR)
 	${CC} -o $(ASP_BIN_DIR)/ASPStokes ${STOKESOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c
+	-L${FITS_LIB_DIR} -lcfitsio -lm  
 
 ASPCal: ${CALOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPCal ${CALOBJS} -L${FITS_LIB_DIR} \
-	-lcfitsio -lm -lg2c
+	-lcfitsio -lm  
 
 ASPThetaBB: ${THETAOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPThetaBB ${THETAOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPBinDown: ${BINDOWNOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPBinDown ${BINDOWNOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPRotateAsc: ${ROTATEOBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPRotateAsc ${ROTATEOBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPRotate: ${ROTATEOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPRotate ${ROTATEOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPMatch: ${MATCHOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPMatch ${MATCHOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPHead: ${HEADOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPHead ${HEADOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPAdd: ${ADDOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPAdd ${ADDOBJS} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPDiff: ${DIFFOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPDiff ${DIFFOBJS} ${OBJS2}  \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPTemplate: ${TEMPLATEOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPTemplate ${TEMPLATEOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 ASPToa: ${TOAOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPToa ${TOAOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c 
+	-L${FITS_LIB_DIR} -lcfitsio -lm   
 
 TestPSRFITS: ${TESTOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/TestPSRFITS ${TESTOBJS} ${OBJS2} \
-	-L${FITS_LIB_DIR} -lcfitsio -lm -lg2c $(LCPGPLOT)
+	-L${FITS_LIB_DIR} -lcfitsio -lm   $(LCPGPLOT)
 
 CmdLine.c CmdLine.h: CmdLine.cli
 	clig -d CmdLine.cli
