@@ -33,7 +33,7 @@ int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin)
 
   /* If data comes from ASP then do ReadASPData */
   if(!strcmp(hdr->gen.BEName, "xASP")) {
-    printf("ASP DATA!\n");
+    // printf("ASP DATA!\n");
 
   /* Read in values for header variables */
     if(ReadASPHdr(hdr, Fin) < 0){
@@ -46,7 +46,7 @@ int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin)
 
     /* Otherwise, if data is in PSRFITS format, then do ReadPSRFITSData */
     if(!strcmp(hdr->gen.FitsType, "PSRFITS")) {
-      printf("PSRFITS Data!!\n");
+      //printf("PSRFITS Data!!\n");
 
       /* Read in values for header variables */
       if(ReadPSRFITSHdr(hdr, Fin) < 0){

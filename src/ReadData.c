@@ -23,7 +23,7 @@ int ReadData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 
   /* If data comes from ASP then do ReadASPData */
   if(!strcmp(hdr->gen.BEName, "xASP")) {
-    printf("ASP DATA!\n");
+    //printf("ASP DATA!\n");
     if (ReadASPData(hdr, subhdr, RunMode, Fin, i_dump,
 		    hdr->redn.RNBinTimeDump, 
 		    ASquared, BSquared, ReAconjB, ImAconjB, 
@@ -35,7 +35,7 @@ int ReadData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 
     /* Otherwise, if data is in PSRFITS format, then do ReadPSRFITSData */
     if(!strcmp(hdr->gen.FitsType, "PSRFITS")) {
-      printf("PSRFITS Data!!\n");
+      // printf("PSRFITS Data!!\n");
       if (ReadPSRFITSData(hdr, subhdr, RunMode, Fin, i_dump,
 			  hdr->redn.RNBinTimeDump, 
 			  ASquared, BSquared, ReAconjB, ImAconjB) < 0){

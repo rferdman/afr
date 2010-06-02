@@ -78,7 +78,7 @@ int main(int argc, char **argv)
     }
   }
   if(RootIndex == 0){
-    printf("WARNING: input file does not follow .asp convention.\n");
+    //printf("WARNING: input file does not follow .asp convention.\n");
     RootIndex = strlen(Cmd->Infile)-1;
   }
 
