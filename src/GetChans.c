@@ -426,7 +426,7 @@ int GetChans(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 
   /* Finally, test that number of output channels does not exceed fits 
      column limit */
-  if (RunMode->NOutChans > NCHOUTMAX){
+  if (RunMode->NOutChans > NCOLMAX/4){
     fprintf(stderr, "GetChans ERROR:  Number of output channels exceeds ");
     printf("cfitsio table column number limit.\n");
     return -1;
