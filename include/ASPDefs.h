@@ -19,7 +19,7 @@
 #define MAXDUMPS 512
 #define MAXOMIT  8192
 #define NCHMAX 2048
-#define NCHOUTMAX 999
+#define NCOLMAX 999
 
 //#define TWOPI 6.2831853071795864
 /* MORE DECIMALS...!  */
