@@ -215,7 +215,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
       (int)floor((double)n_suboffs*hdr->redn.TDump);
     /* Now with all the required info, we can construct the 
        output file name */
-    sprintf(RunMode->OutfileRoot, "%s.%d.%d.%s.%s", 
+    sprintf(RunMode->OutfileRoot, "%s.%5.5d.%5.5d.%s.%s", 
 	    hdr->target.PSRName, 
 	    hdr->obs.IMJDStart + (int)(FileStartSecs/86400), 
 	    FileStartSecs%86400, 
