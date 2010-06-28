@@ -352,6 +352,7 @@ int main(int argc, char **argv)
 	       ContRunMode[i].Infile);
 	exit(2);
       };
+  if(!strcmp(CalHdr.gen.BEName, "xASP")) {
     if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0")){
       ContRunMode[i].NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
 				     many non-data tables we will be using */
@@ -364,7 +365,19 @@ int main(int argc, char **argv)
       printf("This header %s. Exiting...\n",CalHdr.gen.HdrVer);fflush(stdout);
       exit(3);
     }
-
+  }
+  else {      
+    if(!strcmp(CalHdr.gen.FitsType, "PSRFITS")) {
+      /* Set to dedisperse input profiles before processing */
+      ContRunMode[i].NDumps = ContHdr[i].redn.RNTimeDumps;
+    }
+    else {
+      /* Do not recognize data format! */
+      fprintf(stderr, "ASPFitsReader ERROR: Unrecognized file format.\n");
+      exit(1);
+    }
+  }    
+ 
 
     /* If second of two files, make sure that the continuum cal files are for 
        the same source */
