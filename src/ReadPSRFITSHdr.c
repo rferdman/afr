@@ -391,7 +391,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
 
 
 
-
+#if 0
 
   /* Little hard-coded exception for Nancay data taken before MJD 53686.05 
      -- Those channels are labelled 1 MHz too high */
@@ -405,6 +405,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
     }
   }
 
+#endif
 
   retval = 0;
 

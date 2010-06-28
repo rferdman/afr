@@ -206,18 +206,6 @@ int ReadASPHdr(struct      ASPHdr *hdr,
     indx++;
   }
 
-  /* Little hard-coded exception for Nancay data taken before MJD 53686.05 
-     -- Those channels are labelled 1 MHz too high */
-  if (!strcmp(hdr->obs.ObsvtyCode, "f") && 
-     ((double)hdr->obs.IMJDStart + ((double)hdr->obs.StartTime/86400.0)) 
-     <= 53686.05) {
-    printf("Adjusting Nancay data frequency labels by -1.0 MHz...\n");
-    for (i=0; i<hdr->obs.NChan; i++) {
-      if (hdr->obs.ChanFreq[i] >= 1350.0 && hdr->obs.ChanFreq[i] <= 1450.0) 
-	hdr->obs.ChanFreq[i] -= 1.0;
-    }
-  }
-
 
 
   for (i = 0; i < 10; i++)
