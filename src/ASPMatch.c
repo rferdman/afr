@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   /* read in each profile in turn */
   for(nprof=0;nprof<2;nprof++){
 
-    if ( ReadASPAsc(Cmd->Infile[nprof], Headerline, bin,  
+    if ( ReadASPAsc(Cmd->Infile[nprof], &Headerline[0], bin,  
 		    &Profile[nprof], &NBins) < 0) {
       printf("Error in reading file %s.\n",Cmd->Infile[nprof]);
       fflush(stdout);
@@ -86,6 +86,7 @@ int main(int argc, char **argv)
   printf("Shift: %lf radians, eShift: %lf radians\n",
 	 ByAngle,EShift/RunMode.NBins*TWOPI);
   printf("Scale factor: %f +- %f \n",b,errb);
+  //  printf("Headerline = %s\n", Headerline);
   
   RotateProf(&RunMode, &Profile[1], ByAngle);
 

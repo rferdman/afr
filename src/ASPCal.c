@@ -318,107 +318,133 @@ int main(int argc, char **argv)
   /* Read in each cal file (ON and OFF source) separately */
   
   if (CalCmd->ContfileP) {
- 
+    
     for (i=0;i<2;i++){ // ON and OFF files
-
+      
       /* Initialize header variables */
       InitPars(&ContHdr[i]);
-
+      
       /* Dynamically allocate RunMode variables */
       if (AllocRunMode(&ContRunMode[i]) < 0){
 	printf("Could not allocate RunMode structure.  Exiting...\n");
 	exit(2);
       }
-     /* Grab continuum cal file name */
+      /* Grab continuum cal file name */
       strcpy(ContRunMode[i].Infile,"\0");
       strcpy(ContRunMode[i].Infile,CalCmd->Contfile[i]);
-     
+      
       /* Open continuum cal fits file */
       status=0;
-
+      
       if(fits_open_file(&Fcont[i], ContRunMode[i].Infile, READONLY, &status)){
 	printf("Error opening FITS cal file %s !!!\n", ContRunMode[i].Infile);
 	exit(1);
       }
       /* Get number of HDUs in fits file */
       fits_get_num_hdus(Fcont[i], &NumHDU, &status);
-     /*ContRunMode[i].NDumps = NumHDU-3;*//* the "3" is temporary, depending on 
-					  * how many non-data tables we will be
-					  * using */
+      /*ContRunMode[i].NDumps = NumHDU-3;*//* the "3" is temporary, depending on 
+					    * how many non-data tables we will be
+					    * using */
+ 
 
+
+     
       /* Read in values for header variables */
-      if(ReadASPHdr(&ContHdr[i], Fcont[i]) < 0){
+      /*      if(ReadASPHdr(&ContHdr[i], Fcont[i]) < 0){
 	printf("Unable to read Header from Cont. CAL file %s.  Exiting...\n",
 	       ContRunMode[i].Infile);
 	exit(2);
-      };
-  if(!strcmp(CalHdr.gen.BEName, "xASP")) {
-    if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0")){
-      ContRunMode[i].NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
-				     many non-data tables we will be using */
-    }
-    else if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0.1")){
-      ContRunMode[i].NDumps = (NumHDU-3)/2;
-    }
-    else{
-      printf("Do not recognize FITS file version number in header.\n");
-      printf("This header %s. Exiting...\n",CalHdr.gen.HdrVer);fflush(stdout);
-      exit(3);
-    }
-  }
-  else {      
-    if(!strcmp(CalHdr.gen.FitsType, "PSRFITS")) {
-      /* Set to dedisperse input profiles before processing */
-      ContRunMode[i].NDumps = ContHdr[i].redn.RNTimeDumps;
-    }
-    else {
-      /* Do not recognize data format! */
-      fprintf(stderr, "ASPFitsReader ERROR: Unrecognized file format.\n");
-      exit(1);
-    }
-  }    
- 
+	}  */
 
-    /* If second of two files, make sure that the continuum cal files are for 
-       the same source */
+    /* Read in values for header variables */
+    if(ReadHdr(&ContHdr[i], Fcont[i]) < 0){
+      printf("Unable to read Header from continuum CAL file %s.  Exiting...\n",
+	     ContRunMode[i].Infile);
+      exit(2);
+    };
+    /* Load telescope information */
+    if (GetTelescope(&ContHdr[i], &Tel) < 0){
+      fprintf(stderr, "ERROR:  Could not get telescope data.\n");
+      exit(2);
+    }
     
-    /* Also make sure that all channels in continuum files are represented 
-       in pulsar cal file (== vice-versa) */
-    
+    /* If requested on command line, shift all centre frequencies by the 
+       requested amount in MHz */
+    if (CalCmd->FreqShiftP){
+      ContHdr[i].obs.FSkyCent += CalCmd->FreqShift;
+      for (i=0; i<ContHdr[i].obs.NChan; i++)
+	ContHdr[i].obs.ChanFreq[i] += CalCmd->FreqShift;
+    }
 
-    /* Get options */
-    if(GetContOpt(&ContRunMode[i], &CalMode, CalCmd, &ContHdr[i]) < 0){
-      printf("Unable to get options.  Exiting...\n");
-      exit(3);
-    }
-    
-    /* Read in cal files (ON and OFF cal source) */
-    
-    if(GetCalData(&ContHdr[i], ContSubHdr[i], &ContRunMode[i], Fcont[i], 
-		  &ASquared[i*NCHMAX], &BSquared[i*NCHMAX],
-		  &ReAconjB[i*NCHMAX], &ImAconjB[i*NCHMAX]) < 0) {
-      printf("Error: Could not read cal data from file %s.  Exiting...\n",
-	     ContRunMode[i].Infile);fflush(stdout);
-      exit(4);
-    }
-    
-    /* Add all data from all channels together in order to find phases 
-     * at which cal in on and off, and skip omitted channels */
-    if (GetPhases(&ContHdr[i], &ContRunMode[i], &CalMode, 
-		  &ASquared[i*NCHMAX], &BSquared[i*NCHMAX], 
-		  ContOnBin[i], ContOffBin[i]) < 0){
-      printf("Problem obtaining on/off phases for cal file %s.  ",
-	     ContRunMode[i].Infile);fflush(stdout);
-      printf("Try setting a on/off switch phase using the -force option. \n");
-      exit(5);
-    }
-    
-    if(fits_close_file(Fcont[i], &status)){
-      printf("Problems closing fits file %s.  Exiting...\n",
-	     ContRunMode[i].Infile);fflush(stdout);
-      exit(7);
-    }
-    
+
+
+      if(!strcmp(CalHdr.gen.BEName, "xASP")) {
+	if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0")){
+	  ContRunMode[i].NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
+						many non-data tables we will be using */
+	}
+	else if(!strcmp(CalHdr.gen.HdrVer,"Ver1.0.1")){
+	  ContRunMode[i].NDumps = (NumHDU-3)/2;
+	}
+	else{
+	  printf("Do not recognize FITS file version number in header.\n");
+	  printf("This header %s. Exiting...\n",CalHdr.gen.HdrVer);fflush(stdout);
+	  exit(3);
+	}
+      }
+      else {      
+	if(!strcmp(CalHdr.gen.FitsType, "PSRFITS")) {
+	  /* Set to dedisperse input profiles before processing */
+	  ContRunMode[i].NDumps = ContHdr[i].redn.RNTimeDumps;
+	}
+	else {
+	  /* Do not recognize data format! */
+	  fprintf(stderr, "ASPFitsReader ERROR: Unrecognized file format.\n");
+	  exit(1);
+	}
+      }    
+      
+      
+      /* If second of two files, make sure that the continuum cal files are for 
+	 the same source */
+      
+      /* Also make sure that all channels in continuum files are represented 
+	 in pulsar cal file (== vice-versa) */
+      
+      
+      /* Get options */
+      if(GetContOpt(&ContRunMode[i], &CalMode, CalCmd, &ContHdr[i]) < 0){
+	printf("Unable to get options.  Exiting...\n");
+	exit(3);
+      }
+      
+      /* Read in cal files (ON and OFF cal source) */
+      
+      if(GetCalData(&ContHdr[i], ContSubHdr[i], &ContRunMode[i], Fcont[i], 
+		    &ASquared[i*NCHMAX], &BSquared[i*NCHMAX],
+		    &ReAconjB[i*NCHMAX], &ImAconjB[i*NCHMAX]) < 0) {
+	printf("Error: Could not read cal data from file %s.  Exiting...\n",
+	       ContRunMode[i].Infile);fflush(stdout);
+	exit(4);
+      }
+      
+      /* Add all data from all channels together in order to find phases 
+       * at which cal in on and off, and skip omitted channels */
+      if (GetPhases(&ContHdr[i], &ContRunMode[i], &CalMode, 
+		    &ASquared[i*NCHMAX], &BSquared[i*NCHMAX], 
+		    ContOnBin[i], ContOffBin[i]) < 0){
+	printf("Problem obtaining on/off phases for cal file %s.  ",
+	       ContRunMode[i].Infile);fflush(stdout);
+	printf("Try setting a on/off switch phase using the -force option. \n");
+	exit(5);
+      }
+      
+      if(fits_close_file(Fcont[i], &status)){
+	printf("Problems closing fits file %s.  Exiting...\n",
+	       ContRunMode[i].Infile);fflush(stdout);
+	exit(7);
+      }
+      
     }
     
     /*** END READING AND PROCESSING CONTINUUM CAL FILE ***/
@@ -434,7 +460,7 @@ int main(int argc, char **argv)
       Fcheck = fopen("check_cont.dat", "w");
       Ftsys =  fopen("tsys_ratio.dat", "w");
     }
-
+    
     if(CalCmd->ConstTsysP){
       printf("We are assuming CONSTANT TSYS.  Values of Tsys, Tant, Tcal ");
       printf("are given in K, based on input command line Gain value.\n\n");
@@ -452,12 +478,12 @@ int main(int argc, char **argv)
 	printf("found.\n\n");
       }
     }
-
+    
     /* Find Scal, ie the Jy/cal using the continuum source */
-
+    
     printf("\n\nResults from continuum source calibrator:\n");
     printf("-----------------------------------------\n");
-
+    
     /* Prepare to go through loop twice if letting ASPCal choose cal method */ 
     if(CalCmd->ChooseMethodP){
       /* Zero out TsysRatio averages if choosing cal method */
@@ -467,16 +493,16 @@ int main(int argc, char **argv)
     else{
       n_loop=1;
     }
-
-    for(i_loop=0;i_loop<n_loop;i_loop++){
-
-    for (pol=0;pol<2;pol++) {
     
-      if (pol == 0){ 
-	printf("\nPolarization A:\n\n");
-	if(CalRunMode.Verbose)
-	  fprintf(Fcheck,"\nPolarization A:\n\n");
-      }
+    for(i_loop=0;i_loop<n_loop;i_loop++){
+      
+      for (pol=0;pol<2;pol++) {
+	
+	if (pol == 0){ 
+	  printf("\nPolarization A:\n\n");
+	  if(CalRunMode.Verbose)
+	    fprintf(Fcheck,"\nPolarization A:\n\n");
+	}
       else {
 	printf("\nPolarization B:\n\n");
 	if(CalRunMode.Verbose)

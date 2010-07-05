@@ -24,7 +24,8 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
   linenum=-1;
   while ((fgets(line,128,fpin) != NULL)){
     if(linenum<0){
-      strcpy(line,Headerline);
+      //      strcpy(Healine,Headerline);
+      strcpy(Headerline,line);
       linenum++;
     }
     else{
@@ -39,6 +40,8 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
   fclose(fpin);
   
   *NBins=linenum;
+
+  printf("Headerline = %s\n", Headerline);
   
   retval = 0;
   
