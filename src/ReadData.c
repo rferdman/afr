@@ -8,28 +8,32 @@
 		double **, double **, double **, double **, 
 		int **, char **); */
 
-int ReadPSRFITSData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
+/* int ReadPSRFITSData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		    fitsfile *, int, int, 
-		    double **, double **, double **, double **);
+		    double **, double **, double **, double **);  */
 
 int ReadData(struct ASPHdr *hdr, struct SubHdr *subhdr, 
 	     struct RunVars *RunMode, fitsfile *Fin, 
 	     int i_dump, int NPtsProf, 
 	     double **ASquared, double **BSquared, 
 	     double **ReAconjB, double **ImAconjB,
-	     int **SampleCount, char **HeadLine)
+	     long **SampleCount)
 {
 
 
   /* If data comes from ASP then do ReadASPData */
   if(!strcmp(hdr->gen.BEName, "xASP")) {
     //printf("ASP DATA!\n");
+
+
     if (ReadASPData(hdr, subhdr, RunMode, Fin, i_dump,
 		    hdr->redn.RNBinTimeDump, 
 		    ASquared, BSquared, ReAconjB, ImAconjB, 
-		    SampleCount, HeadLine) < 0){
+		    SampleCount) < 0){
       return -1;
     } 
+
+
   }
   else {  
 
@@ -49,7 +53,7 @@ int ReadData(struct ASPHdr *hdr, struct SubHdr *subhdr,
       return -1;
     }
 
-   }
+  }
 
   return 0;		
 }

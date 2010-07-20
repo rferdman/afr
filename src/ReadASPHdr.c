@@ -11,7 +11,7 @@ int ReadASPHdr(struct      ASPHdr *hdr,
   double  dnul=0.0;
   float   fnul=0;
   long    nrows=0;
-  char    tblname[40], *ttype[10], *tform[10], *tunit[10];
+  char    tblname[40]; //, *ttype[10], *tform[10], *tunit[10];
 
   retval = -1;
 
@@ -143,12 +143,14 @@ int ReadASPHdr(struct      ASPHdr *hdr,
   fits_read_key(Fin, TDOUBLE, "FSKYCENT", &hdr->obs.FSkyCent, NULL, &status); 
   status=0; 
 
-  for (i = 0; i < 10; i++)
+  /*  for (i = 0; i < 10; i++)
     {
       ttype[i] = (char *) malloc(20);
       tform[i] = (char *) malloc(20);
       tunit[i] = (char *) malloc(20);
-    }
+      }  */
+
+
   strcpy(tblname, "BECONFIG");
 
   fits_movnam_hdu(Fin, ASCII_TBL, "BECONFIG", 0, &status);
@@ -208,12 +210,12 @@ int ReadASPHdr(struct      ASPHdr *hdr,
 
 
 
-  for (i = 0; i < 10; i++)
+  /*  for (i = 0; i < 10; i++)
     {
       free(ttype[i]);
       free(tform[i]);
       free(tunit[i]);
-    }
+      }  */
 
   retval = 0;
 

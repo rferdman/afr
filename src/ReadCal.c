@@ -108,7 +108,9 @@ int ReadCal(struct ASPHdr *hdr, struct RunVars *RunMode,
 	   &JyPerCount[chan][2], &JyPerCount[chan][3]);
 
     for (j=0;j<hdr->obs.NChan;j++){
-      if(hdr->obs.ChanFreq[j] == CalFreq) {
+      //      if(hdr->obs.ChanFreq[j] == CalFreq) {
+      /* Test for equality -- do this way since these are doubles */
+      if(fabs(hdr->obs.ChanFreq[j] - CalFreq) < DBLEPS) {
 	NumChansFound++;
 	ChanMatch[j]++;
 	CalMode->CalIndex[j] = chan;
@@ -139,9 +141,11 @@ int ReadCal(struct ASPHdr *hdr, struct RunVars *RunMode,
 	
 	//	if(RunMode->AddChans){
 	  RunMode->ZapChan[j]=1;
-	  printf("Warning: All channels in input data file are NOT \n");
-	  printf("  accounted for in cal file. The following channels\n");
-	  printf("   will be omitted:\n");
+	  if(j==0){
+	    printf("Warning: All channels in input data file are NOT \n");
+	    printf("  accounted for in cal file. The following channels\n");
+	    printf("   will be omitted:\n\n");
+	  }
 	  //}
 	/*	else{
 	  JyPerCount[j][0] = JyPerCount[j][1] 
@@ -150,11 +154,14 @@ int ReadCal(struct ASPHdr *hdr, struct RunVars *RunMode,
 	  printf("  accounted for in cal file. The following channels\n");
 	  printf("  will have calibration factor set to 1:\n");	  
 	  } */
-	printf("Channel %d:  %lf MHz\n\n",j,hdr->obs.ChanFreq[j]);
+	printf("Channel %d:  %lf MHz\n",j,hdr->obs.ChanFreq[j]);
 	fflush(stdout);
       }
     }
     //    return -4;
+
+    printf("A total of %d channels were omitted from the final calibrated data scan.\n", 
+	   hdr->obs.NChan - NumChansFound);
   }
 
   

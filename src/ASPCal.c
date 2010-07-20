@@ -551,9 +551,12 @@ int main(int argc, char **argv)
 	if(ContCalFrac[0] < ContCalFrac[1]){
 	  if((j>0 && pol==0) && ONSource==1) { // i.e. opposite to last channel result -- also both pol's must agree
 	    printf("Ambiguity as to which continuum scan is ON source and ");
-	    printf("which is OFF source. Check command line and try again. ");
-	    printf("Exiting...\n");
-	    exit(2);
+	    printf("which is OFF source. Check command line and try again.\n");
+	    printf("Skipping channel %d = %.4lf MHz.\n", 
+		   j, ContHdr[0].obs.ChanFreq[j]);
+	    //	    printf("Exiting...\n");
+	    //	    exit(2);
+	    SkipChan[j]=1;
 	  }
 	  ONSource = 0; 
 	  OFFSource = 1;
@@ -561,9 +564,12 @@ int main(int argc, char **argv)
 	else{
 	  if((j>0 && pol==0) && ONSource==0) { // i.e. opposite to last channel result -- also both pol's must agree
 	    printf("Ambiguity as to which continuum scan is ON source and ");
-	    printf("which is OFF source. Check command line and try again. ");
-	    printf("Exiting...\n");
-	    exit(2);
+	    printf("which is OFF source. Check command line and try again.\n");
+	    printf("Skipping channel %d = %.4lf MHz.\n", 
+		   j, ContHdr[0].obs.ChanFreq[j]);
+	    //	    printf("Exiting...\n");
+	    //	    exit(2);
+	    SkipChan[j]=1;
 	  }
 	  ONSource = 1; 
 	  OFFSource = 0;
@@ -604,7 +610,7 @@ int main(int argc, char **argv)
 	     ratios */
 	}	
 
-	printf("%10.1lf  %8.2lf  %11.2lf  %10.3lf  %10.3lf  %7.1lf  %7.1lf\n",
+	printf("%10.4lf  %8.2lf  %11.2lf  %10.3lf  %10.3lf  %7.1lf  %7.1lf\n",
 	       ContHdr[0].obs.ChanFreq[j],JyPerCal[j][pol], JyPerCount[j][pol],
 	       Tsys[pol][ONSource],Tsys[pol][OFFSource],Tant,Tcal);
 	fflush(stdout);

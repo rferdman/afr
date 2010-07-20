@@ -33,9 +33,7 @@ int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin)
 
   /* If data comes from ASP then do ReadASPData */
   if(!strcmp(hdr->gen.BEName, "xASP")) {
-    // printf("ASP DATA!\n");
-
-  /* Read in values for header variables */
+   /* Read in values for header variables */
     if(ReadASPHdr(hdr, Fin) < 0){
       /* Return with error */
       return -1;

@@ -102,19 +102,19 @@ struct StdProfs {
   float  rstdq[NBINMAX];
   float  rstdu[NBINMAX];
   float  rstdv[NBINMAX];
-  float  rstdinv[NBINMAX];
+  //  float  rstdinv[NBINMAX];
   float  stds[NBINMAX][2];
   float  stdq[NBINMAX][2];
   float  stdu[NBINMAX][2];
   float  stdv[NBINMAX][2];
-  float  stdinv[NBINMAX][2];
+  //  float  stdinv[NBINMAX][2];
   float  stdlin[NBINMAX];
   float  stdphi[NBINMAX];
   float  stdphierr[NBINMAX];
-  float  stdamp[NBINMAX];
-  float  stdpha[NBINMAX];
-  float  stdampinv[NBINMAX];
-  float  stdphainv[NBINMAX];
+  //  float  stdamp[NBINMAX];
+  //  float  stdpha[NBINMAX];
+  //  float  stdampinv[NBINMAX];
+  //  float  stdphainv[NBINMAX];
   float  stdamps[NBINMAX];
   float  stdampq[NBINMAX];
   float  stdampu[NBINMAX];
@@ -123,12 +123,12 @@ struct StdProfs {
   float  stdphaq[NBINMAX];
   float  stdphau[NBINMAX];
   float  stdphav[NBINMAX];
-  float  profmax[NBINMAX];
-  float  profmin[NBINMAX];
-  float  stdampx[NBINMAX];
-  float  stdampn[NBINMAX];
-  float  stdphax[NBINMAX];
-  float  stdphan[NBINMAX];
+  //  float  profmax[NBINMAX];
+  //  float  profmin[NBINMAX];
+  //  float  stdampx[NBINMAX];
+  //  float  stdampn[NBINMAX];
+  //  float  stdphax[NBINMAX];
+  //  float  stdphan[NBINMAX];
   double SNR;
   double Srms;
   double Qrms;
@@ -162,11 +162,10 @@ int    QuickPlot(double *, int);
 int    Median(double *, double *, int, int);
 int    ReadData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		fitsfile *, int, int, 
-		double **, double **, double **, double **,
-		int **, char **);
+		double **, double **, double **, double **, long **);
 int    ReadASPData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		   fitsfile *, int, int, double **, double **, double **, 
-		   double **, int **, char **);
+		   double **, long **);
 int    ReadPSRFITSData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		       fitsfile *, int, int, 
 		       double **, double **, double **, double **);

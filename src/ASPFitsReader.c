@@ -26,8 +26,7 @@ int main(int argc, char **argv)
   int             RootIndex=0;
   int             NFirstTable, NumHDU, NFilesOut, FileOutNo;
   long            NPtsProf=0;
-  char            ProgName[256], *HeadLine[NCHMAX];
-  char            *OutputHead[64];
+  char            ProgName[256]; //, *HeadLine[NCHMAX];
   char            FitsFile[128], FitsFileOut[128];
   fitsfile        *Fin, **Fout;
   int             fitsstatus=0;
@@ -39,7 +38,7 @@ int main(int argc, char **argv)
   struct StdProfs *OutputProfs; 
   struct Telescope Tel;
   double          **ASquared, **BSquared, **ReAconjB, **ImAconjB;
-  int             **SampleCount;
+  long             **SampleCount;
   double          *JyPerCount[NCHMAX];
   //char            Stokesfile[256];
 
@@ -248,7 +247,7 @@ int main(int argc, char **argv)
   BSquared    = (double **)malloc(InHdr.obs.NChan*sizeof(double));
   ReAconjB    = (double **)malloc(InHdr.obs.NChan*sizeof(double));
   ImAconjB    = (double **)malloc(InHdr.obs.NChan*sizeof(double));
-  SampleCount = (int    **)malloc(InHdr.obs.NChan*sizeof(int));
+  SampleCount = (long    **)malloc(InHdr.obs.NChan*sizeof(long));
 
   /* malloc Output profiles */
   InputProfs = (struct StdProfs *)malloc(InHdr.obs.NChan*
@@ -279,21 +278,21 @@ int main(int argc, char **argv)
     exit(7);
   }
 
+
   if (Cmd->ScaleP)
     printf("Will scale polarizations by their respective baseline RMS.\n");
   printf("\n");
 
   /* malloc header lines for ascii output */
-  for(i_chan_in=0;i_chan_in<InHdr.obs.NChan;i_chan_in++){
-   if( ((HeadLine[i_chan_in] = (char *)malloc(128)) == NULL) || 
-       //	((AddChansHead[i_chan_in] = (char *)malloc(128)) == NULL) || 
+  /**  for(i_chan_in=0;i_chan_in<InHdr.obs.NChan;i_chan_in++){
+    if( ((HeadLine[i_chan_in] = (char *)malloc(128)) == NULL) || 
 	((OutputHead[i_chan_in] = (char *)malloc(128)) == NULL) ){
       printf("HeadLine malloc'ing failed for i_chan_in = %d\n",i_chan_in);
       fflush(stdout);
       exit(5);
     }
-  }  
-
+    }  **/
+  
   /* Read in standard profile and rotate it to zero phase */
   /* if (ReadStd(&RunMode, &StdRunMode, &StdProfile, &TotWgt) < 0 ){
     printf("Could not read standard profile correctly.  Exiting...\n");
@@ -376,7 +375,7 @@ int main(int argc, char **argv)
       MaxAddDump = MinAddDump + RunMode.AddDumps;
     }
         
-  
+
     for (i_chan_out=0; i_chan_out<RunMode.NOutChans; i_chan_out++){
       /* Zero out each part of output profile, once for each output channel */
       FZero(OutputProfs[i_chan_out].rstds,NBINMAX); 
@@ -387,7 +386,7 @@ int main(int argc, char **argv)
       FZero(OutputProfs[i_chan_out].stdphi,NBINMAX); 
       FZero(OutputProfs[i_chan_out].stdphierr,NBINMAX);
     }
-    
+
 
    /*** Loop over each integration ***/
       
@@ -412,7 +411,7 @@ int main(int argc, char **argv)
 	}
       }	
       
-      /* Exclude badly written dumps (usually due to ctrl-c)*/
+     /* Exclude badly written dumps (usually due to ctrl-c)*/
       if (RunMode.NBins != (int)NPtsProf){
 	if(RunMode.OldFits) { /* total hack */
 	  printf("\nNumber of bins in header does not agree with header value.\n");
@@ -443,7 +442,7 @@ int main(int argc, char **argv)
       //      if (ReadASPData(&InHdr, &SubInHdr[i_dump_in], &RunMode, Fin, i_dump_in,
       if (ReadData(&InHdr, &SubInHdr[i_dump_in], &RunMode, Fin, i_dump_in,
 		  NPtsProf, ASquared, BSquared, ReAconjB, ImAconjB, 
-		  SampleCount, HeadLine) < 0){
+		  SampleCount) < 0){
 	fprintf(stderr, "ASPFitsReader ERROR: Could not read data from ");
 	fprintf(stderr, "file %s (Error occured when attempting to read ",
 		Cmd->Infile);
@@ -464,6 +463,8 @@ int main(int argc, char **argv)
 	   output channel */
 	/* Note that we put "<=" here since we want the range to be 
 	   inclusive */
+
+
 	for (i_chan_in=RunMode.FirstChanAdd[i_chan_out]; 
 	     i_chan_in<=RunMode.LastChanAdd[i_chan_out]; i_chan_in++){ 
 	  
@@ -529,6 +530,7 @@ int main(int argc, char **argv)
 	      memcpy(&StokesProfs, &InputProfs[i_chan_in], 
 		     sizeof(struct StdProfs));
 	    MakePol(&RunMode, RunMode.NBinsOut, &StokesProfs);
+
 	    
 	    /* Write Stokes parameters, linear polarization, 
 	       and position angle to file if desired */
@@ -582,8 +584,6 @@ int main(int argc, char **argv)
 	} /* end of i_chan_in loop */
 	
       
-       
-     
       
       }  /* end i_chan_out loop */
       
@@ -651,6 +651,7 @@ int main(int argc, char **argv)
     }
     
 
+
     /* BEGIN WRITING TO FITS FILE */
     
     if(RunMode.Verbose)
@@ -668,10 +669,12 @@ int main(int argc, char **argv)
 	       SubOutHdr.DumpRefPeriod[i_chan_out]);
       printf("\n\n");fflush(stdout);
     }
-    
+ 
+   
     if(i_dump_out%MAXDUMPS == 0) {
       FileOutNo++;
       
+
       strcpy(FitsFileOut,"\0");
       if(NFilesOut > 1){
 	sprintf(FitsFileOut,"%s.%d.stokes.fits",RunMode.OutfileRoot,FileOutNo);
@@ -682,18 +685,21 @@ int main(int argc, char **argv)
       
       printf("Writing file %s\n\n",FitsFileOut);fflush(stdout);
       
+
       if(fits_create_file(&Fout[FileOutNo], FitsFileOut, &fitsstatus)) {
 	printf("Error opening FITS file %s!!!\n",
 	       FitsFileOut);fflush(stdout);
 	exit(10);
       }
-      
+
+
       if(WrtASPHdr(&OutHdr, Fout[FileOutNo]) < 0) {
 	printf("Error writing ASP header structure!\n");fflush(stdout);
 	exit(11);
       }
     }    
-    
+
+
     /* only include nonzero (i.e. not all-omitted) added scans */ 
     /*    if (denom == 0 && Cmd->NoBadP) { 
       printf("Output scan %d is excluded from final output.\n",
@@ -706,7 +712,8 @@ int main(int argc, char **argv)
       exit(12);
     }
       /*  }  */
-      
+
+    
   } /* end of i_dump_out loop*/
   
   free(OutputProfs);

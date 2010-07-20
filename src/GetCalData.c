@@ -503,7 +503,7 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
   int    status=0;
   int    NColumns, NDumps2Use;
   long   NPtsProf=0;
-  char   *HeadLine[NCHMAX];
+  //char   *HeadLine[NCHMAX];
   
   int    **SampleCount;
 
@@ -524,12 +524,12 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
   CalSubHdr = (struct SubHdr *)malloc(NDumps2Use*sizeof(struct SubHdr));
 
   /* Malloc HeadLine because C is stupid */
-  for (i=0;i<CalHdr->obs.NChan;i++){
+  /** for (i=0;i<CalHdr->obs.NChan;i++){
     if( (HeadLine[i] = (char *)malloc(128)) == NULL) {
       printf("HeadLine malloc'ing failed for i = %d\n",i);fflush(stdout);
       return -1;;
     }
-  }
+  } **/
 
   for (i_dump=0;i_dump<NDumps2Use;i_dump++){
 
@@ -567,8 +567,7 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
       printf("NChan = %d, NPtsProf = %ld\n", CalHdr->obs.NChan,NPtsProf);
 
     if (ReadData(CalHdr, CalSubHdr, RunMode, Fcal, i_dump,  NPtsProf, 
-		 ASquared, BSquared, ReAconjB, ImAconjB, SampleCount, 
-		 HeadLine) < 0){
+		 ASquared, BSquared, ReAconjB, ImAconjB, SampleCount) < 0){
       fprintf(stderr, "ASPCal ERROR: Could not read data from ");
       fprintf(stderr, "file %s (Error occured when attempting to read ",
 	      RunMode->Infile);

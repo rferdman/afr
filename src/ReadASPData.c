@@ -6,8 +6,7 @@
 int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr, 
 		 struct RunVars *RunMode, fitsfile *Fin, int nscan, 
 		 int NPtsProf, double **ASquared, double **BSquared, 
-		 double **ReAconjB, double **ImAconjB, int **SampleCount,
-		 char **HeadLine)
+		 double **ReAconjB, double **ImAconjB, long **SampleCount)
 {
 
   int  i, j, status=0, datacolnum, refcolnum, anynull;
@@ -31,15 +30,17 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     DZero(&ReAconjB[i][0], NPtsProf);
     ImAconjB[i]    = (double *)malloc(NPtsProf*sizeof(double));
     DZero(&ImAconjB[i][0], NPtsProf);
-    SampleCount[i] = (int   *)malloc(NPtsProf*sizeof(int));
-    IZero(&SampleCount[i][0], NPtsProf);
+    SampleCount[i] = (long   *)malloc(NPtsProf*sizeof(long));
+    LZero(&SampleCount[i][0], NPtsProf);
   }
+
 
   /* get middle dump time  */
   if(!strcmp(hdr->gen.HdrVer,"Ver1.0")) 
     fits_read_key(Fin, TDOUBLE, "DUMPMIDSECS", &(subhdr->DumpMiddleSecs), 
 		  NULL, &status); status = 0;
   
+
   /* move to ref table for newer version */
   if(!strcmp(hdr->gen.HdrVer,"Ver1.0.1")) {
     fits_read_key(Fin, TDOUBLE, "MIDSECS", &(subhdr->DumpMiddleSecs), 
@@ -49,6 +50,7 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 		  subhdr->DumpRefPhase,  &anynull, &status); 
     fits_read_col(Fin, TDOUBLE, ++refcolnum, 1, 1, (long)hdr->obs.NChan, NULL, 
 		  subhdr->DumpRefPeriod, &anynull, &status); 
+
 
    if(RunMode->Verbose){
       printf("Dump %d:  TIME OF DUMP = %lf\n",nscan,subhdr->DumpMiddleSecs); 
@@ -63,6 +65,7 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     /* Move to next HDU, i.e. data table for this dump */
     fits_movrel_hdu(Fin, 1, NULL, &status);
   }
+
 
   datacolnum = 0;
 
@@ -79,7 +82,6 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     if(!RunMode->OldFits)
       fits_read_col(Fin, TLONG,  ++datacolnum, 1, 1, NPtsProf, NULL, 
 		    &SampleCount[i][0], &anynull, &status); 
-
 
 /* Normalize */
     
@@ -115,14 +117,13 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     }
 
 
-
+    /*
    sprintf(HeadLine[i],"# %.1f %.7f %.10f %ld %.3f %.3f %d %s %d %s %.10f",
 	    (double)hdr->obs.IMJDStart, subhdr->DumpMiddleSecs, 
 	    subhdr->DumpRefPeriod[i], (long)1,hdr->obs.ChanFreq[i], hdr->obs.DM, 
 	    RunMode->NBinsOut, hdr->obs.ObsvtyCode, 1, hdr->target.PSRName, 
 	    subhdr->DumpRefPhase[i]);
 
-    /* Open and write raw  file if asked for by user */
     if (RunMode->MakeRaw){
       sprintf(Rawfile,"%s.%4.4d.%4.4d.prof.raw.asc",RunMode->OutfileRoot,
 	      (int)(hdr->obs.ChanFreq[i]),nscan);
@@ -143,6 +144,7 @@ int ReadASPData(struct ASPHdr *hdr, struct SubHdr *subhdr,
       fclose(s);
 
     }
+    */
 
   }
 

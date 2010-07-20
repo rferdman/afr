@@ -254,6 +254,12 @@ int WrtASPHdr(struct      ASPHdr *hdr,
   }
 
 
+  for (ii = 0; ii < (4*(hdr->obs.NChan)+10); ii++)
+    {
+      free(ttype[ii]);
+      free(tform[ii]);
+      free(tunit[ii]);
+    }
 
 
   retval = 0;

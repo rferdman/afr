@@ -270,8 +270,7 @@ int WrtASPStokes(struct ASPHdr hdr, struct SubHdr subhdr, fitsfile *Fout,
     free(tform[i]);
     free(tunit[i]);
   }
-
-
+ 
   retval = 0;
 
   return retval;
