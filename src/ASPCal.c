@@ -26,7 +26,8 @@
 int main(int argc, char **argv)
 {
   
-  int            i, j, i_loop, n_loop, pol, status=0, NumHDU, LastSlashIndex;
+  int            i, j, i_loop, n_loop, pol, status=0, NumHDU;
+  int            LastSlashIndex, LastDotIndex;
 
   double         *ASquared[2*NCHMAX], *BSquared[2*NCHMAX];
   double         *ReAconjB[2*NCHMAX], *ImAconjB[2*NCHMAX];
@@ -59,7 +60,7 @@ int main(int argc, char **argv)
   char           ProgName[256];
 
   char           OutfileRoot[256];
-  char           TempChar[20];
+  char           TempChar[128];
   Cmdline        *CalCmd;
 
   fitsfile       *Fcal, *Fcont[2];
@@ -198,19 +199,42 @@ int main(int argc, char **argv)
       sprintf(CalOutFile,"%s.cal",CalCmd->OutfileRoot);
     }
     else{
-      if(!strcmp(CalHdr.gen.BEName, "xASP")){
-	LastSlashIndex = -1;
-	for(i=0;i<strlen(CalRunMode.Infile);i++){
-	  if(!strncmp(&CalRunMode.Infile[i],"/",1))
-	    LastSlashIndex = i;
+      /* Get file name by removing path from string */
+      LastSlashIndex = -1;
+      for(i=strlen(CalRunMode.Infile)-1; i>=0; i--){
+	if(!strncmp(&CalRunMode.Infile[i],"/",1)){
+	  LastSlashIndex = i;
+	  break;
 	}
+      }
+      if(!strcmp(CalHdr.gen.BEName, "xASP")){
 	strncpy(TempChar, &CalRunMode.Infile[LastSlashIndex+1],12);
 	strcpy(&TempChar[12],"\0");
 	
 	sprintf(OutfileRoot,"%s.%s.%s",&CalRunMode.Source[1],TempChar,CalHdr.obs.ObsvtyCode);
       }
-      else{
-	strcpy(OutfileRoot, CalRunMode.OutfileRoot);
+      else{  /* i.e. likely PSRFITS files.  Find last "." and replace all 
+		after it with ".cal" */
+	LastDotIndex = -1;
+	for(i=strlen(CalRunMode.Infile)-1; i>=0; i--){
+	  if(!strncmp(&CalRunMode.Infile[i],".",1)){
+	    LastDotIndex = i;
+	    break;
+	  }
+	}
+	if(LastDotIndex > 0) {
+	  /* Make root name */
+	  strncpy(TempChar, &CalRunMode.Infile[LastSlashIndex+1],
+		  LastDotIndex-LastSlashIndex-1);
+	  strcpy(&TempChar[LastDotIndex-LastSlashIndex-1],"\0");
+	  //	  strcpy(OutfileRoot, CalRunMode.OutfileRoot);
+	  strcpy(OutfileRoot, TempChar);
+	}
+	else{
+	  fprintf(stderr, "Unrecognized file name %s.  Exiting.\n", 
+		  &CalRunMode.Infile[LastSlashIndex+1]);
+	  exit(3);
+	}
       }
       
       if(CalRunMode.Verbose)
