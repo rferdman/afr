@@ -662,6 +662,17 @@ int main(int argc, char **argv)
 	  }
 
 	}
+	/* If we are on the last loop (constant gain or Tsys method), and 
+	   Tsys is negative, then skip that channel */
+	if (i_loop == n_loop-1){
+	  if (Tsys[0][0] < 0. || Tsys[1][0] < 0. ||
+	      Tsys[1][0] < 0. || Tsys[1][1] <0.){
+	    printf("Channel %d = %.4lf MHz has one or more negative ",
+		   j, ContHdr[0].obs.ChanFreq[j]);
+	    printf("calculated Tsys.  Skipping this channel.\n");
+	    SkipChan[j] = 1;
+	  }
+	}
 	
       }
     }
