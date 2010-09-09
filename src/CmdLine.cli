@@ -124,7 +124,7 @@ String -polyco Polyfile {Use polyco file to adjust pulsar phases} \
 #     -c 1 128 \
 #     -r 0.0 100000.0
 
-Float -chanomit ChanOmit {Choose to omit all scans taken at these frequency channels} \
+Float -freqomit FreqOmit {Choose to omit all scans taken at these frequency channels (given in MHz)} \
     -c 1 2048 \
     -r 0.0 100000.0
 
@@ -182,6 +182,10 @@ Int -nbins NBinsOut {Number of bins in output file} \
 ## Need to check in main program whether this has been selected.  If so, set
 ## RunMode.BinDown = 1.  or just set RunMode.BinDown = RunMode.NBinsOutP (see 
 ## clig manual -- should take care of zeros and ones).
+
+Int -chanomit ChanOmit {Choose to omit all scans taken at these frequency channels (given in channel number)} \
+    -c 1 2048 \
+    -r 0 2047
 
 ## Which channels user wants to add together.  Must be even number of arguments.
 ## The 1st, 3rd, 5th, etc. argument is the start of the range, and 

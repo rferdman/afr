@@ -217,26 +217,27 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
   /* END OF PARSING OF WHICH FREQ/DUMP COMBOS TO OMIT */
   
   /* START OF PARSING OF WHICH FREQ CHANNEL TO OMIT COMPLETELY */
-  
-  if (Cmd->ChanOmitP){
-    
-    //// maybe gone soon ////
-    for(j=0;j<hdr->obs.NChan;j++)
-      RunMode->ZapChan[j]=0;
-    /////////////////////////
 
+  //// maybe gone soon ////
+  for(j=0;j<hdr->obs.NChan;j++)
+    RunMode->ZapChan[j]=0;
+  /////////////////////////
+
+  
+  if (Cmd->FreqOmitP){
+    
     IZero(ChanOmitFlag,NCHMAX);
     
-    for(i=0;i<Cmd->ChanOmitC;i++){
+    for(i=0;i<Cmd->FreqOmitC;i++){
       
-      if(Cmd->ChanOmit[i] < MinChan || Cmd->ChanOmit[i]> MaxChan){
+      if(Cmd->FreqOmit[i] < MinChan || Cmd->FreqOmit[i]> MaxChan){
 	printf("Frequency omission (%lf) out of range (%lf -> %lf)\n",
-	       Cmd->ChanOmit[i], MinChan, MaxChan);fflush(stdout);
+	       Cmd->FreqOmit[i], MinChan, MaxChan);fflush(stdout);
 	return -16;
       }
       
       /* Map frequency to channel number */
-      if((ThisChan = Freq2Chan(Cmd->ChanOmit[i], 
+      if((ThisChan = Freq2Chan(Cmd->FreqOmit[i], 
 			       hdr->obs.ChanFreq, hdr->obs.NChan)) < 0) {
 	printf("Error in scan omission file.\n");
 	return -12;
@@ -252,7 +253,7 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
       
       /* Flag certain channels if they have been chosen for omission */
       for(j=0;j<hdr->obs.NChan;j++){
-	if(hdr->obs.ChanFreq[j] == Cmd->ChanOmit[i]){
+	if(hdr->obs.ChanFreq[j] == Cmd->FreqOmit[i]){
 	  RunMode->ZapChan[j]=1;
 	  break;
 	}
@@ -261,11 +262,12 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
             
     }
 
+
     if (print_to_file) {
       Ftest=fopen("test_omit2.dat", "w");
       fprintf(Ftest, "Channels to be omitted: \n\n");
-      for(i=0;i<Cmd->ChanOmitC;i++)
-	fprintf(Ftest, "%6.1lf   ", Cmd->ChanOmit[i]);
+      for(i=0;i<Cmd->FreqOmitC;i++)
+	fprintf(Ftest, "%6.1lf   ", Cmd->FreqOmit[i]);
       fprintf(Ftest, "\n\n\n");
 
       for (i_chan=0; i_chan<hdr->obs.NChan; i_chan++)
@@ -295,6 +297,35 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
     
  
   }
+
+
+  /* Now do the same for the ChanOmit command line option */
+
+  /* This takes integer channel number and adds all dumps in that channel 
+     to omit flag array */
+
+  if (Cmd->ChanOmitP){
+
+    for(i=0;i<Cmd->ChanOmitC;i++){
+
+      if(Cmd->ChanOmit[i] < 0 || Cmd->ChanOmit[i] > hdr->obs.NChan -1){
+	printf("Frequency channel omission (%d) out of range ",
+	       Cmd->ChanOmit[i]);
+	printf("(channel number 0 -> %d)\n", hdr->obs.NChan-1);fflush(stdout);
+	return -16;
+      }
+      
+      for (i_dump=0; i_dump<RunMode->NDumps; i_dump++){
+	RunMode->OmitFlag[i_dump*hdr->obs.NChan + Cmd->ChanOmit[i]]=1;
+	///// Following is pretty much obsolete //////
+	RunMode->ZapChan[ Cmd->ChanOmit[i] ] = 1;
+
+      }
+
+    }
+
+  }
+
   
   /* END OF PARSING OF WHICH FREQ CHANNEL TO OMIT COMPLETELY */
 
