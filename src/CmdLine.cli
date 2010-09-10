@@ -185,7 +185,7 @@ Int -nbins NBinsOut {Number of bins in output file} \
 
 Int -chanomit ChanOmit {Choose to omit all scans taken at these frequency channels (given in channel number)} \
     -c 1 2048 \
-    -r 0 2047
+    -r -2047 2047
 
 ## Which channels user wants to add together.  Must be even number of arguments.
 ## The 1st, 3rd, 5th, etc. argument is the start of the range, and 

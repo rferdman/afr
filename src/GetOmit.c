@@ -218,11 +218,14 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
   
   /* START OF PARSING OF WHICH FREQ CHANNEL TO OMIT COMPLETELY */
 
-  //// maybe gone soon ////
-  for(j=0;j<hdr->obs.NChan;j++)
-    RunMode->ZapChan[j]=0;
-  /////////////////////////
-
+  if(Cmd->FreqOmitP || Cmd->ChanOmitP){
+    printf("All scans at the following frequencies will be omitted:\n");
+    
+    //// maybe gone soon ////
+    for(j=0;j<hdr->obs.NChan;j++)
+      RunMode->ZapChan[j]=0;
+    /////////////////////////
+  }
   
   if (Cmd->FreqOmitP){
     
@@ -259,7 +262,10 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 	}
       }
       /////////////////////////
-            
+   
+      printf("Channel %4d = %.3lf MHz\n", 
+	     ThisChan, hdr->obs.ChanFreq[ThisChan]);
+         
     }
 
 
@@ -275,7 +281,7 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
       fprintf(Ftest, "\n\n");
       
       for (i_dump=0; i_dump<RunMode->NDumps; i_dump++){
-	fprintf(Ftest, "%d  ",i_dump);
+	fprintf(Ftest, "%4d  ",i_dump);
 	for (i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
 	  fprintf(Ftest,"   %d    ",RunMode->OmitFlag[i_dump*hdr->obs.NChan + i_chan]);
 	}
@@ -308,24 +314,33 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 
     for(i=0;i<Cmd->ChanOmitC;i++){
 
-      if(Cmd->ChanOmit[i] < 0 || Cmd->ChanOmit[i] > hdr->obs.NChan -1){
+      if(abs(Cmd->ChanOmit[i]) > hdr->obs.NChan -1){
 	printf("Frequency channel omission (%d) out of range ",
 	       Cmd->ChanOmit[i]);
 	printf("(channel number 0 -> %d)\n", hdr->obs.NChan-1);fflush(stdout);
 	return -16;
       }
       
-      for (i_dump=0; i_dump<RunMode->NDumps; i_dump++){
-	RunMode->OmitFlag[i_dump*hdr->obs.NChan + Cmd->ChanOmit[i]]=1;
-	///// Following is pretty much obsolete //////
-	RunMode->ZapChan[ Cmd->ChanOmit[i] ] = 1;
+      
+      if (Cmd->ChanOmit[i] < 0) 
+	ThisChan = hdr->obs.NChan + Cmd->ChanOmit[i];
+      else
+	ThisChan = Cmd->ChanOmit[i];
 
+      for (i_dump=0; i_dump<RunMode->NDumps; i_dump++){
+	RunMode->OmitFlag[i_dump*hdr->obs.NChan + ThisChan] = 1;
+	////// Following is pretty much obsolete //////
+	RunMode->ZapChan[ThisChan] = 1;
       }
+      
+      printf("Channel %4d = %.3lf MHz\n", 
+	     ThisChan, hdr->obs.ChanFreq[ThisChan]);
 
     }
 
   }
 
+  printf("\n");
   
   /* END OF PARSING OF WHICH FREQ CHANNEL TO OMIT COMPLETELY */
 
