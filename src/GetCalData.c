@@ -505,7 +505,7 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
   long   NPtsProf=0;
   //char   *HeadLine[NCHMAX];
   
-  int    **SampleCount;
+  long    **SampleCount;
 
 
 
@@ -518,7 +518,7 @@ int GetCalData(struct ASPHdr *CalHdr, struct SubHdr *CalSubHdr,
   if (RunMode->AddDumps) NDumps2Use = RunMode->NDumps;
 
   /* Malloc SampleCount here since we don't need it outside of this routine */
-  SampleCount = (int **)malloc(CalHdr->obs.NChan*sizeof(int));
+  SampleCount = (long **)malloc(CalHdr->obs.NChan*sizeof(long));
 
   /* Malloc SubHdr to number of dumps to use */
   CalSubHdr = (struct SubHdr *)malloc(NDumps2Use*sizeof(struct SubHdr));

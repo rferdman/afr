@@ -193,8 +193,6 @@ int main(int argc, char **argv)
     }
 
 
-
-
     if(CalCmd->OutfileRootP){
       sprintf(CalOutFile,"%s.cal",CalCmd->OutfileRoot);
     }
