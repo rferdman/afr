@@ -28,7 +28,7 @@ void RemoveBase(struct RunVars *RunMode, int NBins,
   BMask(InputProfs->rstds,&NBins,&Duty,FinalMask);
   Baseline(InputProfs->rstds,FinalMask,&NBins,&SBase,&InputProfs->Srms);
 
-  if(RunMode->Verbose) printf("Srms = %f\n",InputProfs->Srms);fflush(stdout);
+  if(RunMode->Verbose) printf("Srms = %f\nSBase = %f\n",InputProfs->Srms, SBase);fflush(stdout);
 
 
   Baseline(InputProfs->rstdv,FinalMask,&NBins,&VBase,&InputProfs->Vrms);

@@ -18,7 +18,7 @@
 /* #include "fitsio.h" */
 
 int WrtASPStokes(struct ASPHdr hdr, struct SubHdr subhdr, fitsfile *Fout,
-		 int nscan, struct StdProfs *OutputProfs, int Omitfile,
+		 int nscan, struct StdProfs *OutputProfs, 
 		 struct RunVars *RunMode)
 {
   int     status=0, i, j, k, colnum, colindex;

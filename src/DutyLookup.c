@@ -13,6 +13,7 @@ double DutyLookup(char *Source)
 
   Duty = 0.95;     /*  default  */
 
+
   if(strncmp(Source,"c",1) == 0) Duty = 0.45;  /* Cal scan case */
 
   if(strncmp(Source,"0034-05",7) == 0) Duty = 0.50;

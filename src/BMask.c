@@ -63,10 +63,11 @@ void Baseline(float *x,double *y, int *nbins, double *ave, double *rms)
 
   for(i=0;i<*nbins;i++) {
     s += x[i]*y[i];
+    //printf("%.3f %.3lf     ", x[i], y[i]);
     sw += y[i];
   }
   *ave = s/sw;
-  /*  printf("sw = %4.0f\n",sw);  */
+  //printf("\ns = %.4f, sw = %.4f, ave = %.4f\n",s, sw, *ave);  
 
   for(i=0;i<*nbins;i++)
     sq += y[i] * (x[i] - *ave) * (x[i] - *ave);

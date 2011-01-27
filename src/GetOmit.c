@@ -50,28 +50,52 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 
 
   /* If user has given file... format is "dump#  freq(MHz) */
-  if (Cmd->OmitfileP) {
-    if((Fomit = fopen(Cmd->Omitfile, "r")) == NULL){
+  if (Cmd->ZapfileP) {
+    if((Fomit = fopen(Cmd->Zapfile, "r")) == NULL){
       printf("Cannot open file %s for reading scan omissions.  Exiting...\n",
-	     Cmd->Omitfile);fflush(stdout);
+	     Cmd->Zapfile);fflush(stdout);
       return -11;
     }
-    printf("\nOmission file name:  %s\n",Cmd->Omitfile);
+    printf("\nOmission file name:  %s\n",Cmd->Zapfile);
     RunMode->NScanOmit = 0;
-    /* Now read the file */
+    /* Now read the file and construct OmitFlag array */
     while (fgets(OmitLine, 100, Fomit) != NULL){
       sscanf(OmitLine, "%d %lf", &RunMode->DumpOmit[RunMode->NScanOmit],
 	     &FreqOmit[RunMode->NScanOmit]);
-      if((ThisChan = Freq2Chan(FreqOmit[RunMode->NScanOmit], 
-			       hdr->obs.ChanFreq, hdr->obs.NChan)) < 0) {
-	printf("Error in scan omission file.\n");
-	return -12;
-      }
-      /* Map frequency to integer channel array number */
+      /* Give dump number this simple variable name */
       ThisDump = RunMode->DumpOmit[RunMode->NScanOmit];
-      /* Finally, flag this dump/channel combination as one for omission */
-      RunMode->OmitFlag[ThisDump*hdr->obs.NChan + ThisChan] = 1;
-      RunMode->NScanOmit++;
+      /* Chek first whether frequency is negative.  If so, all channel of the 
+	 given dump number are flagged for omission */
+      if(FreqOmit[RunMode->NScanOmit] < 0.0){
+	for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++)
+	       RunMode->OmitFlag[ThisDump*hdr->obs.NChan + i_chan] = 1;
+      }
+      else {
+      /* Now we know frequency is not negative. So, map frequency to integer 
+	 channel array number */
+	if((ThisChan = Freq2Chan(FreqOmit[RunMode->NScanOmit], 
+				 hdr->obs.ChanFreq, hdr->obs.NChan)) < 0) {
+	  /* If mapping unsuccessful, quit out with error */
+	  fprintf(stderr, "Error in scan omission file. Frequency %f does not ", 
+		  FreqOmit[RunMode->NScanOmit]);
+	  fprintf(stderr, "map to any channel for this data file. \n");
+	  return -12;
+	}
+	
+	/* Now check whether dump number is negaative. If so, all dumps at the 
+	   given frequency are flagged for omission */
+	if(ThisDump < 0){
+	  for (i_dump=0; i_dump<RunMode->NDumps ; i_dump++)
+	    	  RunMode->OmitFlag[i_dump*hdr->obs.NChan + ThisChan] = 1;
+	}
+	else{
+	  /* Finally, if we got to here, then neither frequency nor dump number 
+	     are negative.  In this case, flag this dump/channel combination 
+	     as one for omission */
+	  RunMode->OmitFlag[ThisDump*hdr->obs.NChan + ThisChan] = 1;
+	  RunMode->NScanOmit++;
+	}
+      }
     }
     fclose(Fomit);
   }

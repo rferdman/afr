@@ -43,3 +43,8 @@ String -infile Infile {Input ASP fits data files} \
 
 String -key Keyword {List of fits keywords for which to search} \
     -c 1 oo
+
+
+
+
+###Rest Infile {Input ASP fits data files} -c 1 oo

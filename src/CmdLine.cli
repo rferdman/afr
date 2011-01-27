@@ -103,7 +103,7 @@ String -mueller Muellerfile {Mueller matrix filename} \
     -c 1 1
 
 ## file of scans to omit in reduction
-String -omitfile Omitfile {File of scans to omit} \
+String -zapfile Zapfile {File of scans to zap} \
     -c 1 1
 
 ## use polyco file to adjust phases and spin frequencies of pulsar

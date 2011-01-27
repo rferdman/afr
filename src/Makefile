@@ -14,7 +14,7 @@ FITS_LIB_DIR = /usr/local/lib
 
 ### IF USING GRFORTRAN, UNCOMMENT THE FOLLWOING ###
 LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm 
- 
+
 ### IF USING G77, UNCOMMENT THE FOLLOWING:
 #LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm -lg2c
 
@@ -26,7 +26,7 @@ PGPLOT_LIB_DIR = /usr/local/pgplot
 ### SPECIFY X11 LIBRARY DIRECTORY HERE ###
 X11_LIB_DIR = /usr/X11R6/lib
 
-LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng # -L/sw/lib -lg2c -pg
+LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng -pg -lgfortran # -L/sw/lib -lg2c -pg
 
 
 ### C COMPILER AND FLAGS ###
@@ -47,7 +47,7 @@ F77FLAGS = -c -Wall  -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O 
 
 
 ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
-	ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc
+	ASPZap ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc
 
 
 # Object file names:
@@ -82,11 +82,17 @@ BINDOWNOBJS = ASPBinDown.o BinDownCmdLine.o AllocRunMode.o BinDown.o \
 
 ROTATEOBJS2 = ASPRotateAsc.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
 	cprofc.o MakePol.o Zero.o WriteStokes.o DutyLookup.o Sort.o \
-	FindPeak.o BMask.o ffft.o
+	FindPeak.o BMask.o ffft.o 
 
 ROTATEOBJS = ASPRotate.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
 	ReadASPHdr.o ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o \
 	cprofc.o MakePol.o Zero.o WrtASPHdr.o WrtASPStokes.o ffft.o
+
+ZAPOBJS = ASPZap.o ZapCmdLine.o AllocRunMode.o ReadASPAsc.o ReadHdr.o \
+	ReadASPHdr.o ReadPSRFITSHdr.o ReadData.o ReadASPData.o \
+	ReadPSRFITSData.o Dedisperse.o MakeStokes.o BMask.o Sort.o FindPeak.o \
+	DutyLookup.o MakePol.o Zero.o MaxMin.o ArrayZero.o BinDown.o cprofc.o \
+	RotateProf.o PhaseCalc.o
 
 MATCHOBJS = ASPMatch.o MatchCmdLine.o AllocRunMode.o ReadASPAsc.o \
 	RotateProf.o cprofc.o MakePol.o Zero.o WriteStokes.o DutyLookup.o \
@@ -153,6 +159,10 @@ ASPRotate: ${ROTATEOBJS} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPRotate ${ROTATEOBJS} \
 	${LCFITSIO}   
 
+ASPZap: ${ZAPOBJS} ${OBJS2} ${ASP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/ASPZap ${ZAPOBJS} ${OBJS2} \
+	${LCFITSIO} $(LCPGPLOT)
+
 ASPMatch: ${MATCHOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPMatch ${MATCHOBJS} ${OBJS2} \
 	${LCFITSIO}   
@@ -205,6 +215,10 @@ RotateCmdLine.c RotateCmdLine.h: RotateCmdLine.cli
 	clig -d RotateCmdLine.cli
 	mv RotateCmdLine.h $(ASP_INCLUDE_DIR)
 
+ZapCmdLine.c ZapCmdLine.h: ZapCmdLine.cli
+	clig -d ZapCmdLine.cli
+	mv ZapCmdLine.h $(ASP_INCLUDE_DIR)
+
 MatchCmdLine.c MatchCmdLine.h: MatchCmdLine.cli
 	clig -d MatchCmdLine.cli
 	mv MatchCmdLine.h $(ASP_INCLUDE_DIR)
@@ -247,6 +261,8 @@ ASPRotateAsc.o: ASPRotateAsc.c RotateCmdLine.h
 
 ASPRotate.o: ASPRotate.c RotateCmdLine.h
 
+ASPZap.o: ASPZap.c ZapCmdLine.h
+
 ASPMatch.o: ASPMatch.c MatchCmdLine.h
 
 ASPHead.o: ASPHead.c HeadCmdLine.h
@@ -288,6 +304,9 @@ rotclean2:
 rotclean:
 	/bin/rm -f ${ROTATEOBJS} $(ASP_BIN_DIR)/ASPRotate core* *~ RotateCmdLine.[ch]
 
+zapclean:
+	/bin/rm -f ${ZAPOBJS} $(ASP_BIN_DIR)/ASPZap core* *~ ZapCmdLine.[ch]
+
 matchclean:
 	/bin/rm -f ${MATCHOBJS} ${OBJS2} $(ASP_BIN_DIR)/ASPMatch core* *~ MatchCmdLine.[ch]
 
@@ -316,7 +335,7 @@ oneclean:
 	/bin/rm -f *.1
 
 clean:
-	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 matchclean headclean addclean diffclean templateclean toaclean includeclean oneclean
+	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 zapclean matchclean headclean addclean diffclean templateclean toaclean includeclean oneclean
 
 #distclean:
 #	/bin/rm -f Makefile config.h config.status config.cache config.log

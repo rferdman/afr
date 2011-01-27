@@ -17,7 +17,7 @@ int main(int argc, char **argv)
   double   ChanFreq, BW, CentFreq, DM;
   double   TDump, StartTime, DumpMiddleSecs, ScanLen;
   char     KeyValue[32], err_text[256];
-  char     cur_file[64], cur_file_short[64];
+  char     cur_file[256], cur_file_short[64];
   char     HdrVer[16];
   char     aspoutstr[11], dumprefstr[11];
   fitsfile *Fin;
@@ -30,6 +30,21 @@ int main(int argc, char **argv)
   /* Normally use this somewhere, and not showOptionValues */
   Cmd->tool = Cmd->tool;
 
+  /*  InfileP = (argc > 1); printf("InfileP = %d\n", InfileP);
+  InfileC = (argc - 1); printf("InfileC = %d\n", InfileC);
+  Infile = (char **)malloc(InfileC);
+  for (i=0; i<InfileC; i++) {
+    Infile[i] = (char *)malloc(256);
+    if (strlen(argv[i+1]) > 255) {
+      fprintf(stderr, "Error: argument %d is too long.\n", i+1);
+      exit(1);
+    }
+    else{
+      strcpy(Infile[i], argv[i+1]);
+    }
+    printf("Argument %d:  %s = %s\n", i+1, Infile[i], argv[i+1]);
+    } */
+  
   /************* Keyword list output  **************/
 
   if (Cmd->ListP) {

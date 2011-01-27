@@ -41,7 +41,7 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
   
   *NBins=linenum;
 
-  printf("Headerline = %s\n", Headerline);
+  // printf("Headerline = %s\n", Headerline);
   
   retval = 0;
   

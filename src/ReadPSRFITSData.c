@@ -118,10 +118,12 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
       Polycos[i_poly].MjdMidInt = floor(ref_mjd);
       Polycos[i_poly].MjdMidFrac = ref_mjd - floor(ref_mjd);
       
-      printf("ref_mjd:                %lf\n", ref_mjd);
-      printf("Polycos:  MjdMidInt:    %lf\n",  Polycos[i_poly].MjdMidInt);
-      printf("Polycos:  MjdMidFrac:   %lf\n\n",  Polycos[i_poly].MjdMidFrac);
-      
+      if(RunMode->Verbose){
+	printf("ref_mjd:                %lf\n", ref_mjd);
+	printf("Polycos:  MjdMidInt:    %lf\n",  Polycos[i_poly].MjdMidInt);
+	printf("Polycos:  MjdMidFrac:   %lf\n\n",  Polycos[i_poly].MjdMidFrac);
+      }
+
       /* REF_FREQ -- Reference observing frequency for this polyco set */
       if(fits_get_colnum (Fin, CASEINSEN, "REF_FREQ", &colnum, &status)){
 	fprintf(stderr,"ReadPSRFITSData ERROR: No REF_FREQ in POLYCO table.\n");
@@ -235,19 +237,20 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   /* Need to recalculate RefPhase and RefPeriod based on polycos or something */
   DumpMiddleDays = subhdr->DumpMiddleSecs /86400.;
   
-  printf("\n\nDUMP %d:\n", i_dump);
-  printf("========\n");
-  printf("Dump length:                             %lf seconds\n", 
-	 hdr->redn.TDump);
-  printf("Time since scan start:                   %lf seconds\n", 
-	 TotalTDump);
-  printf("Midpoint dump time (secs since start):   %lf\n\n", 
-	 subhdr->DumpMiddleSecs);
-  printf("Midpoint dump time (days since start):   %lf\n", 
-	 DumpMiddleDays);
-  printf("Dump time (MJD):   %lf\n", 
-	 hdr->obs.IMJDStart+DumpMiddleDays);
-
+  if (RunMode->Verbose) {
+    printf("\n\nDUMP %d:\n", i_dump);
+    printf("========\n");
+    printf("Dump length:                             %lf seconds\n", 
+	   hdr->redn.TDump);
+    printf("Time since scan start:                   %lf seconds\n", 
+	   TotalTDump);
+    printf("Midpoint dump time (secs since start):   %lf\n\n", 
+	   subhdr->DumpMiddleSecs);
+    printf("Midpoint dump time (days since start):   %lf\n", 
+	   DumpMiddleDays);
+    printf("Dump time (MJD):   %lf\n", 
+	   hdr->obs.IMJDStart+DumpMiddleDays);
+  }
 
   if(PhaseCalc(Polycos, n_poly, hdr->obs.IMJDStart, DumpMiddleDays, 
 	       &RefPhase, &RefFreq) < 0){
@@ -343,19 +346,19 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     //free(tempprof);
     //    short int *tempprof;
     //tempprof = (short int *)malloc(hdr->redn.RNBinTimeDump*sizeof(short int));
-    printf("DATA type is TSHORT\n");
+    if (RunMode->Verbose) printf("DATA type is TSHORT\n");
   }
   else if(typecode == TFLOAT){
     // free(tempprof);
     // float *tempprof;
     // tempprof = (float *)malloc(hdr->redn.RNBinTimeDump*sizeof(float));
-    printf("DATA type is TFLOAT\n");    
+    if (RunMode->Verbose) printf("DATA type is TFLOAT\n");    
   }
   else if(typecode == TINT){
     //free(tempprof);
     //int *tempprof;
     //tempprof = (int *)malloc(hdr->redn.RNBinTimeDump*sizeof(int));
-    printf("DATA type is TINT\n");
+    if (RunMode->Verbose) printf("DATA type is TINT\n");
   }
   else{
     printf("DATA type %d is unknown.\n",typecode);

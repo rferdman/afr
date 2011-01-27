@@ -13,10 +13,10 @@
 int main(int argc, char **argv)
 {
 
-  int             i_file,i_scan,i_chan,i_bin,n_omit,status=0;
+  int             i_file,i_dump,i_chan,i_bin,n_omit,status=0;
   int             NFirstTable, NumHDU, NDumps, TotDumps=0, hdutype;
   int             spk;
-  int             got_bins=0, got_mjd1=0;
+  int             got_bins=0, got_mjd1=0, good_freqs=1;
   int             bin[NBINMAX], NStdBins;
   int             ngood;
 
@@ -31,7 +31,7 @@ int main(int argc, char **argv)
   double          MJD_first=0., MJD_last=0., MJD_mid;
   double          IMJDMid, MJDSecsMid;
   double          SBase,Srms,Duty,SPeak,FinalMask[NBINMAX];
-  double          OutFreq;
+  double          FreqRange[2], OutFreq;
   double          ByAngle;
 
   char            ProgName[32];
@@ -82,6 +82,24 @@ int main(int argc, char **argv)
 	 } 
 	 else{ */
 
+  /* Check whteher user has requested a frequency range.  If so, set FreqRange array.
+     If not, make FreqRange default to large boundaries. */
+  FreqRange[0] = 0.;
+  FreqRange[1] = 9999999.;
+  if(Cmd->FreqRangeP){
+    if(Cmd->FreqRange[0] < Cmd->FreqRange[1]) {
+      FreqRange[0] = Cmd->FreqRange[0];
+      FreqRange[1] = Cmd->FreqRange[1];
+    }
+    else {
+      FreqRange[0] = Cmd->FreqRange[1];
+      FreqRange[1] = Cmd->FreqRange[0];
+    }
+    printf("Will only add together data within the frequency range %.2lf to %.2lf MHz.\n",
+	   FreqRange[0], FreqRange[1]);
+  }
+
+
   if(Cmd->NoiseCutP) {
     if(Cmd->NoiseCutC == 0) CutThresh = 0.; // minimum of minimizing function
     else if (Cmd->NoiseCut < 0) CutThresh = -1.;
@@ -92,6 +110,8 @@ int main(int argc, char **argv)
     }
     else CutThresh = Cmd->NoiseCut;
   }
+
+
 
 
   // }
@@ -108,7 +128,7 @@ int main(int argc, char **argv)
   
   /* Create an output file to check omissions if in vebose mode */
   if (Cmd->VerboseP || Cmd->CheckOmitP){
-    if((Fcheck = fopen("check_omit.dat","w")) == 0)
+    if((Fcheck = fopen("check_omit.dat","a")) == 0)
       { printf("Cannot open check_omit.dat. Exiting...\n"); exit(1); }   
   }
 
@@ -223,6 +243,25 @@ int main(int argc, char **argv)
 	       ProgName,Cmd->Infile[i_file]);
 	exit(1);
       }
+
+
+      /* Do check of Frequency range here.  If non of profile if within range, then there
+	 is no point in continuing to read this file. For now ALL frequencies MUST be within
+	 range, so user must choose range wisely.. */
+      if(Hdr[i_file].obs.ChanFreq[0] < Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]){
+	good_freqs = (FreqRange[0] >=  Hdr[i_file].obs.ChanFreq[0] ||
+		      FreqRange[1] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+      }
+      else{
+	good_freqs = (FreqRange[1] <= Hdr[i_file].obs.ChanFreq[0] ||
+		      FreqRange[0] >= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+
+      }
+      printf("\n\nFrequency range = %.3lf --> %.3lf\n", Hdr[i_file].obs.ChanFreq[0],
+	     Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+      printf("Frequency restrict range: %.3lf --> %.3lf\n", FreqRange[0], FreqRange[1]);
+      printf("good_freqs = %d\n\n", good_freqs);
+
       /* Set Source Name here */
       if(i_file==0) {
 	strcpy(RunMode.Source,Hdr[0].target.PSRName);
@@ -231,8 +270,8 @@ int main(int argc, char **argv)
 
 
       /* Write file name in verbose-mode omit check file */
-      if(Cmd->VerboseP || Cmd->CheckOmitP) 
-	fprintf(Fcheck, "\n%s\n",Cmd->Infile[i_file]);
+      /* if(Cmd->VerboseP || Cmd->CheckOmitP) 
+	 fprintf(Fcheck, "\n%s\n",Cmd->Infile[i_file]); */
 
 
       /* for now just check if all files have same number of channels */
@@ -245,258 +284,276 @@ int main(int argc, char **argv)
 	 Cmd->Infile[i_file],Hdr[i_file].obs.NChan);
 	 } */
     
-      /* now find the number of dumps in the file */    
-      fits_get_num_hdus(Fin[i_file], &NumHDU, &status);
-      if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0")){
-	NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
-			       many non-data tables we will be using */
-      }
-      else if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0.1")){
-	NDumps = (NumHDU-3)/2;
-      }
-      else{
-	fprintf(stderr,"%s> Do not recognize FITS file version in header.\n",
-		ProgName);
-	fprintf(stderr,"This header is %s. Exiting...\n",Hdr[i_file].gen.HdrVer);
-	exit(1);
-      }
+      /* If observing frequencies are within restricted range, then go ahead */
+      if(good_freqs) {
 
-      printf("File %s:\n",Cmd->Infile[i_file]);
-      printf("     Number of channels:  %d\n",Hdr[i_file].obs.NChan) ;
-      printf("     Number of dumps:     %d\n",NDumps);
-
-      /* Move to the first data table HDU in the fits file */
-      if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0"))
-	fits_movnam_hdu(Fin[i_file], BINARY_TBL, "STOKES0", 0, &status);
-      else if (!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0.1"))
-	fits_movnam_hdu(Fin[i_file], ASCII_TBL, "DUMPREF0", 0, &status);
-
-      /* Get the current HDU number */
-      fits_get_hdu_num(Fin[i_file], &NFirstTable);
-
-
-      for(i_scan=0;i_scan<NDumps;i_scan++){
-      
-	/* Set up Profile structure size */
-	InProfile=(struct StdProfs *)malloc(Hdr[i_file].obs.NChan*
-					    sizeof(struct StdProfs));
-      
-	/* move to next dump's data */
+	/* now find the number of dumps in the file */    
+	fits_get_num_hdus(Fin[i_file], &NumHDU, &status);
 	if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0")){
-	  fits_movabs_hdu(Fin[i_file], NFirstTable+i_scan, &hdutype, &status); 
+	  NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
+				 many non-data tables we will be using */
 	}
 	else if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0.1")){
-	  /* if we've reached the end of the FITS file then increase FileNo */
-	  fits_movabs_hdu(Fin[i_file],NFirstTable+(i_scan%MAXDUMPS)*2+1,
-			  &hdutype,  &status);
-	  fits_get_num_rows(Fin[i_file], &NPtsProf, &status);status=0; 
-	  fits_movrel_hdu(Fin[i_file], -1, NULL, &status);
-	}
-      
-	/* IF not done so, use number of bins from first file to compare to 
-	   the rest of the files */
-	if(got_bins==0){
-	  FirstNPtsProf=NPtsProf;  
-	  /* Set number of bins in first file's profiles to be StdBins if we 
-	     don't input a standard profile */
-	  if(!Cmd->StdfileP) NStdBins=NPtsProf;
-	  got_bins=1;
-	}
-
-	/**********  FIX:  SKIP THIS WITHOUT DOING THE OMIT THING ***********/
-	/**********         AND DON'T ADD TO NUMBER COUNT  ************/
-	if(NPtsProf != NStdBins) {
-	  fprintf(stderr,"Warning: Skipping scan %d (%ld bins ",
-		  i_scan,NPtsProf);
-	  fprintf(stderr,"vs. %d bins in others).\n",NStdBins);
-		
-	  n_omit += Hdr[i_file].obs.NChan;
+	  NDumps = (NumHDU-3)/2;
 	}
 	else{
+	  fprintf(stderr,"%s> Do not recognize FITS file version in header.\n",
+		  ProgName);
+	  fprintf(stderr,"This header is %s. Exiting...\n",Hdr[i_file].gen.HdrVer);
+	  exit(1);
+	}
 	
-	  /* find NPtsProf */
-	  ReadASPStokes(&Hdr[i_file], &Subhdr, Fin[i_file], NPtsProf, 
-			InProfile, i_scan, Cmd->VerboseP);
+	printf("File %s:\n",Cmd->Infile[i_file]);
+	printf("     Number of channels:  %d\n",Hdr[i_file].obs.NChan) ;
+	printf("     Number of dumps:     %d\n",NDumps);
 	
-	  /* Add this profile onto running output profile */
+	/* Move to the first data table HDU in the fits file */
+	if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0"))
+	  fits_movnam_hdu(Fin[i_file], BINARY_TBL, "STOKES0", 0, &status);
+	else if (!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0.1"))
+	  fits_movnam_hdu(Fin[i_file], ASCII_TBL, "DUMPREF0", 0, &status);
 	
-	  for(i_chan=0;i_chan<Hdr[i_file].obs.NChan;i_chan++){
+	/* Get the current HDU number */
+	fits_get_hdu_num(Fin[i_file], &NFirstTable);
+	
+	
+	for(i_dump=0;i_dump<NDumps;i_dump++){
 	  
-	    /* Bad scans are zeroed so if summ of the profile is zero, it's 
-	       not to be used in summation */
-	    // ProfSum = FSum(&InProfile[i_chan].rstds[0], NPtsProf);
-	    // if(ProfSum != 0.0) { // i.e. good data
-	    if(!ArrayZero(InProfile[i_chan].rstds, NPtsProf)) { // i.e. good data
-	      //	  if(InProfile[i_chan].rstds[0] > -99998.) { // i.e. good data
-	      RemoveBase(&RunMode, NPtsProf, &InProfile[i_chan]);
-    
-	      /* If first MJD has not been registered, then do so since this 
-		 would be the first non-omitted scan */
-	      if (got_mjd1==0) {
-		MJD_first = (double)Hdr[i_file].obs.IMJDStart + 
-		  Subhdr.DumpMiddleSecs/86400.;
-		got_mjd1=1;
-	      }
-	      if (i_scan==NDumps-1) {
-		/* Just keep overwriting MJD_last every i_file -- that way we 
-		   ensure getting the last MJD of the FINAL non-omitted scan 
-		   used */
-		MJD_last = (double)Hdr[i_file].obs.IMJDStart + 
-		  Subhdr.DumpMiddleSecs/86400.;
-	      }
+	  /* Set up Profile structure size */
+	  InProfile=(struct StdProfs *)malloc(Hdr[i_file].obs.NChan*
+					      sizeof(struct StdProfs));
+	  
+	  /* move to next dump's data */
+	  if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0")){
+	    fits_movabs_hdu(Fin[i_file], NFirstTable+i_dump, &hdutype, &status); 
+	  }
+	  else if(!strcmp(Hdr[i_file].gen.HdrVer,"Ver1.0.1")){
+	    /* if we've reached the end of the FITS file then increase FileNo */
+	    fits_movabs_hdu(Fin[i_file],NFirstTable+(i_dump%MAXDUMPS)*2+1,
+			    &hdutype,  &status);
+	    fits_get_num_rows(Fin[i_file], &NPtsProf, &status);status=0; 
+	    fits_movrel_hdu(Fin[i_file], -1, NULL, &status);
+	  }
+	  
+	  /* IF not done so, use number of bins from first file to compare to 
+	     the rest of the files */
+	  if(got_bins==0){
+	    FirstNPtsProf=NPtsProf;  
+	    /* Set number of bins in first file's profiles to be StdBins if we 
+	       don't input a standard profile */
+	    if(!Cmd->StdfileP) NStdBins=NPtsProf;
+	    got_bins=1;
+	  }
+	  
+	  /**********  FIX:  SKIP THIS WITHOUT DOING THE OMIT THING ***********/
+	  /**********         AND DON'T ADD TO NUMBER COUNT  ************/
+	  if(NPtsProf != NStdBins) {
+	    fprintf(stderr,"Warning: Skipping scan %d (%ld bins ",
+		    i_dump,NPtsProf);
+	    fprintf(stderr,"vs. %d bins in others).\n",NStdBins);
 	    
-	      // printf("SNR %d = %lf\n",i_chan,InProfile[i_chan].SNR);
+	    n_omit += Hdr[i_file].obs.NChan;
+	  }
+	  else{
 	    
-	      /* Now, if std profile is provided, then scale current scan to it 
-		 using fftfit.  If std profile is NOT provided, then let first 
-		 file accumulate and copy that into StdProfile, scaling 
-		 subsequent profiles to that from then on. */
-
-	      if(Cmd->StdfileP || (!Cmd->StdfileP && i_file > 0)) {
-		//	      if (Cmd->StdfileP || i_file > 0){
-		/* Scale by scale factor unless it is the first file and no 
-		   standard profile is given */
-		  /* Run fftfit */
-		if (Cmd->ScaleP || Cmd->RotateP){
-		  memcpy(profs,InProfile[i_chan].rstds,sizeof(float)*NBINMAX);
-		  /* Now fftfit to find shift required in second profile */
-		  fftfit_(profs,&amps[1],&phas[1],
-			  &NStdBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);
+	    /* find NPtsProf */
+	    ReadASPStokes(&Hdr[i_file], &Subhdr, Fin[i_file], NPtsProf, 
+			  InProfile, i_dump, Cmd->VerboseP);
+	    
+	    /* Add this profile onto running output profile */
+	    
+	    for(i_chan=0;i_chan<Hdr[i_file].obs.NChan;i_chan++){
+	      
+	      /* First filter -- make sure that the current channel falls within desired 
+		 frequency range restriction */
+	      if(Hdr[i_file].obs.ChanFreq[i_chan] >= FreqRange[0] &&
+		 Hdr[i_file].obs.ChanFreq[i_chan] <= FreqRange[1]) { 
+		
+		
+		/* Bad scans are zeroed so if summ of the profile is zero, it's 
+		   not to be used in summation */
+		if(!ArrayZero(InProfile[i_chan].rstds, NPtsProf)) { // i.e. good data
+		  if(!Cmd->NoBaseP) RemoveBase(&RunMode, NPtsProf, &InProfile[i_chan]);
+		  
+		  /* If first MJD has not been registered, then do so since this 
+		     would be the first non-omitted scan */
+		  if (got_mjd1==0) {
+		    MJD_first = (double)Hdr[i_file].obs.IMJDStart + 
+		      Subhdr.DumpMiddleSecs/86400.;
+		    got_mjd1=1;
+		  }
+		  if (i_dump==NDumps-1) {
+		    /* Just keep overwriting MJD_last every i_file -- that way we 
+		       ensure getting the last MJD of the FINAL non-omitted scan 
+		       used */
+		    MJD_last = (double)Hdr[i_file].obs.IMJDStart + 
+		      Subhdr.DumpMiddleSecs/86400.;
+		  }
+		  
+		  // printf("SNR %d = %lf\n",i_chan,InProfile[i_chan].SNR);
+		  
+		  /* Now, if std profile is provided, then scale current scan to it 
+		     using fftfit.  If std profile is NOT provided, then let first 
+		     file accumulate and copy that into StdProfile, scaling 
+		     subsequent profiles to that from then on. */
+		  
+		  if(Cmd->StdfileP || (!Cmd->StdfileP && i_file > 0)) {
+		    //	      if (Cmd->StdfileP || i_file > 0){
+		    /* Scale by scale factor unless it is the first file and no 
+		       standard profile is given */
+		    /* Run fftfit */
+		    if (Cmd->ScaleP || Cmd->RotateP){
+		      memcpy(profs,InProfile[i_chan].rstds,sizeof(float)*NBINMAX);
+		      /* Now fftfit to find shift required in second profile */
+		      fftfit_(profs,&amps[1],&phas[1],
+			      &NStdBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);
+		    }
+		    
+		    if (Cmd->ScaleP) {
+		      //printf("Scaling according to standard profile...\n");
+		      printf("scale factor = %f\n\n", b);fflush(stdout);
+		      for(i_bin=0; i_bin<NPtsProf; i_bin++){
+			InProfile[i_chan].rstds[i_bin] /= b;
+			InProfile[i_chan].rstdq[i_bin] /= b;
+			InProfile[i_chan].rstdu[i_bin] /= b;
+			InProfile[i_chan].rstdv[i_bin] /= b;
+		      } 
+		    }
+		    
+		    if(Cmd->RotateP) {
+		      RunMode.Verbose = Cmd->VerboseP;
+		      RunMode.NBins = NPtsProf;
+		      
+		      ByAngle = (double)(-Shift/NPtsProf*TWOPI);
+		      if(Cmd->VerboseP){
+			printf("Rotating dump %d, channel %d (%lf.1 MHz)\n", 
+			       i_dump, i_chan, Hdr[i_file].obs.ChanFreq[i_chan]);
+			printf("Scale factor: %f +- %f \n",b,errb);
+		      }
+		      RotateProf(&RunMode, &InProfile[i_chan], ByAngle);
+		    }
+		  }
+		  /* Get SNR for each Profile if we want to use weighting; 
+		     otherwise weights will all be 1.0 */
+		  if(!Cmd->NoWeightP) {
+		    Duty = DutyLookup(PSRName);
+		    BMask(InProfile[i_chan].rstds,&Hdr[i_file].redn.RNBinTimeDump,
+			  &Duty,FinalMask);
+		    Baseline(InProfile[i_chan].rstds,FinalMask,
+			     &Hdr[i_file].redn.RNBinTimeDump,&SBase,&Srms);
+		    SPeak =  FindPeak(InProfile[i_chan].rstds,
+				      &Hdr[i_file].redn.RNBinTimeDump,&spk);
+		    InProfile[i_chan].SNR = (SPeak-SBase)*Srms;
+		    Weight = InProfile[i_chan].SNR;
+		    //Weight = Srms; // which is actually 1/RMS.
+		    //printf("Weight = %.2f\n", Weight);
+		  }
+		  if (Cmd->ScaleBeforeP) Zero2One(&InProfile[i_chan], NPtsProf, 
+						  PSRName);
+		  
+		  /* Now add onto accumulating output profile */
+		  for(i_bin=0;i_bin<NPtsProf;i_bin++) {
+		    OutProfile.rstds[i_bin] += 
+		      Weight*InProfile[i_chan].rstds[i_bin];
+		    OutProfile.rstdq[i_bin] += 
+		      Weight*InProfile[i_chan].rstdq[i_bin];
+		    OutProfile.rstdu[i_bin] += 
+		      Weight*InProfile[i_chan].rstdu[i_bin];
+		    OutProfile.rstdv[i_bin] += 
+		      Weight*InProfile[i_chan].rstdv[i_bin];  
+		    //   printf("%f\n",OutProfile[0].rstds[i_bin]);fflush(stdout);
+		  }
+		  //  }
+		  TotWeight += Weight;  // for now keep at zero index
+		  /* Print profile weights for each scan, for each channel */
+		  if(RunMode.Verbose) {
+		    // if(i_chan==0) 
+		    printf("Profile weights -- scan %d, chan %d: \n   ",i_dump, i_chan);
+		    printf("%6.2f \n ",Weight);
+		    if(i_chan==Hdr[i_file].obs.NChan-1) printf("\n");fflush(stdout);
+		  }
 		}
-
-		if (Cmd->ScaleP) {
-		  //printf("Scaling according to standard profile...\n");
-		  printf("scale factor = %f\n\n", b);fflush(stdout);
-		  for(i_bin=0; i_bin<NPtsProf; i_bin++){
-		    InProfile[i_chan].rstds[i_bin] /= b;
-		    InProfile[i_chan].rstdq[i_bin] /= b;
-		    InProfile[i_chan].rstdu[i_bin] /= b;
-		    InProfile[i_chan].rstdv[i_bin] /= b;
-		  } 
+		else {
+		  n_omit++;
+		  if(Cmd->VerboseP || Cmd->CheckOmitP){
+		    fprintf(Fcheck, "%s -- %6d     %.1lf\n",
+			    Cmd->Infile[i_file], i_dump,Hdr[i_file].obs.ChanFreq[i_chan]);
+		  }
 		}
 		
-		if(Cmd->RotateP) {
-		  RunMode.Verbose = Cmd->VerboseP;
-		  RunMode.NBins = NPtsProf;
-		  
-		  ByAngle = (double)(-Shift/NPtsProf*TWOPI);
-		  if(Cmd->VerboseP){
-		    printf("Rotating dump %d, channel %d (%lf.1 MHz)\n", 
-			   i_scan, i_chan, Hdr[i_file].obs.ChanFreq[i_chan]);
-		    printf("Scale factor: %f +- %f \n",b,errb);
-		  }
-		  RotateProf(&RunMode, &InProfile[i_chan], ByAngle);
-		}
+	      } /* if (within frequency range) */
+	      else {
+		printf("Scan %d, channel %d (%.2lf MHz) omitted, since it does not fall within ",
+		       i_dump, i_chan, Hdr[i_file].obs.ChanFreq[i_chan]);
+		printf("specified frequency range.\n");
 	      }
-	      /* Get SNR for each Profile if we want to use weighting; 
-		 otherwise weights will all be 1.0 */
-	      if(!Cmd->NoWeightP) {
-		Duty = DutyLookup(PSRName);
-		BMask(InProfile[i_chan].rstds,&Hdr[i_file].redn.RNBinTimeDump,
-		      &Duty,FinalMask);
-		Baseline(InProfile[i_chan].rstds,FinalMask,
-			 &Hdr[i_file].redn.RNBinTimeDump,&SBase,&Srms);
-		SPeak =  FindPeak(InProfile[i_chan].rstds,
-				  &Hdr[i_file].redn.RNBinTimeDump,&spk);
-		InProfile[i_chan].SNR = (SPeak-SBase)*Srms;
-		Weight = InProfile[i_chan].SNR;
-		//Weight = Srms; // which is actually 1/RMS.
-		//printf("Weight = %.2f\n", Weight);
-	      }
-	      if (Cmd->ScaleBeforeP) Zero2One(&InProfile[i_chan], NPtsProf, 
-					      PSRName);
-
-	      /* Now add onto accumulating output profile */
-	      for(i_bin=0;i_bin<NPtsProf;i_bin++) {
-		OutProfile.rstds[i_bin] += 
-		  Weight*InProfile[i_chan].rstds[i_bin];
-		OutProfile.rstdq[i_bin] += 
-		  Weight*InProfile[i_chan].rstdq[i_bin];
-		OutProfile.rstdu[i_bin] += 
-		  Weight*InProfile[i_chan].rstdu[i_bin];
-		OutProfile.rstdv[i_bin] += 
-		  Weight*InProfile[i_chan].rstdv[i_bin];  
-		//   printf("%f\n",OutProfile[0].rstds[i_bin]);fflush(stdout);
-	      }
-	      //  }
-	      TotWeight += Weight;  // for now keep at zero index
-	      /* Print profile weights for each scan, for each channel */
-	      if(RunMode.Verbose) {
-		if(i_chan==0) printf("Profile weights -- scan %d: \n   ",i_scan);
-		printf("%6.2f  ",Weight);
-		if(i_chan==Hdr[i_file].obs.NChan-1) printf("\n");fflush(stdout);
-	      }
+	      
 	    }
-	    else {
-	      n_omit++;
-	      if(Cmd->VerboseP || Cmd->CheckOmitP){
-		fprintf(Fcheck, "%6d     %.1lf\n",
-			i_scan,Hdr[i_file].obs.ChanFreq[i_chan]);
-		/*printf("File %d, Dump %d, Channel %d (%lf MHz) were found to be\n",
-		  i_file,i_scan,i_chan,Hdr[i_file].obs.ChanFreq[i_chan]);
-		  printf("  zeroed and so are not included.\n");fflush(stdout);*/
-	      }
+	    
+	    /*****************/
+	    
+	    /*     }  */
+	    
+	    
+	  } /* else from positive check on NPtsProf */
+	  free(InProfile);
+	  
+	  /* Now if we *aren't* using a user-supplied standard profile, copy 
+	     the current output profile's worth of added scans to the 
+	     standard profile for scaling purposes from now on */
+	  
+	  /* To ensure that this starts with the first file for which all 
+	     scans are not omitted, and only for when standard profile is not 
+	     given, and do once every dump, not once every channel */
+	  if (got_mjd1 && !Cmd->StdfileP) {
+	    
+	    //printf("Copying over std prof...\n\n");fflush(stdout);
+	    for(i_bin=0;i_bin<NPtsProf;i_bin++) {
+	      StdProfile.rstds[i_bin] = OutProfile.rstds[i_bin];///TotWeight;
+	      StdProfile.rstdq[i_bin] = OutProfile.rstdq[i_bin];///TotWeight;
+	      StdProfile.rstdu[i_bin] = OutProfile.rstdu[i_bin];///TotWeight;
+	      StdProfile.rstdv[i_bin] = OutProfile.rstdv[i_bin];///TotWeight;
 	    }
-	    //    if(i_chan==0) {for(i=0;i<50;i++) printf("%lf  ",OutProfile[0].rstds[i]);printf("\n\n");fflush(stdout);};
-
-
- 
+	    //memcpy(&StdProfile, &OutProfile, sizeof(struct StdProfs));
+	    
+	    /* Now prepare it for fftfitting next round */
+	    cprofc(StdProfile.rstds,NStdBins,
+		   StdProfile.stdamps,StdProfile.stdphas);
+	    
+	    memcpy(amps,StdProfile.stdamps,sizeof(float)*NBINMAX);
+	    memcpy(phas,StdProfile.stdphas,sizeof(float)*NBINMAX);     
 	  }
-	
-	  /*****************/
-	
-	  /*     }  */
-	
-	
-	} /* else from positive check on NPtsProf */
-	free(InProfile);
-
-	/* Now if we *aren't* using a user-supplied standard profile, copy 
-	   the current output profile's worth of added scans to the 
-	   standard profile for scaling purposes from now on */
-      
-	/* To ensure that this starts with the first file for which all 
-	   scans are not omitted, and only for when standard profile is not 
-	   given, and do once every dump, not once every channel */
-	if (got_mjd1 && !Cmd->StdfileP) {
-	
-	  //printf("Copying over std prof...\n\n");fflush(stdout);
-	  for(i_bin=0;i_bin<NPtsProf;i_bin++) {
-	    StdProfile.rstds[i_bin] = OutProfile.rstds[i_bin];///TotWeight;
-	    StdProfile.rstdq[i_bin] = OutProfile.rstdq[i_bin];///TotWeight;
-	    StdProfile.rstdu[i_bin] = OutProfile.rstdu[i_bin];///TotWeight;
-	    StdProfile.rstdv[i_bin] = OutProfile.rstdv[i_bin];///TotWeight;
-	  }
-	  //memcpy(&StdProfile, &OutProfile, sizeof(struct StdProfs));
-	
-	  /* Now prepare it for fftfitting next round */
-	  cprofc(StdProfile.rstds,NStdBins,
-		 StdProfile.stdamps,StdProfile.stdphas);
-	
-	  memcpy(amps,StdProfile.stdamps,sizeof(float)*NBINMAX);
-	  memcpy(phas,StdProfile.stdphas,sizeof(float)*NBINMAX);     
 	}
+	
+	/****** maybe bring this inside the ELSE where entire scans aren't being omitted ******/
+	/* if (Cmd->SortChansP) 
+	   TotDumps += (NDumps - n_omit);
+	   else */ 
+	TotDumps += (NDumps*Hdr[i_file].obs.NChan - n_omit); 
+	
+	printf("Reading of file %s complete and successful.\n",
+	       Cmd->Infile[i_file]);
+	printf("%d scans omitted.\n\n",n_omit);fflush(stdout);
+	
+	
+      } /* if(good_freq) */
+      else{
+	printf("File %s contains data outside frequency range restrictions ",
+	       Cmd->Infile[i_file]);
+	printf("(%.2lf to %.2lf).  Skipping this file in constructing template profile.\n",
+	       Hdr[i_file].obs.ChanFreq[0], Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
       }
-    
-      /****** maybe bring this inside the ELSE where entire scans aren't being omitted ******/
-      /* if (Cmd->SortChansP) 
-	 TotDumps += (NDumps - n_omit);
-	 else */ 
-      TotDumps += (NDumps*Hdr[i_file].obs.NChan - n_omit); 
-    
-      printf("Reading of file %s complete and successful.\n",
-	     Cmd->Infile[i_file]);
-      printf("%d scans omitted.\n\n",n_omit);fflush(stdout);
+      
     }
-
+    
     if(Cmd->VerboseP || Cmd->CheckOmitP) fclose(Fcheck);
-
+    
     /* Appease the format of the MakePol routine by making up these RunMode 
        structure members */
     /* divide out total number of dumps to get the average */
     // for(i_chan=0;i_chan<OutChans;i_chan++){
-   
-    printf("Totdumps = %d\n",TotDumps);
+    
+    printf("Totdumps = %d\nTotWeight = %f\n", TotDumps, TotWeight);
     fflush(stdout);
     
     if (Cmd->NormalizeP){
@@ -519,7 +576,7 @@ int main(int argc, char **argv)
   
     printf("MJD_mid = %lf, IMJDMid = %lf, MJDSecsMid = %lf\n",MJD_mid,IMJDMid,MJDSecsMid);fflush(stdout); 
 
-    /* to choose a channel to put in the header for now, ust use the average 
+    /* to choose a channel to put in the header for now, just use the average 
        of the first datafile's channels */ 
     OutFreq=0.;
     for(i_chan=0; i_chan<Hdr[0].obs.NChan; i_chan++){

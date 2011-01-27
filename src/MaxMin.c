@@ -40,6 +40,45 @@ double Min(double *array,int nbins, int *imin)
                                                                                 
 }
 
+                                                                                
+float FMax(float *array,int nbins, int *imax)
+{
+                                                                                
+  int    i;
+  float max;
+                                                                                
+  max = -999999.;
+  *imax = 0;
+                                                                                
+  for(i=0;i<nbins;i++)
+    if(array[i] > max) {
+      max = array[i];
+      *imax = i;
+    }
+                                                                                
+  return(max);
+                                                                                
+}
+
+float FMin(float *array,int nbins, int *imin)
+{
+                                                                                
+  int    i;
+  float min;
+                                                                                
+  min = array[0];
+  *imin = 0;
+                                                                                
+  for(i=1;i<nbins;i++)
+    if(array[i] < min) {
+      min = array[i];
+      *imin = i;
+    }
+                                                                                
+  return(min);
+                                                                                
+}
+
 int IMax(int *array,int nbins, int *imax)
 {
                                                                                 

@@ -132,3 +132,7 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
     fclose(fp);
     return(jsave);
 }
+
+
+/* Routine to make polyco file, and read it using GetPoly() above, given the pulsar 
+   name or par file */

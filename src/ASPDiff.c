@@ -324,7 +324,7 @@ int main(int argc, char *argv[])
     }
 
    if(WrtASPStokes(Hdr, StokesSubHdr, Fdiff, nscan, 
-		    DiffProfile, 0, &RunMode) < 0) {
+		    DiffProfile, &RunMode) < 0) {
       printf("Cannot write data tables to fits file. Exiting...\n");fflush(stdout);
       exit(6);
     }

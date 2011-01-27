@@ -150,7 +150,7 @@ int main(int argc, char **argv)
     if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
       RunMode.NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
 				     many non-data tables we will be using */
-    }
+    } 
     else if(!strcmp(InHdr.gen.HdrVer,"Ver1.0.1")){
       RunMode.NDumps = (NumHDU-3)/2;
     }
@@ -263,7 +263,7 @@ int main(int argc, char **argv)
 
   /* Parse omission file and set up omission scans etc. */
   if (GetOmit(&InHdr, Cmd, &RunMode) < 0){
-    printf("Unable to read or parse omit file %s. Exiting...\n",Cmd->Omitfile);
+    printf("Unable to read or parse omit file %s. Exiting...\n",Cmd->Zapfile);
     fflush(stdout);
     exit(6);
   }
@@ -707,7 +707,7 @@ int main(int argc, char **argv)
     }
     else{  */
     if(WrtASPStokes(OutHdr, SubOutHdr, Fout[FileOutNo], i_dump_out, 
-		    OutputProfs, Cmd->OmitfileP, &RunMode) < 0) {
+		    OutputProfs, &RunMode) < 0) {
       printf("Cannot write data tables to fits file. Exiting...\n");
       exit(12);
     }
@@ -784,7 +784,7 @@ void PrintLog(struct RunVars *RunMode, struct ASPHdr *Hdr, Cmdline *Cmd)
   fclose(Fcheck);
 
 
-  if(Cmd->OmitfileP){
+  if(Cmd->ZapfileP){
       
     Fcheck=fopen("check_omit.dat", "w");
     fprintf(Fcheck, "  Omit matrix for each Input Dump/Channel combination (omit==1):\n\n");
