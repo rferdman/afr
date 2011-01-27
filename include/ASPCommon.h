@@ -188,6 +188,7 @@ void   DSort(int , double *);
 void   FZero(float *, int);
 void   DZero(double *, int);
 void   IZero(int *, int);
+void   LZero(long *, int);
 int    ISum(int *, int);
 float  FSum(float *, int);
 double DSum(double *, int);
@@ -195,6 +196,8 @@ int    ArrayZero(float *, int);
 double FindPeak(float *, int *, int *);
 double Max(double *,int , int *);
 double Min(double *,int , int *);
+float FMax(float *,int , int *);
+float FMin(float *,int , int *);
 int    IMax(int *, int, int *);
 int    IMin(int *, int, int *);
 void   WriteStokes(struct RunVars *, struct StdProfs *, char *, char *);
@@ -206,7 +209,7 @@ double ratorad(char *);
 double dectorad(char *);
 int    WrtASPHdr(struct ASPHdr *, fitsfile *);
 int    WrtASPStokes(struct ASPHdr, struct SubHdr, fitsfile *, int, 
-		    struct StdProfs *,  int, struct RunVars *);
+		    struct StdProfs *, struct RunVars *);
 void   ReadASPStokes(struct ASPHdr *, struct SubHdr *,fitsfile *, long , 
 		     struct StdProfs *, int, int);
 int    ReadASPAsc(char *, char *, int *, struct StdProfs *, int *);
