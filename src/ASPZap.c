@@ -529,12 +529,7 @@ int main(int argc, char *argv[])
       /* Check that profile is not zeroed out, or contains NaNs */
       bad_array = ArrayZero(Profile[i_chan].rstds, Hdr.redn.RNBinTimeDump);
       
-      /*   if(i_array == 186){
-	printf("\n\n********** BAD PROFILE CHECK i_chan = %d, freq = %lf, i_dump = %d**************\n", i_chan, Hdr.obs.ChanFreq[i_chan], i_dump);fflush(stdout);
-      for (i=0;i< Hdr.redn.RNBinTimeDump; i++)
-	printf("%.4f   ",Profile[i_chan].rstds[i]);fflush(stdout);
-      printf("\n*******************************************\n\n");fflush(stdout);
-      } */
+  
 
 
       if (bad_array) {
@@ -554,12 +549,7 @@ int main(int argc, char *argv[])
       BMask(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&Duty,FinalMask);
       Baseline(Profile[i_chan].rstds,FinalMask,&Hdr.redn.RNBinTimeDump,
 	       &SBase,&Srms);
-      /*      Baseline(Profile[i_chan].rstdv,FinalMask,&Hdr.redn.RNBinTimeDump,
-	       &VBase,&Vrms);
-      Baseline(Profile[i_chan].rstdq,FinalMask,&Hdr.redn.RNBinTimeDump,
-	       &QBase,&Qrms);
-      Baseline(Profile[i_chan].rstdu,FinalMask,&Hdr.redn.RNBinTimeDump,
-      &UBase,&Urms); */
+
  
       // SPeak =  FindPeak(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&spk);
       // Profile[i_chan].SNR = SPeak*Srms;
@@ -850,10 +840,7 @@ int main(int argc, char *argv[])
   cpgeras();
   /* Set limiting x and y-axis coordinates in the window */
   
-  /*xaxis_min = 0.05;
-  xaxis_max = 0.97;
-  yaxis_min = 0.12;
-  yaxis_max = 0.97; */
+ 
 
  /* start with RMS plot, and if Template is given, do fftfit shift, shift errors, 
      and scaling factor */

@@ -248,7 +248,7 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
     //// maybe gone soon ////
     for(j=0;j<hdr->obs.NChan;j++)
       RunMode->ZapChan[j]=0;
-    /////////////////////////
+    ////////////////////////
   }
   
   if (Cmd->FreqOmitP){
