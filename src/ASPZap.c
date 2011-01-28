@@ -1417,10 +1417,12 @@ int main(int argc, char *argv[])
     }
   }
 
-  if(Cmd->PazP) fprintf(FPaz, "%s", FitsFile);
-  
   fclose(FZap);
-  fclose(FPaz);
+
+  if(Cmd->PazP){
+    fprintf(FPaz, "%s", FitsFile);
+    fclose(FPaz);
+  }
   
   /* Free ASquared, BSquared, etc. */
   free(ASquared);
