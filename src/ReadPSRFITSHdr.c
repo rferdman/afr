@@ -161,7 +161,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
   /* Don't bother to get this DM/RM info if this is a cal file */
   if (strncmp(hdr->gen.ObsMode, "CAL", 3) &&
       strncmp(hdr->gen.ObsMode, "FOF", 3) &&
-      strncmp(hdr->gen.ObsMode, "SEARCH", 3) ) {
+      strncmp(hdr->gen.ObsMode, "SEARCH", 6) ) {
       
       /* If this is GUPPI data, we need to read in DM/RM from the ephemeris table */
     //    if (!strncmp(hdr->gen.BEName, "GUPPI", 5)){
