@@ -159,7 +159,9 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
   status=0; 
 
   /* Don't bother to get this DM/RM info if this is a cal file */
-  if (strncmp(hdr->gen.ObsMode, "CAL", 3)) {
+  if (strncmp(hdr->gen.ObsMode, "CAL", 3) &&
+      strncmp(hdr->gen.ObsMode, "FOF", 3) &&
+      strncmp(hdr->gen.ObsMode, "SEARCH", 3) ) {
       
       /* If this is GUPPI data, we need to read in DM/RM from the ephemeris table */
     //    if (!strncmp(hdr->gen.BEName, "GUPPI", 5)){
@@ -170,7 +172,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
 	/* Now try PSRPARAM table */
 	status=0;
 	if(fits_movnam_hdu(Fin, BINARY_TBL, "PSRPARAM", 0, &status)) {
-	  fprintf(stderr, "ERROR ReadASPHdr: neither PSREPHEM nor PSRPARAM tables exist!\n");
+	  fprintf(stderr, "ERROR ReadPSRFITSHdr: neither PSREPHEM nor PSRPARAM tables exist!\n");
 	  return -1;
 	}
 	else {
