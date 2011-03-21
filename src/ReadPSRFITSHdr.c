@@ -377,6 +377,16 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
   fits_read_key(Fin, TINT, "NAXIS2", &hdr->redn.RNTimeDumps, NULL, &status); 
   status=0;
   
+/* Length of integration */
+  if(fits_get_colnum (Fin, CASEINSEN, "TSUBINT", &colnum, &status)){
+    fprintf(stderr, "ReadPSRFITSData ERROR: No TSUBINT in FITS file?\n");
+    return -1;
+  }
+  if(fits_read_col(Fin, TDOUBLE, colnum, 1, 1, 1, NULL, &hdr->redn.TDump, &anynul, &status)){
+    fprintf(stderr, "ReadPSRFITSData ERROR: Unable to read TSUBINT...\n");
+    return -1;
+  }
+
   if(fits_get_colnum(Fin, CASEINSEN, "DAT_FREQ", &colnum, &status)){
     fprintf(stderr, "ERROR ReadPSRFITSHdr: Could not read DAT_FREQ column.\n");
     return -1;

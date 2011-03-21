@@ -8,3 +8,4 @@ int  Freq2Chan(double, double *, int);
 int  ReadCal(struct ASPHdr *, struct RunVars *, struct CalVars *, 
 	    double **);
 void PrintLog(struct RunVars *, struct ASPHdr *, Cmdline *);
+int MakePoly(Cmdline *, struct ASPHdr *);

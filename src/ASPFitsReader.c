@@ -147,6 +147,11 @@ int main(int argc, char **argv)
   fits_get_num_hdus(Fin, &NumHDU, &status);
   
   if(!strcmp(InHdr.gen.BEName, "xASP")) {
+    
+    /* Still hanging onto RunMode.NDumps for now for the sake of other routines */
+    RunMode.NDumps = InHdr.redn.RNTimeDumps;
+    
+#if 0
     if(!strcmp(InHdr.gen.HdrVer,"Ver1.0")){
       RunMode.NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
 				     many non-data tables we will be using */
@@ -160,13 +165,9 @@ int main(int argc, char **argv)
       exit(3);
     }
 
-    /* Now check last dump to make sure it wrote properly if scan 
-       was ctrl-c'd -- if so, reduce NDumps by 1 to avoid disaster */
-    fits_get_num_hdus(Fin, &NumHDU, &status);
-    fits_movabs_hdu(Fin,NumHDU,&hdutype, &status);
-    /* find NPtsProf */
-    fits_get_num_rows(Fin, &NPtsProf, &status);status=0;    
+#endif
   }
+
   else {      
     if(!strcmp(InHdr.gen.FitsType, "PSRFITS")) {
       /* Set to dedisperse input profiles before processing */
@@ -185,12 +186,7 @@ int main(int argc, char **argv)
   
 
   //  if ((RunMode.NBins!=(int)NPtsProf)){
-  if ((InHdr.redn.RNBinTimeDump!=(int)NPtsProf)){
-    printf("Warning:  last dump did not write cleanly.\n");
-    printf("Reducing number of dumps read in file by one...\n\n");
-    fflush(stdout);
-    RunMode.NDumps--;
-  }
+
   
   /* Get and sort out command line options */
   if(GetOptions(&RunMode, &CalMode, Cmd, &InHdr) < 0){
@@ -210,6 +206,7 @@ int main(int argc, char **argv)
     printf("NOutChans = %d\n",RunMode.NOutChans);fflush(stdout);
     printf("AddDumps = %d\n",RunMode.AddDumps);fflush(stdout);
     printf("NDumps = %d\n",RunMode.NDumps);fflush(stdout);
+    printf("TDump = %.3lf seconds\n\n", InHdr.redn.TDump);
   }
   
   printf("Number of input channels:       %d\n",InHdr.obs.NChan);
@@ -318,7 +315,15 @@ int main(int argc, char **argv)
     }
   }
 
-  /* Read in polyco.dat file and get polyco structure if requested on 
+  /* Make polyco file on the fly if requested by user, which will be 
+     seen and used by GetPoly routine */
+  if (Cmd->PSRNameP || Cmd->ParFileP) {
+    if(MakePoly(Cmd, &InHdr) < 0){
+      fprintf(stderr, "Could not make polycos. Exiting...\n");
+      exit(2);
+    }
+  }
+ /* Read in polyco.dat file and get polyco structure if requested on 
      command line */
   if(Cmd->PolyfileP){
     if(Cmd->PolyfileC == 0) sprintf(Cmd->Polyfile,"polyco.dat");

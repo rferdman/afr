@@ -10,6 +10,8 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
 #include "fitsio.h"
 #include "ZapCmdLine.h" 
 #include "ASPCommon.h"
@@ -712,6 +714,7 @@ int main(int argc, char *argv[])
     }
     /* Make a long rectangular plot surface for profiles */
     cpgpap(5.5, 1.9);
+	//  printf("VIEW WIDTH = %f,  VIEW HEIGHT = %f\n\n", view_width, view_height);
     cpgsch(1.);  
     
    if ((dev_prof_plot = cpgopen("/xs")) < 1) {
@@ -1131,7 +1134,7 @@ int main(int argc, char *argv[])
 	    final_check = 1;
 	    reset_plot = 1;
 	}
-	/* Profile mode help ('h') */
+	/* Profile mode help ('?') */
 	if (!strcmp(char_input, "?\n")){
 	  printf("-------------------------------------------------------------------------\n");
 	  printf("Profile mode command options:\n");

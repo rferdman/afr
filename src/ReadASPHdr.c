@@ -7,12 +7,17 @@
 int ReadASPHdr(struct      ASPHdr *hdr,
 		fitsfile   *Fin)
 {
-  int     i, status, knul=0, anynull, indx, retval;
+  int     i, hdutype, status, knul=0, anynull, indx, retval;
   double  dnul=0.0;
   float   fnul=0;
   long    nrows=0;
+  long    NPtsProf=0;
   char    tblname[40]; //, *ttype[10], *tform[10], *tunit[10];
 
+  int     NumHDU;
+  double  DumpMiddleSecs;
+  
+  
   retval = -1;
 
   fits_read_key(Fin, TSTRING, "SCANNAME", hdr->gen.ScanName, NULL, &status); 
@@ -209,6 +214,75 @@ int ReadASPHdr(struct      ASPHdr *hdr,
   }
 
 
+  /* Get the correct value for NDumps by finding the number of HDUs and calculting
+     it according to the version number of the ASP FITS file */
+  fits_get_num_hdus(Fin, &NumHDU, &status);
+  if(!strcmp(hdr->gen.HdrVer,"Ver1.0")){
+    hdr->redn.RNTimeDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
+				   many non-data tables we will be using */
+  } 
+  else if(!strcmp(hdr->gen.HdrVer,"Ver1.0.1")){
+    hdr->redn.RNTimeDumps = (NumHDU-3)/2;
+  }
+  else{
+    printf("Do not recognize ASP FITS file version number in header.\n");
+    printf("This header %s. Exiting...\n",hdr->gen.HdrVer);fflush(stdout);
+    exit(3);
+  }
+  /* Now check last dump to make sure it wrote properly if scan 
+     was ctrl-c'd -- if so, reduce NDumps by 1 to avoid disaster */
+  fits_get_num_hdus(Fin, &NumHDU, &status);
+  fits_movabs_hdu(Fin,NumHDU, &hdutype, &status);
+  /* find NPtsProf */
+  fits_get_num_rows(Fin, &NPtsProf, &status);status=0;    
+  /* Won't happen for PSRFITS data this way */
+  if ((hdr->redn.RNBinTimeDump!=(int)NPtsProf)){
+    printf("Warning:  last dump did not write cleanly.\n");
+    printf("Reducing number of dumps read in file by one...\n\n");
+    fflush(stdout);
+    hdr->redn.RNTimeDumps--;
+    //RunMode.NDumps--; 
+  }
+  
+  /* Fill in TDump value by finding the time stamp difference between the first 
+     and second scans */
+  if (hdr->redn.RNTimeDumps > 1) {
+    if(!strcasecmp(hdr->gen.HdrVer,"Ver1.0")) {
+      fits_movnam_hdu(Fin, BINARY_TBL, "ASPOUT0", 0, &status);
+      fits_read_key(Fin, TDOUBLE, "DUMPMIDSECS", 
+		    &(DumpMiddleSecs), NULL, &status); status = 0;
+    }
+    else if (!strcasecmp(hdr->gen.HdrVer,"Ver1.0.1")) {
+      fits_movnam_hdu(Fin, ASCII_TBL, "DUMPREF0", 0, &status);
+      fits_read_key(Fin, TDOUBLE, "MIDSECS", &(DumpMiddleSecs), 
+		    NULL, &status); status = 0;
+    }
+    hdr->redn.TDump = DumpMiddleSecs;
+    /* Move to second data table , get central time stamp */
+    if(!strcasecmp(hdr->gen.HdrVer,"Ver1.0")) {
+      fits_movnam_hdu(Fin, BINARY_TBL, "ASPOUT1", 0, &status);
+      fits_read_key(Fin, TDOUBLE, "DUMPMIDSECS", 
+		    &(DumpMiddleSecs),NULL, &status); status = 0;
+    }
+    else if (!strcasecmp(hdr->gen.HdrVer,"Ver1.0.1")) {
+      fits_movnam_hdu(Fin, ASCII_TBL, "DUMPREF1", 0, &status);
+      fits_read_key(Fin, TDOUBLE, "MIDSECS", &(DumpMiddleSecs), 
+		    NULL, &status); status = 0;
+    }
+    if(DumpMiddleSecs < hdr->redn.TDump) DumpMiddleSecs += 86400.;
+    
+    hdr->redn.TDump = DumpMiddleSecs - hdr->redn.TDump;
+  }
+  else {
+    /* We may have switched over to the next MJD, so take care of 
+       this if it's the case */
+    if (DumpMiddleSecs < (double)hdr->obs.StartTime) DumpMiddleSecs += 86400.;
+    
+    /* TDump is twice the difference between the middle time stamp 
+       and the start time */
+    hdr->redn.TDump = 2.* ((double)floor(DumpMiddleSecs) - (double)hdr->obs.StartTime);
+  }
+  
 
   /*  for (i = 0; i < 10; i++)
     {

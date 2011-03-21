@@ -158,6 +158,7 @@ int    GetTelescope(struct ASPHdr *, struct Telescope *Tel);
 void   GetCal(struct ASPHdr *, struct RunVars *, double **);
 int    GetCalPhases(double *, int , int *);
 double GetCalHeight(double *, int , int *, int *, double *, double *);
+int    FileExists(char *);
 int    QuickPlot(double *, int);
 int    Median(double *, double *, int, int);
 int    ReadData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 

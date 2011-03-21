@@ -87,8 +87,8 @@ String -outroot OutfileRoot {Output data filename root [<PSR Name>.<MJD>.<Integr
 ## e.g. for 1534+12, file name = "1534.std
 
 ## PSR name
-String -psr Source {PSR Name} \
-    -c 1 1
+##String -psr Source {PSR Name} \
+##    -c 1 1
 
 ## calibration file name
 String -calfile Calfile {Input calibration file} \
@@ -110,6 +110,15 @@ String -zapfile Zapfile {File of scans to zap} \
 String -polyco Polyfile {Use polyco file to adjust pulsar phases} \
     -c 0 1 
 #    -d "polyco.dat"
+
+## Use par file to adjust and align pulse phases
+String -parfile ParFile {Use input parameter file to reallign pulse profiles} \
+    -c 1 1
+
+## Look for and use par file for this pulsar to realign pulse profiles
+String -psr PSRName {Find and use parameter file for this pulsar to realign profiles.  Will search directory $TEMPO/tzpar} \
+    -c 1 1
+
 
 ########################################################################
 ## FLOAT OPTIONS

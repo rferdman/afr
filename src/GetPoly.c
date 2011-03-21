@@ -7,7 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "polyco.h"
+#include "ASPCommon.h"
+#include "Cmdline.h"
+
+
 //#include "misc.h"
 
 /* Input:  obs_params needs to be read in before calling this, so
@@ -135,4 +138,168 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
 
 
 /* Routine to make polyco file, and read it using GetPoly() above, given the pulsar 
-   name or par file */
+   name or par file -- at the moment this will only be in tempo1 format */
+
+int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr) 
+{  
+  
+  int  i_chan;
+  char ParDir[256], tempstr[10];
+  char ParFile[256];
+  char tempo_cmd[256];
+  FILE *Fpoly, *Ftempo;
+  
+  /* Get TEMPO environment variable */
+  if(getenv("TEMPO")==NULL){
+    fprintf(stderr,"TEMPO environment variable is not set!\n");
+    return -1;
+  }
+  sprintf(ParDir, "%s/tzpar", getenv("TEMPO"));
+ 
+  
+  /* Get par file -- Are we using a user-provided par file, or are we looking in the 
+     default par directory? */
+  
+  if(Cmd->ParFileP){
+    /* Check that input par file exists */
+    if(FileExists(Cmd->ParFile)){
+      strcpy(ParFile, Cmd->ParFile);
+      printf("Creating polycos for PSR %s from input parameter file %s.\n", 
+	     Hdr->target.PSRName, ParFile);
+    }
+    else{
+      fprintf(stderr,"Could not open file %s.\n", Cmd->ParFile);
+      return -1;
+    }
+  }
+  else if(Cmd->PSRNameP){
+    printf("Looking for par file in directory %s for pulsar %s, provided by user.\n",
+	   ParDir, Cmd->PSRName);
+    sprintf(ParFile, "%s/%s.par", ParDir, Cmd->PSRName);
+    /* Is there a file in directory that matches Cmd->PSRName.par? */
+    if(FileExists(ParFile)){
+      printf("Creating polycos from input parameter file %s/%s.par\n",ParDir,Cmd->PSRName);
+      /* If yes, take (absolute path of) par file name. */
+    }
+    else{
+      /* If still no, give error and exit. */
+      fprintf(stderr, "Could not open file %s.par.  Try explicitly ", Cmd->PSRName);
+      fprintf(stderr, "inputting parameter file name by using the -parfile option.\n");
+      return -1;
+    }
+  }
+  else{
+    printf("Looking for par file in directory %s that matches pulsar name %s ",
+	   ParDir, Hdr->target.PSRName);
+    printf("from current data file header.\n");
+    sprintf(ParFile, "%s/%s.par", ParDir, Hdr->target.PSRName);      
+    /* Is there a file in directory that matches Hdr->target.PSRName.par? */
+    if(FileExists(ParDir)){
+      printf("Creating polycos from input parameter file %s/%s.par\n",
+	     ParDir, Hdr->target.PSRName);
+      /* If yes, take (absolute path of) par file name. */
+    }
+    else{
+      /* If not, strip first "B" or "J" from name and repeat previous two steps again.*/
+      if(!strncmp(Hdr->target.PSRName, "J", 1) || !strncmp(Hdr->target.PSRName, "B", 1)){
+	strncpy(tempstr, &Hdr->target.PSRName[1], sizeof(char)*strlen(Hdr->target.PSRName)-1);
+	sprintf(ParFile, "%s/%s.par", ParDir, tempstr);
+	if(FileExists(ParFile)){
+	  printf("Creating polycos from input parameter file %s/%s.par\n",
+		 ParDir,tempstr);	  
+	  /* If yes, take (absolute path of) par file name. */
+	}
+	else{
+	  fprintf(stderr,"Could not open file %s.par.  Try explicitly ", 
+		  tempstr);
+	  fprintf(stderr,"inputting parameter file name by using the -parfile option.\n");
+	  return -1;	  
+	}
+      }
+      else{
+	/* If still no, give error and exit. */
+	fprintf(stderr, "Could not open file %s.par.  Try explicitly ", 
+		Hdr->target.PSRName);
+	fprintf(stderr, "inputting parameter file name by using the -parfile option.\n");
+	return -1;
+      }
+    }
+  }
+  
+  /* If we made it this far, we have a par file we can now use to create a polyco file. */
+  
+  /* Open final output file and close right away to create it -- sort of 
+     like a "touch" command, in effect */
+  if((Fpoly=fopen("poly_final.dat", "w"))==NULL){
+    fprintf(stderr,"Could not open file poly_final.dat.  \n");
+    return -1;
+  }
+  fclose(Fpoly);
+  
+  
+  /* Loop over number of frequency channels */
+  for (i_chan=0; i_chan<Hdr->obs.NChan; i_chan++){
+    /* Construct command line based on Header information:  Frequency, 
+       start MJD, and get scan length using dump length and number of dumps */
+    sprintf(tempo_cmd,
+	    "tempo -f %s -Zpsr=%s -Zfreq=%lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s", 
+	    ParFile, Hdr->target.PSRName, Hdr->obs.ChanFreq[i_chan], 
+	    /* allow an extra 2 hours of polycos */
+	    2. + (Hdr->redn.TDump*((double)Hdr->redn.RNTimeDumps)/3600.), 
+	    /* Start polyco set to be 1 hour early, (and so end 1 hour later) */
+	    Hdr->obs.IMJDStart + ((double)Hdr->obs.StartTime - 3600.)/86400.,
+	    /* default at 15 minutes valid span */
+	    900, Hdr->obs.ObsvtyCode);
+
+    /* Create polyco using tempo command, and append it to final polyco file */
+    if(i_chan==1) printf("tempo command:\n%s\n\n\n", tempo_cmd);
+    system(tempo_cmd);
+#if 0
+    if((Ftempo = popen(tempo_cmd, "r"))==NULL) {
+      fprintf(stderr, "Could not run tempo correctly\n");
+      return -1;
+    }
+    pclose(Ftempo);
+#endif
+    /* Now take the output polyco.dat file and append it to the final polyco
+       file */
+    system("cat polyco.dat >> poly_final.dat");
+    if(remove("polyco.dat") < 0) {
+      fprintf(stderr,"Could not remove polyco.dat file for frequency %.3lf.",
+	      Hdr->obs.ChanFreq[i_chan]);
+      return -1;
+    }
+
+  }
+
+  /* Finally, set appropriate variables to let main AFR program know that it 
+     can go ahead and read in an existing par file (poly_final.dat in 
+     this case) */
+  Cmd->PolyfileP=1;
+  Cmd->PolyfileC=1;
+  Cmd->Polyfile = (char *) malloc(64);
+  strcpy(Cmd->Polyfile,"poly_final.dat");
+
+  return 0;
+}
+
+
+
+
+int FileExists(char *testfile)
+{
+  
+  FILE *Ftest;
+  
+  if((Ftest=fopen(testfile, "r"))==NULL){
+    /* File cannot be opened */
+    return 0;
+  }
+  else{
+    /* File exists! */
+    fclose(Ftest);
+    return 1;
+  }
+  
+}
+
