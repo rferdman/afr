@@ -124,7 +124,12 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
                 }
                 jsave++;
             }
-        } 
+        }
+	else{
+	  printf("Found a mismatch:\n");
+	  printf("name0=%s,  psr_name=%s\n ChanFreq=%.5lf, RefFreq=%.5lf\n",
+		 name0, psr_name, ChanFreq, RefFreq);
+	}
     }
     fflush(stdout); 
 
