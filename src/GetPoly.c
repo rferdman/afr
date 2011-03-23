@@ -259,7 +259,7 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
 	    /* Start polyco set to be 1 hour early, (and so end 1 hour later) */
 	    Hdr->obs.IMJDStart + ((double)Hdr->obs.StartTime - 3600.)/86400.,
 	    /* default at 15 minutes valid span */
-	    900, Hdr->obs.ObsvtyCode);
+	    1800, Hdr->obs.ObsvtyCode);
 
     /* Create polyco using tempo command, and append it to final polyco file */
     if(i_chan==1) printf("tempo command:\n%s\n\n\n", tempo_cmd);
