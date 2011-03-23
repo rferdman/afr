@@ -248,7 +248,8 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
     /* Construct command line based on Header information:  Frequency, 
        start MJD, and get scan length using dump length and number of dumps */
     sprintf(tempo_cmd,
-	    "tempo -f %s -Zpsr=%s -Zfreq=%lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s", 
+	 "tempo -f %s -Zpsr=%s -Zfreq=%.3lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s",
+	    /* Channel frequency must be 3 decimal places for tempo1 predictors */
 	    ParFile, Hdr->target.PSRName, Hdr->obs.ChanFreq[i_chan], 
 	    /* allow an extra 2 hours of polycos */
 	    2. + (Hdr->redn.TDump*((double)Hdr->redn.RNTimeDumps)/3600.), 
