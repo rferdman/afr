@@ -10,6 +10,7 @@
 #include "ASPCommon.h"
 #include "CmdLine.h"
 
+#define FREQTOL 0.003
 
 //#include "misc.h"
 
@@ -99,7 +100,9 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
         /* just in case its a futmid we want an mjdmid */
         if (mjdmid < 20000) mjdmid += 39126.;
 //        if (!strncmp(name0,obs_params->psr_name,10) && (ChanFreq == RefFreq)) {
-        if (!strncmp(name0,psr_name,10) && (ChanFreq == RefFreq)) {
+	/* Ensure that pulsar names match, and that frequencies match within tolerance */
+        if (!strncmp(name0,psr_name,10) && 
+	    (fabsf(ChanFreq - RefFreq) <= FREQTOL) ) {
             mjdcheck = mjdmid + mjd1mid;
 	    //            printf("GETPOLY: mjd = %f, mjdcheck = %f, ChanFreq = %lf, RefFreq = %lf\n",mjd,mjdcheck, ChanFreq, RefFreq); fflush(stdout); 
             if (fabs(mjd-mjdcheck) <= 0.5) {
@@ -131,7 +134,7 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
 
     if(jsave < 1){
       printf("Found a mismatch -- ChanFreq=%.5lf not found...\n",
-	     name0, psr_name, ChanFreq, RefFreq);
+	     ChanFreq);
     }
 
     /* jsave comes out as the number of polyco sets found for this
