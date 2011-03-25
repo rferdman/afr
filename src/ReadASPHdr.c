@@ -283,6 +283,9 @@ int ReadASPHdr(struct      ASPHdr *hdr,
     hdr->redn.TDump = 2.* ((double)floor(DumpMiddleSecs) - (double)hdr->obs.StartTime);
   }
   
+  /* There are no subint offsets for ASP files, so set to zero */
+  hdr->obs.NSubOffs=0;
+
 
   /*  for (i = 0; i < 10; i++)
     {

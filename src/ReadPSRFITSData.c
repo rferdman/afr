@@ -15,7 +15,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   int  hdutype, anynul, status=0;
   int  colnum, colnum_wts, colnum_scl, colnum_offs, colnum_data;
   int  NColumns, n_poly, FileStartSecs;
-  static int  n_suboffs=0;   
+  //  static int  n_suboffs=0;   
   double  *tempprof;
   //short int  *tempprof;
   float  *Weights, *Offsets, *Scales;
@@ -176,6 +176,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 
   /* Read in number of rows before this file if it is a file in a series, so 
      that we can add the offset to the number of subints in this file */
+#if 0
   if (i_dump==0) { // first scan only
     if(fits_read_key(Fin, TINT, "NSUBOFFS", &n_suboffs, NULL, &status)) {
       if(!strncmp(hdr->gen.ObsMode, "CAL", 3)){
@@ -196,7 +197,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     }
 
   }
-  
+#endif  
+
 /* Length of integration */
   if(fits_get_colnum (Fin, CASEINSEN, "TSUBINT", &colnum, &status)){
     fprintf(stderr, "ReadPSRFITSData ERROR: No TSUBINT in FITS file?\n");
@@ -211,10 +213,10 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
      data file -- and assume TDump for all dumps is the same as this first 
      dump in the current file */
   if(i_dump==0) {
-    TotalTDump = ((double)n_suboffs)*hdr->redn.TDump;
+    TotalTDump = ((double)hdr->obs.NSubOffs)*hdr->redn.TDump;
     /* Get the number of seconds after UT 0:00 this particular scan began */
     FileStartSecs = hdr->obs.StartTime + 
-      (int)floor((double)n_suboffs*hdr->redn.TDump);
+      (int)floor((double)hdr->obs.NSubOffs*hdr->redn.TDump);
     /* Now with all the required info, we can construct the 
        output file name */
     sprintf(RunMode->OutfileRoot, "%s.%5.5d.%5.5d.%s.%s", 

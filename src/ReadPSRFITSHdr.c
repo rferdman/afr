@@ -207,7 +207,6 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
 	    //#endif
 
 
-	    printf("OH HAI again 2\n");
 	    /* Parse string */
 	    printf("%s\n",tempstr1);
 	    if(!strncmp(&tempstr1[0], "DM ", 3)){
@@ -370,6 +369,23 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
     /* NOTE that there is a separate DAT_FREQ table for each row...  
        hopefully will be the same for all integrations!  
        Will put in a safeguard at some point */
+    if(fits_read_key(Fin, TINT, "NSUBOFFS", &hdr->obs.NSubOffs, NULL, &status)) {
+      if(!strncmp(hdr->gen.ObsMode, "CAL", 3)){
+	fprintf(stderr, "ReadPSRFITSData WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
+	printf("Proceeding with CAL file reading.\n");	
+	status=0;  /* Otherwise next fits routine will crash */
+	
+      } 
+      else {
+	fprintf(stderr, "ReadPSRFITSData WARNING:  Could not read NSUBOFFS keyword from SUBINT extension.\n");
+	printf("Proceeding with reading of data.  Time stamps likely not correct.\n");	
+	hdr->obs.NSubOffs=0;
+	//sleep(2);
+	status=0;  /* Otherwise next fits routine will crash */
+	//  fits_report_error(stderr, status); /* print any error message */
+	
+      }
+    }
     
   }
   

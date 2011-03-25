@@ -257,7 +257,9 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
 	    /* allow an extra 2 hours of polycos */
 	    2. + (Hdr->redn.TDump*((double)Hdr->redn.RNTimeDumps)/3600.), 
 	    /* Start polyco set to be 1 hour early, (and so end 1 hour later) */
-	    Hdr->obs.IMJDStart + ((double)Hdr->obs.StartTime - 3600.)/86400.,
+	    Hdr->obs.IMJDStart + ((double)Hdr->obs.StartTime + 
+				  floor((double)Hdr->obs.NSubOffs*Hdr->redn.TDump)
+				  - 3600.)/86400.,
 	    /* default at 15 minutes valid span */
 	    1800, Hdr->obs.ObsvtyCode);
 

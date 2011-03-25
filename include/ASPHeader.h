@@ -45,6 +45,7 @@ struct ObservationMode
   double   StartFSec;             /* Fractional sec after StartTime */
   char     StartDate[STRINGLEN];  /* Start Date */
   char     StartUT[STRINGLEN];    /* Start Time UT */
+  int      NSubOffs;              /* Number of subintegrations current data file is offset from beginning of observation */
   double   ObsLength;             /* Length of Observation (sec) */
   float    IonRM;                 /* Ionospheric Rotation measure correction */
   double   ClockOffset;           /* [Obs.Std - GPS] (microsec) */
