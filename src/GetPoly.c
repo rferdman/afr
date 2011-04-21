@@ -10,7 +10,7 @@
 #include "ASPCommon.h"
 #include "CmdLine.h"
 
-#define FREQTOL 0.003
+#define FREQTOL 0.0003
 
 //#include "misc.h"
 
@@ -104,7 +104,7 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
         if (!strncmp(name0,psr_name,10) && 
 	    (fabsf(ChanFreq - RefFreq) <= FREQTOL) ) {
             mjdcheck = mjdmid + mjd1mid;
-	    //            printf("GETPOLY: mjd = %f, mjdcheck = %f, ChanFreq = %lf, RefFreq = %lf\n",mjd,mjdcheck, ChanFreq, RefFreq); fflush(stdout); 
+	    // printf("GETPOLY: ChanFreq = %lf, RefFreq = %lf\n",ChanFreq, RefFreq); fflush(stdout); 
             if (fabs(mjd-mjdcheck) <= 0.5) {
                 pc[jsave].NMinutes = nblk0;
 		//                printf("GETPOLY: fabs = %f,   jobs = %d, mjdcheck = %f\n",fabs(mjd-mjdcheck), jobs, mjdcheck); 
@@ -251,7 +251,7 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
     /* Construct command line based on Header information:  Frequency, 
        start MJD, and get scan length using dump length and number of dumps */
     sprintf(tempo_cmd,
-	 "tempo -f %s -Zpsr=%s -Zfreq=%.3lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s",
+	 "tempo -f %s -Zpsr=%s -Zfreq=%lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s",
 	    /* Channel frequency must be 3 decimal places for tempo1 predictors */
 	    ParFile, Hdr->target.PSRName, Hdr->obs.ChanFreq[i_chan], 
 	    /* allow an extra 2 hours of polycos */

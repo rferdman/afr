@@ -412,6 +412,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
     return -1;
   }
   
+
   /* Set BW -- should work for all backend versions of PSRFITS */
   hdr->obs.BW = hdr->obs.ChanWidth * ((double)hdr->obs.NChan);
   /* Set Centre Frequency here -- should work for all versions of PSRFITS */

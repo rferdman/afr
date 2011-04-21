@@ -99,6 +99,10 @@ int main(int argc, char **argv)
 	   ProgName, Cmd->Infile);
     exit(2);
   }
+
+  //  printf("CHANNELS:\n\n");
+  //for(i=5; i<25; i++) printf("%lf\n", InHdr.obs.ChanFreq[i]);
+
   /* Load telescope information */
   if (GetTelescope(&InHdr, &Tel) < 0){
     fprintf(stderr, "ERROR:  Could not get telescope data.\n");
