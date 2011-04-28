@@ -89,8 +89,8 @@ int main(int argc, char **argv)
   }
 
   /* printf("\n\n!!!!!!!!!!!!!!!!!!!!!!!!!!\n");
-  printf("NEW VERSION!!!!!!!!!!!!!!!\n");
-  printf("!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n"); */
+     printf("NEW VERSION!!!!!!!!!!!!!!!\n"); */
+  printf("!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n");
   
   /* Read in values for header variables */
   //  if(ReadASPHdr(&InHdr, Fin) < 0){
