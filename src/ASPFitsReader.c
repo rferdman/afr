@@ -348,7 +348,7 @@ int main(int argc, char **argv)
 	Cmd->PolyfileP=0;
       }
     }
-    printf("Polycos successfully found.\n\n");
+    if (Cmd->PolyfileP) printf("Polycos successfully found.\n\n");
   }
   
   if(Cmd->PAngleOffP)

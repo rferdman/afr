@@ -260,7 +260,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     printf("match MJD for PSRFITS file.\n");
     printf("Phase and period information not known.  Will not be able to \n");
     printf("realign using polycos.\n\n");
-    //return -1;
+    return -1;
   }
 
   /*** IF NO VALID POLYCOS BECAUSE FITS FILE DATES ARE OFF... 

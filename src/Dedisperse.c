@@ -22,7 +22,10 @@ int Dedisperse (struct StdProfs *Profile, struct RunVars *RunMode,
     ( (1.0/(Hdr->obs.ChanFreq[i_chan]*Hdr->obs.ChanFreq[i_chan])) - 
       (1.0/(Hdr->obs.FSkyCent*Hdr->obs.FSkyCent)) );
   phase_delay = (dm_delay/SubHdr->DumpRefPeriod[i_chan]);
-  SubHdr->DumpRefPhase[i_chan] -= phase_delay;
+  ////////  SubHdr->DumpRefPhase[i_chan] -= phase_delay;
+
+
+
   ///  RotateProf
   //      printf("Chan%d:\nPeriod =  %.4lf\nPhase = %.4lf\ndm_delay = %.2lf\nphase_delay = %.4lf\n",i_chan,SubInHdr[i_dump].DumpRefPeriod[i_chan], SubInHdr[i_dump].DumpRefPhase[i_chan], dm_delay, phase_delay);
 
