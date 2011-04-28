@@ -21,7 +21,13 @@ int Dedisperse (struct StdProfs *Profile, struct RunVars *RunMode,
   dm_delay = (Hdr->obs.DM / DFFAC) * 
     ( (1.0/(Hdr->obs.ChanFreq[i_chan]*Hdr->obs.ChanFreq[i_chan])) - 
       (1.0/(Hdr->obs.FSkyCent*Hdr->obs.FSkyCent)) );
-  phase_delay = (dm_delay/SubHdr->DumpRefPeriod[i_chan]);
+  phase_delay = (dm_delay/SubHdr->DumpRefPeriod[i_chan]);  /* Number from 0 to 1 */
+
+  /* Use only fractional part of phase_shift */
+  phase_delay -= floor(phase_delay);
+  /* Now make sure it's between 0 and 1 (may be negative at this point) */
+  if(phase_delay < 0.0) phase_delay += 1.0;
+
   ////////  SubHdr->DumpRefPhase[i_chan] -= phase_delay;
 
 
