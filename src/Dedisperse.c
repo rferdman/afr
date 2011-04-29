@@ -28,7 +28,7 @@ int Dedisperse (struct StdProfs *Profile, struct RunVars *RunMode,
   /* Now make sure it's between 0 and 1 (may be negative at this point) */
   if(phase_delay < 0.0) phase_delay += 1.0;
 
-  ////////  SubHdr->DumpRefPhase[i_chan] -= phase_delay;
+  SubHdr->DumpRefPhase[i_chan] -= phase_delay;
 
 
 
