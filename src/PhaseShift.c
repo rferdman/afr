@@ -32,7 +32,7 @@ int PhaseShift(struct Polyco *Polycos, int n_poly, struct StdProfs *Profile,
     
   RotateProf(RunMode, Profile, ByAngle);
 
-  //printf("%.5lf : oldphase=%.5lf  newphase=%.5lf\n", Hdr->obs.ChanFreq[chan], SubHdr->DumpRefPhase[chan], RefPhase);
+  printf("%.5lf : oldphase=%.5lf  newphase=%.5lf\n", Hdr->obs.ChanFreq[chan], SubHdr->DumpRefPhase[chan], RefPhase);
   
   SubHdr->DumpRefPeriod[chan] = 1./RefFreq;
   SubHdr->DumpRefPhase[chan]  = RefPhase;

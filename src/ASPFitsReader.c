@@ -175,7 +175,7 @@ int main(int argc, char **argv)
   else {      
     if(!strcmp(InHdr.gen.FitsType, "PSRFITS")) {
       /* Set to dedisperse input profiles before processing */
-      Cmd->DedispP = 1;
+      //Cmd->DedispP = 1; // Want dedisperse to now be a command-line only option
       RunMode.NDumps = InHdr.redn.RNTimeDumps;
       NPtsProf = InHdr.redn.RNBinTimeDump;
     }
@@ -186,8 +186,6 @@ int main(int argc, char **argv)
     }
   }    
 
- 
-  
 
   //  if ((RunMode.NBins!=(int)NPtsProf)){
 
@@ -494,6 +492,7 @@ int main(int argc, char **argv)
 	  
 	  /* Now dedisperse to the centre frequency before further 
 	     processing, if required */	  
+	  //  RunMode.Dedisp=0;
 	  if(RunMode.Dedisp){
 	    if (Dedisperse(&InputProfs[i_chan_in], &RunMode, 
 			   &InHdr, &SubInHdr[i_dump_in], 

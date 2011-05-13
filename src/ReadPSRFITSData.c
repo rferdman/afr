@@ -226,6 +226,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	    hdr->obs.ObsvtyCode, hdr->gen.BEName);
   
   }
+  /* This is on purpose that even though i_dump may ==0, the TotalTDump
+     will correspond to the time elapsed *after* the current dump */
   TotalTDump += hdr->redn.TDump;
 
 
@@ -233,10 +235,11 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   
   /* Check that polyco falls inside NMinutes/2 of subint time */
   
+  /* This works out to the time  halfway during the current dump */
   subhdr->DumpMiddleSecs =  (double)hdr->obs.StartTime + 
     TotalTDump - hdr->redn.TDump/2.;
 
-  /* Need to recalculate RefPhase and RefPeriod based on polycos or something */
+  /* Need to recalculate RefPhase and RefPeriod based on polycos */
   DumpMiddleDays = subhdr->DumpMiddleSecs /86400.;
   
   if (RunMode->Verbose) {
@@ -267,7 +270,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
        THEN FIND PHASE WITH FFTFIT AND SET REFPERIOD TO 0 ***/
   /*** AND IF NO NEW POLYCO FILE IS GIVEN ON COMMAND LINE, 
        GIVE A WARNING THAT IT'S PROBABLY NEEDED ***/
-
+  //  printf("JUST READ IN POLYCO AT frac MJD %lf AND FOUND PHASE = %lf\n", DumpMiddleDays, RefPhase);
 
   /* In general, PSRFITS data does not store different polycos for different 
      observing frequency channels, so will have to assign each period/phase 

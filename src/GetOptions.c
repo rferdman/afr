@@ -30,12 +30,14 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
   RunMode->Swap         = Cmd->SwapP;
   RunMode->OldFits      = Cmd->OldFitsP;
   RunMode->NoBase       = Cmd->NoBaseP;
-  /* Set to dedisperse input profiles before processing,
-     unless we are inputting polycos to align anyway */
-  if (Cmd->PolyfileP) 
+  /* Set to dedisperse input profiles before processing onlky if on 
+     command line, */
+  /* If we are inputting polycos to align anyway, don't need dedisp option */
+
+  /*  if (Cmd->PolyfileP) 
     RunMode->Dedisp = 0;
-  else 
-    RunMode->Dedisp = Cmd->DedispP;
+    else  */
+  RunMode->Dedisp = Cmd->DedispP;
   
 
   /**** String Options ****/  
