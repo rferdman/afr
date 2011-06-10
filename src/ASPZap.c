@@ -685,12 +685,14 @@ int main(int argc, char *argv[])
   if (first_pass) {
     tempRMSLim[0] = RMSLim[0] = FMin(ProfRMS, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
     tempRMSLim[1] = RMSLim[1] = FMax(ProfRMS, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
-    tempShiftLim[0] = ShiftLim[0] = FMin(ProfShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
-    tempShiftLim[1] = ShiftLim[1] = FMax(ProfShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
-    tempeShiftLim[0] = eShiftLim[0] = FMin(ProfeShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
-    tempeShiftLim[1] = eShiftLim[1] = FMax(ProfeShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
-    tempScaleLim[0] = ScaleLim[0] = FMin(ProfScale, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
-    tempScaleLim[1] = ScaleLim[1] = FMax(ProfScale, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
+    if(Cmd->TemplateP){
+      tempShiftLim[0] = ShiftLim[0] = FMin(ProfShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
+      tempShiftLim[1] = ShiftLim[1] = FMax(ProfShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
+      tempeShiftLim[0] = eShiftLim[0] = FMin(ProfeShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
+      tempeShiftLim[1] = eShiftLim[1] = FMax(ProfeShift, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
+      tempScaleLim[0] = ScaleLim[0] = FMin(ProfScale, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_min);
+      tempScaleLim[1] = ScaleLim[1] = FMax(ProfScale, Hdr.redn.RNTimeDumps*Hdr.obs.NChan, &i_max);
+    }
   }
   /* Done with FITS file.  Close it. */
   /*  fits_close_file(Fin, &fitsstatus); */
@@ -732,7 +734,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
     /* Make a long rectangular plot surface for 4 histograms if we are doing 
-       templatematching  */
+       template matching  */
     if(Cmd->TemplateP)
       cpgpap(4., 2.45);
     else
@@ -897,7 +899,8 @@ int main(int argc, char *argv[])
 	cpgsci(c_red); /* make hashed regions red */
 	
 	
-	if(Cmd->TemplateP) cpgpanl(1,1);
+	if(Cmd->TemplateP) 
+	  cpgpanl(1,1);
 	printf("\nEnter desired limits for RMS histogram [leave as is]:  ");
 	//printf("input string is _%s_ you know, and %d in length\n", input_str, (int)(strlen(input_str)));
 	
@@ -1436,12 +1439,14 @@ int main(int argc, char *argv[])
 
   free(RMSBinVal);
   free(RMSHist);
-  free(ShiftBinVal);
-  free(ShiftHist);
-  free(eShiftBinVal);
-  free(eShiftHist);
-  free(ScaleBinVal);
-  free(ScaleHist);
+  if(Cmd->TemplateP){
+    free(ShiftBinVal);
+    free(ShiftHist);
+    free(eShiftBinVal);
+    free(eShiftHist);
+    free(ScaleBinVal);
+    free(ScaleHist);
+  }
   /******************************************************/
   
   /* Done with FITS file.  Close it. */
