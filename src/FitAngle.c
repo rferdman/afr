@@ -6,22 +6,22 @@
 double ratorad(char *ra)
 {
  
-  int    hh,mm,ss;
-  double rads;
+  int    hh,mm;
+  double ss,rads;
  
-  sscanf(ra,"%2d:%2d:%2d",&hh,&mm,&ss);
-  rads = (3600*hh + 60*mm + ss)*TWOPI/86400.;
+  sscanf(ra,"%2d:%2d:%lf",&hh,&mm,&ss);
+  rads = (3600.*hh + 60.*mm + ss)*TWOPI/86400.;
   return(rads);
 }
 
 double dectorad(char *dec)
 {
  
-  int dd,mm,ss;
-  double rads;
+  int dd,mm;
+  double ss,rads;
  
-  sscanf(dec,"%2d:%2d:%2d",&dd,&mm,&ss);
-  rads = (3600*dd + 60*mm + ss)*TWOPI/1296000.;
+  sscanf(dec,"%2d:%2d:%lf",&dd,&mm,&ss);
+  rads = (3600.*dd + 60.*mm + ss)*TWOPI/1296000.;
   return(rads);
 }
 
