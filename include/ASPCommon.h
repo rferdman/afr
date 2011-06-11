@@ -206,6 +206,7 @@ void   RotateProf(struct RunVars *, struct StdProfs *, double);
 void   FitAngle(struct RunVars *, struct ASPHdr *, struct SubHdr *, 
 		struct StdProfs *, struct Telescope *);
 double GetChi(double, char *, double, double, struct Telescope *);
+double GetLST(double, double);
 double ratorad(char *);
 double dectorad(char *);
 int    WrtASPHdr(struct ASPHdr *, fitsfile *);
