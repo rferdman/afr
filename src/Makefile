@@ -9,8 +9,8 @@ ASP_INCLUDE_DIR = ../include
 
 
 ### SPECIFY CFITSIO INCLUDE FILE AND LIBRARY DIRECTORIES HERE ###
-FITS_INCLUDE_DIR = /usr/local/include
-FITS_LIB_DIR = /usr/local/lib
+FITS_INCLUDE_DIR = /usr/include
+FITS_LIB_DIR = /usr/lib
 
 ### IF USING GRFORTRAN, UNCOMMENT THE FOLLWOING ###
 LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm 
@@ -20,11 +20,11 @@ LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm
 
 
 ### SPECIFY PGPLOT INCLUDE AND LIBRARY DIRECTORIES HERE ###
-PGPLOT_INCLUDE_DIR = /usr/local/pgplot
-PGPLOT_LIB_DIR = /usr/local/pgplot
+PGPLOT_INCLUDE_DIR = /ASTRO/pulsar/pgplot
+PGPLOT_LIB_DIR = /ASTRO/pulsar/pgplot
 
 ### SPECIFY X11 LIBRARY DIRECTORY HERE ###
-X11_LIB_DIR = /usr/X11R6/lib
+X11_LIB_DIR = /usr/lib
 
 LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng -pg -lgfortran # -L/sw/lib -lg2c -pg
 
@@ -60,12 +60,13 @@ OBJS1 = ASPFitsReader.o CmdLine.o AllocRunMode.o GetOptions.o GetChans.o \
 	Dedisperse.o MakeStokes.o PhaseShift.o PhaseCalc.o BinDown.o \
 	MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o MaxMin.o \
 	FindPeak.o RotateProf.o FitAngle.o GetChi.o FitThetaBB.o FitMueller.o \
-	WrtASPHdr.o WrtASPStokes.o Median.o
+	WrtASPHdr.o WrtASPStokes.o Median.o GetLST.o
 
 OBJS2 = ffft.o fftfit.o cprof.o fccf.o brent.o 
 
 STOKESOBJS = ASPStokes.o StokesCmdLine.o ReadASPHdr.o GetTelescope.o \
-	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o GetChi.o
+	ReadASPStokes.o BMask.o Sort.o FindPeak.o DutyLookup.o GetChi.o \
+	GetLST.o
 
 CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalOpt.o BMask.o \
