@@ -44,8 +44,11 @@ double GetChi(double MJD, char *NObs, double RA, double Dec,
 #endif
 
   /* calculate LST in radians -- based on GST at Dec. 31, 2003 midnight UT */
-  LSTdeg = 0.2750375 + 1.0027379093*(MJD-53004.0) - Tel->Long/360.0;
-  LST = TWOPI*(LSTdeg-floor(LSTdeg));
+/*   LSTdeg = 0.2750375 + 1.0027379093*(MJD-53004.0) - Tel->Long/360.0;
+  LST = TWOPI*(LSTdeg-floor(LSTdeg)); */
+
+  /* Tempo-derived LST calculation, courtesy of Marjorie */
+  LST=GetLST(MJD,Tel->Long);
 
   if (LST < 0.0)
     LST = TWOPI-LST;
@@ -54,6 +57,7 @@ double GetChi(double MJD, char *NObs, double RA, double Dec,
   Lat = Tel->Lat*TWOPI/360.;
 
   /*** do we need dec in radians????? ***/
+  /* June 8, 2011: yes, but it should already be in radians! */
 
   Chi = 2.0*atan( (sin(HA)*cos(Tel->Lat)) / 
 		  ( sin(Tel->Lat)*cos(Dec) - cos(Tel->Lat)*sin(Dec)*cos(HA)) );
