@@ -9,8 +9,8 @@ ASP_INCLUDE_DIR = ../include
 
 
 ### SPECIFY CFITSIO INCLUDE FILE AND LIBRARY DIRECTORIES HERE ###
-FITS_INCLUDE_DIR = /usr/include
-FITS_LIB_DIR = /usr/lib
+FITS_INCLUDE_DIR = /usr/local/include
+FITS_LIB_DIR = /usr/local/lib
 
 ### IF USING GRFORTRAN, UNCOMMENT THE FOLLWOING ###
 LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm 
@@ -20,11 +20,11 @@ LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm
 
 
 ### SPECIFY PGPLOT INCLUDE AND LIBRARY DIRECTORIES HERE ###
-PGPLOT_INCLUDE_DIR = /ASTRO/pulsar/pgplot
-PGPLOT_LIB_DIR = /ASTRO/pulsar/pgplot
+PGPLOT_INCLUDE_DIR = /usr/local/pgplot
+PGPLOT_LIB_DIR = /usr/local/pgplot
 
 ### SPECIFY X11 LIBRARY DIRECTORY HERE ###
-X11_LIB_DIR = /usr/lib
+X11_LIB_DIR = /usr/X11R6/lib
 
 LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng -pg -lgfortran # -L/sw/lib -lg2c -pg
 
@@ -47,7 +47,8 @@ F77FLAGS = -c -Wall  -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O 
 
 
 ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
-	ASPZap ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc
+	ASPZap ASPToa ASPMatch ASPHead ASPAdd ASPDiff ASPTemplate ASPRotateAsc \
+	GetPhases GetWidths
 
 
 # Object file names:
@@ -59,8 +60,8 @@ OBJS1 = ASPFitsReader.o CmdLine.o AllocRunMode.o GetOptions.o GetChans.o \
 	cprofc.o ReadData.o ReadASPData.o ReadPSRFITSData.o \
 	Dedisperse.o MakeStokes.o PhaseShift.o PhaseCalc.o BinDown.o \
 	MakePol.o WriteStokes.o DutyLookup.o BMask.o Sort.o Zero.o MaxMin.o \
-	FindPeak.o RotateProf.o FitAngle.o GetChi.o FitThetaBB.o FitMueller.o \
-	WrtASPHdr.o WrtASPStokes.o Median.o GetLST.o
+	FindPeak.o RotateProf.o FitAngle.o GetChi.o GetLST.o FitThetaBB.o \
+	FitMueller.o WrtASPHdr.o WrtASPStokes.o Median.o
 
 OBJS2 = ffft.o fftfit.o cprof.o fccf.o brent.o 
 
@@ -116,6 +117,11 @@ TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o AllocRunMode.o \
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \
 	Sum.o cprofc.o
+
+PHASEOBJS = GetPhases.o PhaseCmdLine.o GetPoly.o PhaseCalc.o # FileExists.o
+
+WIDTHOBJS = GetWidths.o WidthCmdLine.o ReadASPAsc.o FindPeak.o DutyLookup.o \
+	BMask.o Sort.o MaxMin.o 
 
 TESTOBJS = TestPSRFITS.o TestCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o ReadData.o \
@@ -186,7 +192,15 @@ ASPTemplate: ${TEMPLATEOBJS} ${OBJS2} ${ASP_BIN_DIR}
 
 ASPToa: ${TOAOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/ASPToa ${TOAOBJS} ${OBJS2} \
-	${LCFITSIO}   
+	${LCFITSIO}  
+
+GetPhases: ${PHASEOBJS} ${SAP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/GetPhases ${PHASEOBJS} \
+	$(LCPGPLOT)
+
+GetWidths: ${WIDTHOBJS} ${SAP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/GetWidths ${WIDTHOBJS} \
+	$(LCPGPLOT)
 
 TestPSRFITS: ${TESTOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/TestPSRFITS ${TESTOBJS} ${OBJS2} \
@@ -244,6 +258,14 @@ ToaCmdLine.c ToaCmdLine.h: ToaCmdLine.cli
 	clig -d ToaCmdLine.cli
 	mv ToaCmdLine.h $(ASP_INCLUDE_DIR)
 
+PhaseCmdLine.c PhaseCmdLine.h: PhaseCmdLine.cli
+	clig -d PhaseCmdLine.cli
+	mv PhaseCmdLine.h $(ASP_INCLUDE_DIR)
+
+WidthCmdLine.c WidthCmdLine.h: WidthCmdLine.cli
+	clig -d WidthCmdLine.cli
+	mv WidthCmdLine.h $(ASP_INCLUDE_DIR)
+
 TestCmdLine.c TestCmdLine.h: TestCmdLine.cli
 	clig -d TestCmdLine.cli
 	mv TestCmdLine.h $(ASP_INCLUDE_DIR)
@@ -275,6 +297,10 @@ ASPDiff.o: ASPDiff.c DiffCmdLine.h
 ASPTemplate.o: ASPTemplate.c TemplateCmdLine.h
 
 ASPToa.o: ASPToa.c ToaCmdLine.h
+
+GetPhases.o: GetPhases.c PhaseCmdLine.h
+
+GetWidths.o: GetWidths.c WidthCmdLine.h
 
 TestPSRFITS.o: TestPSRFITS.c TestCmdLine.h
 
@@ -326,6 +352,12 @@ templateclean:
 toaclean:
 	/bin/rm -f ${TOAOBJS} $(ASP_BIN_DIR)/ASPToa core* *~ ToaCmdLine.[ch]
 
+phaseclean:
+	/bin/rm -f ${PHASEOBJS} $(ASP_BIN_DIR)/GetPhases core* *~ PhaseCmdLine.[ch]
+
+widthclean:
+	/bin/rm -f ${WIDTHOBJS} $(ASP_BIN_DIR)/GetWidths core* *~ WidthCmdLine.[ch]
+
 testclean:
 	/bin/rm -f ${TESTOBJS} $(ASP_BIN_DIR)/TestPSRFITS core* *~ TestCmdLine.[ch]
 
@@ -336,7 +368,7 @@ oneclean:
 	/bin/rm -f *.1
 
 clean:
-	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 zapclean matchclean headclean addclean diffclean templateclean toaclean includeclean oneclean
+	make afrclean calclean thetaclean stokesclean bindownclean rotclean rotclean2 zapclean matchclean headclean addclean diffclean templateclean toaclean includeclean oneclean widthclean phaseclean
 
 #distclean:
 #	/bin/rm -f Makefile config.h config.status config.cache config.log

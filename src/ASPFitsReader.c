@@ -345,6 +345,7 @@ int main(int argc, char **argv)
 	       RunMode.Source);
 	Cmd->PolyfileP=0;
       }
+      //printf("%lf MHz:  %d polyco sets found...\n", InHdr.obs.ChanFreq[i_chan_in], n_poly);
     }
     if (Cmd->PolyfileP) printf("Polycos successfully found.\n\n");
   }

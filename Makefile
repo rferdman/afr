@@ -81,4 +81,4 @@ clean:
 #	done && test -z "$$fail"
 
 install: $(INSTALL_BIN_DIR)
-	cd $(ASP_BIN_DIR); ln -sf `pwd`/ASP* $(INSTALL_BIN_DIR)
+	cd $(ASP_BIN_DIR); ln -sf `pwd`/* $(INSTALL_BIN_DIR)

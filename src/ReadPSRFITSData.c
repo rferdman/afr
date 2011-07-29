@@ -11,7 +11,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 		    double **ReAconjB, double **ImAconjB)
 {
   
-  int  i_chan, i_poly, i_poln, i_bin, i_data;
+  int  i_chan, i_poly, i_poln, i_bin, i_data, i_coeff;
   int  hdutype, anynul, status=0;
   int  colnum, colnum_wts, colnum_scl, colnum_offs, colnum_data;
   int  NColumns, n_poly, FileStartSecs;
@@ -68,6 +68,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   }
 
   /* Read in polycos from FITS file -- first move to POLYCO extension */
+
   if(fits_movnam_hdu(Fin, BINARY_TBL, "POLYCO", 0, &status)) {
     fprintf(stderr, "ReadPSRFITSData WARNING: POLYCO table does not exist\n");
     fprintf(stderr, "Continuing, with no pulse phase information.\n");
@@ -166,7 +167,26 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     }
   }
   
-  
+  /* Do only first time through */
+  if(i_dump==0 && RunMode->Verbose) {
+    /* Check on Polyco info and whether it is the same as written in data file */
+    printf("POLYCO INFORMATION:\n\nNumber of Polycos: %d\n\n", n_poly);
+    for(i_poly=0; i_poly<n_poly; i_poly++){
+      printf("Polyco %d:\n", i_poly);
+      printf("NSPAN = %d,  NCOEFF = %d,  REF_MJD = %lf\n",
+	     Polycos[i_poly].NMinutes, Polycos[i_poly].NCoeff, 
+	     Polycos[i_poly].MjdMidInt+Polycos[i_poly].MjdMidFrac);
+      printf("REF_FREQ = %lf,  REF_PHS = %lf,  REF_F0 = %lf\n", 	   
+	     Polycos[i_poly].FSkyRef, Polycos[i_poly].PhRotRef, 
+	     Polycos[i_poly].FRotRef);
+      printf("COEFF:\n");
+      for(i_coeff=0; i_coeff<Polycos[i_poly].NCoeff; i_coeff++)
+	printf("%e  ",Polycos[i_poly].Coeff[i_coeff]);
+      printf("\n\n");;
+      
+    }
+    
+  }
   
   /* Move to SUBINT extension */
   if(fits_movnam_hdu(Fin, BINARY_TBL, "SUBINT", 0, &status)) {
