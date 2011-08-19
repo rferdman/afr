@@ -1,0 +1,79 @@
+## The Name specified is only used in/for the manual page
+Name GetPhases
+
+## Usage specifies a one-liner which is printed as part of
+## usage-message. It is also used in the NAME-section of the manual
+## page as a short description.
+Usage {Outputs pulsar spin phases and frequencies/periods from a user-provided parameter file and user-defined observing frequency, date range, and polyco valid time span}
+
+## The Version specified is printed as part of the usage-message. The
+## example used here records the date of the clig-run as the version.
+Version [exec date +%Y-%m-%d]
+
+## Commandline specifies the name of a slot in the generated struct
+## which will be set to a newly allocated string holding the
+## concatenated command line. This is particularly useful for programs
+## which want to record their calling sequence somewhere, e.g. in a in
+## output file to document how it was generated.
+Commandline tool
+
+
+########################################################################
+## FLAG OPTIONS
+########################################################################
+
+## Verbose mode
+Flag -v Verbose {Turn on verbose mode}
+
+## Express period in milliseconds
+Flag -ms MilliSecs {Express period in milliseconds}
+
+########################################################################
+## STRING OPTIONS
+########################################################################
+
+## Use par file to adjust and align pulse phases
+String -parfile ParFile {Input parameter file to caluculate pulse phases} \
+    -m \
+    -c 1 1
+
+## Pulsar name
+String -psr PSRName {Pulsar name} \
+    -m \
+    -c 1 1
+
+## Telescope site code
+String -site Site {Observatory code} \
+    -m \
+    -c 1 1
+
+########################################################################
+## DOUBLE OPTIONS
+########################################################################
+
+## Sky Frequency
+Double -freq ObsFreq {Observing frequency in MHz} \
+     -m \
+     -r 0.0 10000.0 
+
+Double -mjd MJDStart {Start MJD} \
+    -m \
+    -c 1 1 \
+    -r 0.0 oo
+
+Double -timestep TimeStep {Time increment in minutes} \
+    -c 1 1 \
+    -r 0.0 oo \
+    -d 5.0
+
+Double -tobs TObsHours {Total time span in hours} \
+    -c 1 1 \
+    -r 0.0 oo \
+    -d 3.0
+
+Int -nspan NSpan {Time interval of polyco validity in seconds} \
+    -c 1 1 \
+    -r 0 60000 \
+    -d 1800
+
+
