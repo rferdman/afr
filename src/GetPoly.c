@@ -263,7 +263,7 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
 	    /* default at 15 minutes valid span */
 	    1800, Hdr->obs.ObsvtyCode);
 
-    printf("TDump = %lf,  NDumps = %d\n", Hdr->redn.TDump, Hdr->redn.RNTimeDumps);
+    // printf("TDump = %lf,  NDumps = %d\n", Hdr->redn.TDump, Hdr->redn.RNTimeDumps);
 
 
     /* Create polyco using tempo command, and append it to final polyco file */
