@@ -152,8 +152,14 @@ int main(int argc, char *argv[])
   }
   /* Get output file root name from input file name */
   OutRootIndex = -1;
-  for (i=strlen(FitsFile)-1;i>0;i--){
+  /*  for (i=strlen(FitsFile)-1;i>0;i--){
     if(!strncmp(&FitsFile[i],".",1)){
+      OutRootIndex = i;
+      break;
+    }
+    } */
+  for (i=0;i<strlen(FitsFile);i++){
+    if(!strncmp(&FitsFile[i],".asp",4)){
       OutRootIndex = i;
       break;
     }

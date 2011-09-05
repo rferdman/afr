@@ -245,16 +245,24 @@ int main(int argc, char **argv)
       }
 
 
-      /* Do check of Frequency range here.  If non of profile if within range, then there
+      /* Do check of Frequency range here.  If none of profile is within range, then there
 	 is no point in continuing to read this file. For now ALL frequencies MUST be within
 	 range, so user must choose range wisely.. */
-      if(Hdr[i_file].obs.ChanFreq[0] < Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]){
-	good_freqs = (FreqRange[0] >=  Hdr[i_file].obs.ChanFreq[0] ||
-		      FreqRange[1] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+      if(Cmd->VerboseP){
+	printf("\nTEST:  ChanFreq[0]  = %.3lf,  ChanFreq[last] = %.3lf\n",
+	       Hdr[i_file].obs.ChanFreq[0], 
+	       Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+	printf("TEST:  FreqRange[0] = %.3lf,  FreqRange[1]   = %.3lf\n\n",
+	       FreqRange[0], FreqRange[1]);
+	fflush(stdout);
+      }
+      if(Hdr[i_file].obs.ChanFreq[0] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]){
+	good_freqs = (FreqRange[0] <= Hdr[i_file].obs.ChanFreq[0] ||
+		      FreqRange[1] >= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
       }
       else{
-	good_freqs = (FreqRange[1] <= Hdr[i_file].obs.ChanFreq[0] ||
-		      FreqRange[0] >= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+	good_freqs = (FreqRange[1] >= Hdr[i_file].obs.ChanFreq[0] ||
+		      FreqRange[0] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
 
       }
       printf("\n\nFrequency range = %.3lf --> %.3lf\n", Hdr[i_file].obs.ChanFreq[0],

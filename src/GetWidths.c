@@ -22,7 +22,7 @@
 #include "cpgplot_def.h"
 
 int NormProf(int, float *, char *);
-double XInterp(int, float *, int, int, double, double, double *);
+// double XInterp(int, float *, int, int, double, double, double *);
 double XInterp2D(double *, double *, double, double, double *);
 void PlotProf(int, float *, float, float);
 
@@ -33,10 +33,12 @@ int main(int argc, char **argv)
   int i_low, i_high, i_ymin, i_ymax, n_range;
   int bin[NBINMAX], bin_seg[2], NBins, TempNBins;
   int at_height;
+  double iMJDStart, sMJDStart;
   double Duty, PeakHeight, Height, SBase;
   double FinalMask[NBINMAX];
   double ProfLow, ProfHigh;
   double Width, WidthErr;
+  double phase_seg[2];
   /* bounding valus going into estimating interpolated x value: */
   double x_int[2], y_int[2]; 
   double x0, x1, x0_err, x1_err;
@@ -45,10 +47,15 @@ int main(int argc, char **argv)
   int dev_prof_plot, l_width;
   float xaxis_min, xaxis_max, yaxis_min, yaxis_max;
 
-  char Headerline[256];
+  char Headerline[256], PSRName[12], outfile[256];
   struct StdProfs Profile;
   Cmdline *Cmd;
 
+  FILE **fpout;
+
+  int ijunk;
+  double fjunk;
+  char sjunk[16];
 
   /* Get command line variables */
   Cmd = parseCmdline(argc, argv);  
@@ -75,12 +82,43 @@ int main(int argc, char **argv)
 
   /* Determine the number of phase ranges we will have */
   n_range = Cmd->PhaseSplitC + 1;
+  fpout = (FILE **)malloc(n_range*sizeof(FILE *));
+  /* Open output file(s) for each range */
+  if(n_range == 1){
+    sprintf(outfile, "%s.w%.0lf.dat", Cmd->PSRName, Cmd->PercentHeight);
+    if ((fpout[0] = fopen(outfile,"w"))==NULL){
+      fprintf(stderr, "Could not open file %s.  Exiting.\n", outfile);
+      exit(2);
+    }
+  }
+  else{
+    for (i_range=0; i_range<n_range; i_range++){
+      if(i_range==0) 
+	phase_seg[0] = 0.0;
+      else 
+	phase_seg[0] = Cmd->PhaseSplit[i_range-1];
+      if(i_range==n_range-1) 
+	phase_seg[1] = 1.0;
+      else 
+	phase_seg[1] = Cmd->PhaseSplit[i_range];
+      sprintf(outfile, "%s.w%.0lf.%.1f_%.1f.dat", Cmd->PSRName, 
+	      Cmd->PercentHeight, phase_seg[0], phase_seg[1]);
+      if ((fpout[i_range] = fopen(outfile,"w"))==NULL){
+	fprintf(stderr, "Could not open file %s.  Exiting.\n", outfile);
+	exit(2);
+      }
+    }
+  }
 
   /* Will have to change this when we use fits files, with multiple profiles 
      per file (and thus can't determine size of Profile by number of input 
      data files */
 
   for (i_prof=0; i_prof<Cmd->InfileC; i_prof++){
+
+    if(Cmd->VerboseP)
+      printf("Opening file %s\n", Cmd->Infile[i_prof]);
+    
 
     if ( ReadASPAsc(Cmd->Infile[i_prof], &Headerline[0], bin,  
 		    &Profile, &NBins) < 0) {
@@ -89,9 +127,10 @@ int main(int argc, char **argv)
       exit(1);
     }
 
-    if(Cmd->VerboseP)
-      printf("Opening file %s\n", Cmd->Infile[i_prof]);
-
+    /* Read in header variables of use to this routine:  MJD and PSR name */
+    sscanf(Headerline, "%s%lf%lf%lf%d%lf%lf%d%d%d%s%lf",
+	   sjunk, &iMJDStart, &sMJDStart, &fjunk, &ijunk, &fjunk, &fjunk, 
+	   &ijunk, &ijunk, &ijunk, PSRName, &fjunk);
 
     /* Normalise profile */
     if(NormProf(NBins, Profile.rstds, Cmd->PSRName) < 0){
@@ -207,23 +246,25 @@ int main(int argc, char **argv)
       x_int[1] = (double)i_high;
       y_int[0] = (double)Profile.rstds[i_low];
       y_int[1] = (double)Profile.rstds[i_high];
-      x1 = XInterp2D(x_int, y_int, Height, Profile.Srms, &x0_err);
+      x1 = XInterp2D(x_int, y_int, Height, Profile.Srms, &x1_err);
       printf("%lf\n\n", (double)i_bin/(double)NBins);
     
 
       /* Width is just the difference between the two */
       if(x1 > x0) {
-	Width = (x1 - x0);
+	Width = (x1 - x0)/((double)NBins);
       }
       else {   /* Need to deal with case of profile wrapping through phase 1 and 
 		  back from 0 again */
-	Width = (x1 - x0 + (double)NBins);
+	Width = (x1 - x0 + (double)NBins)/((double)NBins);
       }
-      WidthErr = sqrt(x0_err*x0_err + x1_err*x1_err);
+	WidthErr = sqrt(x0_err*x0_err + x1_err*x1_err)/((double)NBins);
 
 
-      printf("%s   %s   %lf   %lf\n", Cmd->Infile[i_prof], Cmd->PSRName, Width, WidthErr);
-
+      printf("%s   %.15lf  %s   %lf   %lf\n", Cmd->Infile[i_prof], 
+	     iMJDStart+(sMJDStart/86400.0), Cmd->PSRName, Width, WidthErr);
+      fprintf(fpout[i_range], "%.15lf  %lf   %lf\n", 
+	      iMJDStart+(sMJDStart/86400.0), Width, WidthErr);
 
       /* Draw vertical lines at phases between which width will be calculated */
       cpgsci(c_red);
@@ -268,7 +309,9 @@ int main(int argc, char **argv)
     /* End plotting section */
   }
   
-  
+  for (i_range=0; i_range<n_range; i_range++)
+    fclose(fpout[i_range]);
+ 
   exit(0);
 
 }
@@ -327,7 +370,6 @@ void PlotProf(int NBin, float *ProfArray, float x1, float x2)
   free(PhaseBin);
   free(Profile);
 
-
 }
 
 
@@ -360,7 +402,7 @@ int NormProf(int NBin, float *Profile, char *Source)
 
 }
 
-
+#if 0
 double XInterp(int NBins, float *Profile, int i_low, int i_high, double y_val, 
 	       double rms, double *x_err)
 {
@@ -376,8 +418,9 @@ double XInterp(int NBins, float *Profile, int i_low, int i_high, double y_val,
 		    / (slope*slope*slope*slope) );
     
   return x_interp;
-
 }
+#endif
+
 
 double XInterp2D(double *x, double *y, double y_val, 
 	       double y_err, double *x_err)

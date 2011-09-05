@@ -246,7 +246,6 @@ int ReadASPHdr(struct      ASPHdr *hdr,
   
   /* Fill in TDump value by finding the time stamp difference between the first 
      and second scans */
-  if (hdr->redn.RNTimeDumps > 1) {
     if(!strcasecmp(hdr->gen.HdrVer,"Ver1.0")) {
       fits_movnam_hdu(Fin, BINARY_TBL, "ASPOUT0", 0, &status);
       fits_read_key(Fin, TDOUBLE, "DUMPMIDSECS", 
@@ -257,6 +256,10 @@ int ReadASPHdr(struct      ASPHdr *hdr,
       fits_read_key(Fin, TDOUBLE, "MIDSECS", &(DumpMiddleSecs), 
 		    NULL, &status); status = 0;
     }
+
+
+# if 0
+  if (hdr->redn.RNTimeDumps > 1) {
     hdr->redn.TDump = DumpMiddleSecs;
     /* Move to second data table , get central time stamp */
     if(!strcasecmp(hdr->gen.HdrVer,"Ver1.0")) {
@@ -274,14 +277,19 @@ int ReadASPHdr(struct      ASPHdr *hdr,
     hdr->redn.TDump = DumpMiddleSecs - hdr->redn.TDump;
   }
   else {
+#endif
+
+
     /* We may have switched over to the next MJD, so take care of 
        this if it's the case */
+
+    printf("DUMPMIDSECS = %lf,  STARTTIME = %d", DumpMiddleSecs, hdr->obs.StartTime);
     if (DumpMiddleSecs < (double)hdr->obs.StartTime) DumpMiddleSecs += 86400.;
     
     /* TDump is twice the difference between the middle time stamp 
        and the start time */
     hdr->redn.TDump = 2.* ((double)floor(DumpMiddleSecs) - (double)hdr->obs.StartTime);
-  }
+    //  }
   
   /* There are no subint offsets for ASP files, so set to zero */
   hdr->obs.NSubOffs=0;
