@@ -283,7 +283,7 @@ int ReadASPHdr(struct      ASPHdr *hdr,
     /* We may have switched over to the next MJD, so take care of 
        this if it's the case */
 
-    printf("DUMPMIDSECS = %lf,  STARTTIME = %d", DumpMiddleSecs, hdr->obs.StartTime);
+    //    printf("DUMPMIDSECS = %lf,  STARTTIME = %d", DumpMiddleSecs, hdr->obs.StartTime);
     if (DumpMiddleSecs < (double)hdr->obs.StartTime) DumpMiddleSecs += 86400.;
     
     /* TDump is twice the difference between the middle time stamp 

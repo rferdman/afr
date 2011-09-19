@@ -159,7 +159,7 @@ int main(int argc, char *argv[])
     }
     } */
   for (i=0;i<strlen(FitsFile);i++){
-    if(!strncmp(&FitsFile[i],".asp",4)){
+    if(!strncmp(&FitsFile[i],".asp",4) || !strncmp(&FitsFile[i],".fits",5)){
       OutRootIndex = i;
       break;
     }
@@ -1139,7 +1139,7 @@ int main(int argc, char *argv[])
 
 	/* Now start seeing what input values are */
 	/* First choice is to see if user quits out of profile zapping ('q') */
-	if (!strcmp(char_input, "q\n")){
+	if (!strncmp(char_input, "q\n", 2)){
 	    final_check = 1;
 	    reset_plot = 1;
 	}
@@ -1162,19 +1162,19 @@ int main(int argc, char *argv[])
 	}
 	/* Let user pick frequency or time-added profile ('f' or 't').  If so, reset 
 	   corresponding plot */
-	else if(!strcmp(char_input, "f\n")){
+	else if(!strncmp(char_input, "f\n", 2)){
 	  prof_mode = FREQMODE;
 	  reset_plot = 1;
 	  cant_undo = 1;
 	}
-	else if(!strcmp(char_input, "t\n")){
+	else if(!strncmp(char_input, "t\n", 2)){
 	  prof_mode = TIMEMODE;
 	  reset_plot = 1;
 	  cant_undo = 1;
 	}
 	/* Now allow user to undo zoom with 'u'.  Simple flag switch, relying on 
 	   prof_mode value to reset to correct plot */
-	else if(!strcmp(char_input, "u\n")){
+	else if(!strncmp(char_input, "u\n", 2)){
 	  reset_plot = 1;
 	}
 
@@ -1183,7 +1183,7 @@ int main(int argc, char *argv[])
 	   and another if it is the second click. */
 
 	/* Left-click */
-	else if(!strcmp(char_input, "A\n")){
+	else if(!strncmp(char_input, "A\n", 2)){
 	  /* Set first zoom range value to this click */
 	  if(n_click==1){
 	    strcpy(first_click_char, char_input);
@@ -1203,7 +1203,7 @@ int main(int argc, char *argv[])
 	    /* If first click was left-click, then this means to zoom.  Otherwise, 
 	       it is an unrecognized command, and we reset clicks, leaving 
 	       current plot untouched. */
-	    if(!strcmp(first_click_char, "A\n")) {
+	    if(!strncmp(first_click_char, "A\n", 2)) {
 	      if(prof_mode==FREQMODE){
 		if(ProfZoom(ProfChan, TempChanMask, Hdr, ClickVal, ZoomIndex, prof_mode) < 0){
 		  fprintf(stderr, "Could not zoom into desired frequency limits. Exiting.\n");
@@ -1219,7 +1219,7 @@ int main(int argc, char *argv[])
 	      
 	    }
 	    else{
-	      printf("Unrecognized command. Try again.\n");
+	      printf("Unrecognized command %s. Try again.\n", first_click_char);
 	    }
 	    n_click=0;
 	  }
@@ -1229,7 +1229,7 @@ int main(int argc, char *argv[])
 	}
 
 	/* Right-click */
-	else if(!strcmp(char_input, "X\n")){
+	else if(!strncmp(char_input, "X\n", 2)){
 	  /* Set first zoom range value to this click */
 	  if(n_click==1){
 	    strcpy(first_click_char, char_input);
@@ -1247,7 +1247,7 @@ int main(int argc, char *argv[])
 	    }
 
 	    /* If first click was left-click, then this means to zap. */
-	    if(!strcmp(first_click_char, "A\n")) {
+	    if(!strncmp(first_click_char, "A\n", 2)) {
 	      
 	      if(prof_mode==FREQMODE){
 		if(ProfZap(ProfChan, TempChanMask, Hdr, ClickVal, ZoomIndex, 
@@ -1267,7 +1267,7 @@ int main(int argc, char *argv[])
 	      cant_undo = 0;
 	    }
 	    /* If first click was right click, then this means to un-zap last zap range. */
-	    else if (!strcmp(first_click_char, "X\n")) {
+	    else if (!strncmp(first_click_char, "X\n", 2)) {
 	      if(cant_undo){
 		printf("Cannot undo last zap.  Either there is nothing to undo, ");
 		printf("or you have already undone previous zap, or you have switched ");
@@ -1295,7 +1295,7 @@ int main(int argc, char *argv[])
 	    /* Otherwise, it is an unrecognized command, and we reset clicks, leaving 
 	       current plot untouched.  */
 	    else{
-	      printf("Unrecognized command. Try again.\n");
+	      printf("Unrecognized command %s. Try again.\n", first_click_char);
 	    }
 	    n_click=0;
 	  }
@@ -1305,7 +1305,7 @@ int main(int argc, char *argv[])
 	/* If user has not entered one of the available options, then just reset click number, 
 	   leaving current plot untouched. */
 	else{
-	  printf("Unrecognized command. Try again.\n");
+	  printf("Unrecognized command %s. Try again.\n", char_input);
 	  n_click=0;
 	}
 
