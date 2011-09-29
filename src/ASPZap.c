@@ -662,7 +662,7 @@ int main(int argc, char *argv[])
 	if(NormProf(Hdr.redn.RNBinTimeDump, 
 		    &ProfChan[i_chan*Hdr.redn.RNBinTimeDump], 
 		    &Hdr.target.PSRName[0]) < 0){
-	  printf("Added Profile across channel %d (%.4lf) could not be ",
+	  printf("Added Profile across channel %d (%.6lf) could not be ",
 		 i_chan, Hdr.obs.ChanFreq[i_chan]);
 	  printf("normalised.  Have left as is.\n");
 	}
@@ -895,7 +895,8 @@ int main(int argc, char *argv[])
 
       /* If user types 'h' that means they will want to adjust acceptable value 
 	 limits based on histograms */
-    if(!strcmp(char_input, "h\n")) {
+    //    if(!strncmp(char_input, "h\n", 2)) {
+    if(!strncmp(char_input, "h", 1)) {
       hist_quit = 0;
       while (!hist_quit){
 	/* Start with accepting input about min and max histogram ranges desired */
@@ -1010,7 +1011,8 @@ int main(int argc, char *argv[])
       //cpgsls(l_full); /* normal solid line */
       
     }
-    else if(!strcmp(char_input, "p\n")) {
+    //    else if(!strncmp(char_input, "p\n", 2)) {
+    else if(!strncmp(char_input, "p", 1)) {
 
       printf("Will now perform cuts based on the frequency and/or ");
       printf("time-added profiles...\n\n");
@@ -1139,12 +1141,14 @@ int main(int argc, char *argv[])
 
 	/* Now start seeing what input values are */
 	/* First choice is to see if user quits out of profile zapping ('q') */
-	if (!strncmp(char_input, "q\n", 2)){
+	//	if (!strncmp(char_input, "q\n", 2)){
+	if (!strncmp(char_input, "q", 1)){
 	    final_check = 1;
 	    reset_plot = 1;
 	}
 	/* Profile mode help ('?') */
-	if (!strcmp(char_input, "?\n")){
+	//	if (!strncmp(char_input, "?\n", 2)){
+	if (!strncmp(char_input, "?", 1)){
 	  printf("-------------------------------------------------------------------------\n");
 	  printf("Profile mode command options:\n");
 	  printf("-------------------------------------------------------------------------\n");
@@ -1162,19 +1166,22 @@ int main(int argc, char *argv[])
 	}
 	/* Let user pick frequency or time-added profile ('f' or 't').  If so, reset 
 	   corresponding plot */
-	else if(!strncmp(char_input, "f\n", 2)){
+	//	else if(!strncmp(char_input, "f\n", 2)){
+	else if(!strncmp(char_input, "f", 1)){
 	  prof_mode = FREQMODE;
 	  reset_plot = 1;
 	  cant_undo = 1;
 	}
-	else if(!strncmp(char_input, "t\n", 2)){
+	//	else if(!strncmp(char_input, "t\n", 2)){
+	else if(!strncmp(char_input, "t", 1)){
 	  prof_mode = TIMEMODE;
 	  reset_plot = 1;
 	  cant_undo = 1;
 	}
 	/* Now allow user to undo zoom with 'u'.  Simple flag switch, relying on 
 	   prof_mode value to reset to correct plot */
-	else if(!strncmp(char_input, "u\n", 2)){
+	//	else if(!strncmp(char_input, "u\n", 2)){
+	else if(!strncmp(char_input, "u", 1)){
 	  reset_plot = 1;
 	}
 
@@ -1183,7 +1190,8 @@ int main(int argc, char *argv[])
 	   and another if it is the second click. */
 
 	/* Left-click */
-	else if(!strncmp(char_input, "A\n", 2)){
+	//	else if(!strncmp(char_input, "A\n", 2)){
+	else if(!strncmp(char_input, "A", 1)){
 	  /* Set first zoom range value to this click */
 	  if(n_click==1){
 	    strcpy(first_click_char, char_input);
@@ -1203,7 +1211,8 @@ int main(int argc, char *argv[])
 	    /* If first click was left-click, then this means to zoom.  Otherwise, 
 	       it is an unrecognized command, and we reset clicks, leaving 
 	       current plot untouched. */
-	    if(!strncmp(first_click_char, "A\n", 2)) {
+	    //	    if(!strncmp(first_click_char, "A\n", 2)) {
+	    if(!strncmp(first_click_char, "A", 1)) {
 	      if(prof_mode==FREQMODE){
 		if(ProfZoom(ProfChan, TempChanMask, Hdr, ClickVal, ZoomIndex, prof_mode) < 0){
 		  fprintf(stderr, "Could not zoom into desired frequency limits. Exiting.\n");
@@ -1229,7 +1238,8 @@ int main(int argc, char *argv[])
 	}
 
 	/* Right-click */
-	else if(!strncmp(char_input, "X\n", 2)){
+	//	else if(!strncmp(char_input, "X\n", 2)){
+	else if(!strncmp(char_input, "X", 1)){
 	  /* Set first zoom range value to this click */
 	  if(n_click==1){
 	    strcpy(first_click_char, char_input);
@@ -1247,7 +1257,8 @@ int main(int argc, char *argv[])
 	    }
 
 	    /* If first click was left-click, then this means to zap. */
-	    if(!strncmp(first_click_char, "A\n", 2)) {
+	    //	    if(!strncmp(first_click_char, "A\n", 2)) {
+	    if(!strncmp(first_click_char, "A", 1)) {
 	      
 	      if(prof_mode==FREQMODE){
 		if(ProfZap(ProfChan, TempChanMask, Hdr, ClickVal, ZoomIndex, 
@@ -1267,7 +1278,8 @@ int main(int argc, char *argv[])
 	      cant_undo = 0;
 	    }
 	    /* If first click was right click, then this means to un-zap last zap range. */
-	    else if (!strncmp(first_click_char, "X\n", 2)) {
+	    //	    else if (!strncmp(first_click_char, "X\n", 2)) {
+	    else if (!strncmp(first_click_char, "X", 1)) {
 	      if(cant_undo){
 		printf("Cannot undo last zap.  Either there is nothing to undo, ");
 		printf("or you have already undone previous zap, or you have switched ");
@@ -1324,11 +1336,13 @@ int main(int argc, char *argv[])
       free(ZapFlagDump);
 
     }
-    else if(!strcmp(char_input, "r\n")) {
+    //    else if(!strncmp(char_input, "r\n", 2)) {
+    else if(!strncmp(char_input, "r", 1)) {
       read_data=1;
       printf("Re-reading data file, updating zap mask...\n\n");
     }
-    else if(!strcmp(char_input, "q\n")) {
+    //    else if(!strncmp(char_input, "q\n", 2)) {
+    else if(!strncmp(char_input, "q", 1)) {
       quit=1;
     }
     else{
@@ -1387,7 +1401,7 @@ int main(int argc, char *argv[])
     if(bad_chan[i_chan]==Hdr.redn.RNTimeDumps){
       bad_chan[i_chan] = 1;
       /* Now write this to file */
-      fprintf(FZap, "  -1  %.4lf\n", Hdr.obs.ChanFreq[i_chan]);
+      fprintf(FZap, "  -1  %.8lf\n", Hdr.obs.ChanFreq[i_chan]);
       if(Cmd->PazP){
 	if(first_zap) {
 	  fprintf(FPaz, "paz ");
@@ -1415,7 +1429,7 @@ int main(int argc, char *argv[])
 	  /* Write individual scan/chan combo to file */
 	  i_array = i_chan*Hdr.redn.RNTimeDumps + i_dump;
 	  if (ProfWgt[i_array]==0)
-	    fprintf(FZap, "  %d  %.4lf\n", i_dump, Hdr.obs.ChanFreq[i_chan]);	  
+	    fprintf(FZap, "  %d  %.8lf\n", i_dump, Hdr.obs.ChanFreq[i_chan]);	  
 	  if(Cmd->PazP){
 	    if(first_zap) {
 	      fprintf(FPaz, "paz ");
@@ -1892,11 +1906,18 @@ int GetYesNo(char *Question)
     printf("%s (y/n) [y]: ", Question);
     fgets(&input_str[0], 64, stdin);
     
-    if(!strcmp(input_str,"\n") || !strcmp(input_str, "y\n") || !strcmp(input_str, "yes\n")){
+    if(!strncmp(input_str,"\n", 1) || 
+       //       !strncmp(input_str, "y\n", 2) || 
+       !strncmp(input_str, "y", 1) || 
+       //       !strncmp(input_str, "yes\n", 4)){
+       !strncmp(input_str, "yes", 3)){
       //printf("You said YES\n");
       retval = YES;
     }
-    else if(!strcmp(input_str, "n\n") || !strcmp(input_str, "no\n")){
+    //    else if(!strncmp(input_str, "n\n", 2) || 
+    //	    !strncmp(input_str, "no\n", 3)){
+    else if(!strncmp(input_str, "n", 1) || 
+	    !strncmp(input_str, "no", 2)){
       //printf("You said NO\n");
       retval = NO;
     }

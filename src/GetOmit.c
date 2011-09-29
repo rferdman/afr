@@ -2,6 +2,7 @@
 #include <math.h>
 #include <string.h>
 #include <stdlib.h>
+#include "ASPDefs.h"
 #include "ASPCommon.h"
 #include "ASPFitsReader.h"
 
@@ -48,7 +49,6 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
     MaxChan = hdr->obs.ChanFreq[0];
   }
 
-
   /* If user has given file... format is "dump#  freq(MHz) */
   if (Cmd->ZapfileP) {
     if((Fomit = fopen(Cmd->Zapfile, "r")) == NULL){
@@ -58,6 +58,7 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
     }
     printf("\nOmission file name:  %s\n",Cmd->Zapfile);
     RunMode->NScanOmit = 0;
+
     /* Now read the file and construct OmitFlag array */
     while (fgets(OmitLine, 100, Fomit) != NULL){
       sscanf(OmitLine, "%d %lf", &RunMode->DumpOmit[RunMode->NScanOmit],
@@ -82,7 +83,7 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 	  return -12;
 	}
 	
-	/* Now check whether dump number is negaative. If so, all dumps at the 
+	/* Now check whether dump number is negative. If so, all dumps at the 
 	   given frequency are flagged for omission */
 	if(ThisDump < 0){
 	  for (i_dump=0; i_dump<RunMode->NDumps ; i_dump++)
@@ -94,9 +95,14 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
 	     as one for omission */
 	  RunMode->OmitFlag[ThisDump*hdr->obs.NChan + ThisChan] = 1;
 	  RunMode->NScanOmit++;
+	  /*	  printf("OmitFlag index = %d, NScanOmit = %d\n\n", 
+		 ThisDump*hdr->obs.NChan + ThisChan, 
+		 RunMode->NScanOmit);fflush(stdout);  */
 	}
+
       }
     }
+
     fclose(Fomit);
   }
 
@@ -167,7 +173,8 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
     /* Figure out which channel corresponds to each frequency */
     RunMode->ChanOmit[i] = -1;
     for (j=0;j<hdr->obs.NChan;j++){
-      if (FreqOmit[i] == hdr->obs.ChanFreq[j]){
+      if (fabs(FreqOmit[i] - hdr->obs.ChanFreq[j]) <= DBLEPS){
+	//      if (FreqOmit[i] == hdr->obs.ChanFreq[j]){
 	RunMode->ChanOmit[i] = j;
 	nomit[j]++;
 	/* Include this channel as an omission for this dump */

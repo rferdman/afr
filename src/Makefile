@@ -23,7 +23,7 @@ LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm
 PGPLOT_INCLUDE_DIR = /usr/local/pgplot
 PGPLOT_LIB_DIR = /usr/local/pgplot
 
-### SPECIFY X11 LIBRARY DIRECTORY HERE ###
+### SPECIFY X11 LIBRARY DIRECTASPORY HERE ###
 X11_LIB_DIR = /usr/X11R6/lib
 
 LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng -pg -lgfortran # -L/sw/lib -lg2c -pg
@@ -38,7 +38,7 @@ CFLAGS = -Wall -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT
 
 ### GFORTRAN FLAGS ###
 F77 = gfortran
-F77FLAGS = -c -Wall  -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O -I$(ASP_INCLUDE_DIR)
+F77FLAGS = -c -Wall -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O -I$(ASP_INCLUDE_DIR)
 
 ### G77 FLAGS ###
 # F77 = g77
