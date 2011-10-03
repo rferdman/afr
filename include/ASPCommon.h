@@ -223,3 +223,4 @@ int    FitMueller(struct RunVars *, struct ASPHdr *, struct StdProfs *, int);
 void   MJDPaste(int, double, char *);
 void   TemplateCutoff(struct StdProfs *, int, float);
 void   Zero2One(struct StdProfs *, int, char *);
+int    Freq2Chan(double, double *, int);

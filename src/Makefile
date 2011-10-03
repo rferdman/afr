@@ -77,7 +77,7 @@ CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalData.o \
 	ReadData.o ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o \
-	Sort.o Median.o Zero.o  
+	Sort.o Median.o Zero.o Freq2Chan.o
 
 BINDOWNOBJS = ASPBinDown.o BinDownCmdLine.o AllocRunMode.o BinDown.o \
 	MakePol.o Zero.o WriteStokes.o  DutyLookup.o Sort.o FindPeak.o BMask.o 

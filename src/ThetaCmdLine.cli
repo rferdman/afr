@@ -24,6 +24,7 @@ Commandline tool
 ## Swap polarization A and B due to polarizations flipped
 Flag -swap Swap {Swap polarizations}
 
+
 ########################################################################
 ## STRING OPTIONS
 ########################################################################
@@ -33,3 +34,6 @@ String -infile Infile {Input off-source continuum cal data file from ASP} \
     -m \
     -c 1 1
 
+## Use output file from psrchive's pacv routine after having run "pacv -b"
+String -b Bfile {Use this pacv -b output file when calculating ThetaBB} \
+    -c 1 1

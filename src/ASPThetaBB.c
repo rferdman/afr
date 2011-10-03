@@ -50,6 +50,12 @@ int main(int argc, char **argv)
 
   float          ThetaDeg[NCHMAX], Chan[NCHMAX];
 
+  /* Variables associated with 'pacv -b' output file */
+  int            i_b, ThisChan;
+  double         Bfreq, C1, C2, C3, C1err, C2err, C3err, Bangle[NCHMAX];
+  char           BLine[256];
+  FILE           *Fb;
+
   int Diagnose=1;
   FILE *fptest;
 
@@ -169,6 +175,44 @@ int main(int argc, char **argv)
   }
   
 
+  /* Read in output file from pacv -b */
+  if(Cmd->BfileP){
+    printf("Reading input file from 'pacv -b' output, named %s\n",
+	   Cmd->Bfile);
+    if((Fb = fopen(Cmd->Bfile, "r")) == NULL){
+      printf("Cannot open file %s for reading in 'pacv -b' output.  Exiting...\n",
+	     Cmd->Bfile);fflush(stdout);
+      return -2;
+    }
+    printf("File %s open.\n", Cmd->Bfile);
+    while (fgets(BLine, 256, Fb) != NULL){
+      sscanf(BLine, "%d%lf%lf%lf%lf%lf%lf%lf", 
+	     &i_b, &Bfreq, &C1, &C1err, &C2, &C2err, &C3, &C3err);
+
+      /* Now do frequency match to determine corresponding channel index */
+      if((ThisChan = Freq2Chan(Bfreq, Hdr.obs.ChanFreq, Hdr.obs.NChan)) < 0) {
+	/* If mapping unsuccessful, quit out with error */
+	fprintf(stderr, "Error in 'pacv -b' output. Frequency %f does not ", 
+		Bfreq);
+	fprintf(stderr, "map to any channel for this cal data file. \n");
+	return -3;
+      }
+
+
+      /* Assuming here feeds are linear?  Or is this general? If so,
+       are we then assuming linearity for the ThetaBB calculation, which uses 
+       Re and Im cross products without checking polarization basis? */
+      /* C2 = U; C3 = V */
+      Bangle[ThisChan] = atan2(C2, C3);
+      //printf("Bangle[%d] = %lf\n", ThisChan, Bangle[ThisChan]);
+	
+    }
+
+  }
+  fclose(Fb);
+  printf("File %s closed.\n", Cmd->Bfile);
+
+
   /*** BEGIN FIND THETA_BB ***/
 
   printf("\n\nResults from ThetaBB calculation:\n");
@@ -212,6 +256,10 @@ int main(int argc, char **argv)
       
 
     ThetaBB[j] = atan2(CalHeightIm, CalHeightRe); // * 360./TWOPI;
+
+    /* Remove extra angle if using output file from "pacv -b" */
+    if(Cmd->BfileP)
+      ThetaBB[j] -= Bangle[j];
 
     /* do error calculations -- need RMS as well -- see Shauna's thesis */
 
