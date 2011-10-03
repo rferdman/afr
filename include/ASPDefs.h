@@ -16,8 +16,8 @@
 #define NB      128
 #define MAXSPLIT 32
 #define NFILEMAX 1000
-#define MAXDUMPS 512
-#define MAXOMIT  8192
+#define MAXDUMPS 1024
+#define MAXOMIT  65536
 #define NCHMAX 2048
 #define NCOLMAX 999
 
@@ -29,6 +29,7 @@
 #define DFFAC 2.410e-4
 
 /* THRESHOLD WHEN COMPARING TWO DOUBLES */
-#define DBLEPS 0.000001
+//#define DBLEPS 0.000001
+#define DBLEPS 0.00011
 
 

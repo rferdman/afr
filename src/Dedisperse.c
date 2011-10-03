@@ -19,8 +19,9 @@ int Dedisperse (struct StdProfs *Profile, struct RunVars *RunMode,
 
   /* Calculate dispersion delay realtive to centre frequency */
   dm_delay = (Hdr->obs.DM / DFFAC) * 
-    ( (1.0/(Hdr->obs.ChanFreq[i_chan]*Hdr->obs.ChanFreq[i_chan])) - 
-      (1.0/(Hdr->obs.FSkyCent*Hdr->obs.FSkyCent)) );
+    ( (1.0/(Hdr->obs.ChanFreq[i_chan]*Hdr->obs.ChanFreq[i_chan])) );
+  /*    ( (1.0/(Hdr->obs.ChanFreq[i_chan]*Hdr->obs.ChanFreq[i_chan])) - 
+	(1.0/(Hdr->obs.FSkyCent*Hdr->obs.FSkyCent)) ); */
   phase_delay = (dm_delay/SubHdr->DumpRefPeriod[i_chan]);  /* Number from 0 to 1 */
 
   //  if (i_chan==0) printf("I AM DEDISPERING!!!\n");
