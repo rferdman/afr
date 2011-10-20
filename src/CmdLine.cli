@@ -116,8 +116,8 @@ String -parfile ParFile {Use input parameter file to reallign pulse profiles} \
     -c 1 1
 
 ## Look for and use par file for this pulsar to realign pulse profiles
-String -psr PSRName {Find and use parameter file for this pulsar to realign profiles.  Will search directory $TEMPO/tzpar} \
-    -c 1 1
+#String -psr PSRName {Find and use parameter file for this pulsar to realign profiles.  Will search directory $TEMPO/tzpar} \
+#    -c 1 1
 
 
 ########################################################################

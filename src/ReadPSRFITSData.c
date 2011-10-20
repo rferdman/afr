@@ -20,7 +20,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   //short int  *tempprof;
   float  *Weights, *Offsets, *Scales;
   static double TotalTDump=0.;
-  double ref_mjd, DumpMiddleDays, RefPhase, RefFreq;
+  double ref_mjd, OffsSub, DumpMiddleDays, RefPhase, RefFreq;
   char Rawfile[100], tempstr[8];
   struct Polyco Polycos[MAX_PC_SETS];
 
@@ -251,13 +251,22 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   TotalTDump += hdr->redn.TDump;
 
 
-  /* Now calculate the mid-scan dump time based on TotalTDump, TDump, Start time, and current dump number */
+  /* Now calculate the mid-scan dump time by simply reading the next entry in the 
+   OFFS_SUB column */
   
-  /* Check that polyco falls inside NMinutes/2 of subint time */
+   if(fits_get_colnum (Fin, CASEINSEN, "OFFS_SUB", &colnum, &status)){
+    fprintf(stderr, "ReadPSRFITSData ERROR: No TSUBINT in FITS file?\n");
+    return -1;
+  }
+  if(fits_read_col(Fin, TDOUBLE, colnum, 1+i_dump, 1, 1, NULL, &OffsSub,
+		   &anynul, &status)){
+    fprintf(stderr, "ReadPSRFITSData ERROR: Unable to read TSUBINT...\n");
+    return -1;
+  }
+ /* Check that polyco falls inside NMinutes/2 of subint time */
   
   /* This works out to the time  halfway during the current dump */
-  subhdr->DumpMiddleSecs =  (double)hdr->obs.StartTime + 
-    TotalTDump - hdr->redn.TDump/2.;
+  subhdr->DumpMiddleSecs =  (double)hdr->obs.StartTime + OffsSub;
 
   /* Need to recalculate RefPhase and RefPeriod based on polycos */
   DumpMiddleDays = subhdr->DumpMiddleSecs /86400.;

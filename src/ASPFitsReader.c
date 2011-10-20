@@ -319,11 +319,19 @@ int main(int argc, char **argv)
 
   /* Make polyco file on the fly if requested by user, which will be 
      seen and used by GetPoly routine */
-  if (Cmd->PSRNameP || Cmd->ParFileP) {
-    if(MakePoly(Cmd, &InHdr) < 0){
+  //  if (Cmd->PSRNameP || Cmd->ParFileP) {
+  if (Cmd->ParFileP) {
+    if(MakePoly(Cmd->ParFile, &InHdr) < 0){
       fprintf(stderr, "Could not make polycos. Exiting...\n");
       exit(2);
     }
+    /* Finally, set appropriate variables to let main AFR program know that 
+       it can go ahead and read in an existing par file (poly_final.dat in 
+       this case) */
+    Cmd->PolyfileP=1;
+    Cmd->PolyfileC=1;
+    Cmd->Polyfile = (char *) malloc(64);
+    strcpy(Cmd->Polyfile,"poly_final.dat");
   }
  /* Read in polyco.dat file and get polyco structure if requested on 
      command line */

@@ -29,9 +29,9 @@ int GetOmit(struct ASPHdr *hdr, Cmdline *Cmd, struct RunVars *RunMode)
   int DumpOmitFlag[MAXDUMPS];
   int ChanOmitFlag[NCHMAX];
 
-
   /* START OF PARSING OF WHICH FREQ/DUMP COMBOS TO OMIT */
   IZero(nomit, NCHMAX);
+  RunMode->NScanOmit = 0;
   
   /* make OmitFlag array to denote (Dump,Freq) combinations that are to be omitted */
   //OmitFlag = (int *)malloc(RunMode->NDumps*hdr->obs.NChan*sizeof(int));

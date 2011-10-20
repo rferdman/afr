@@ -30,7 +30,7 @@ LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng 
 
 
 ### C COMPILER AND FLAGS ###
-CC = gcc-4.2
+CC = gcc
 CFLAGS = -Wall -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
 # CFLAGS_NO_OPT = -Wall -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT_INCLUDE_DIR)
 #CFLAGS_OPT2 = -Wall -O3 -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR)  -I$(PGPLOT_INCLUDE_DIR)
@@ -92,7 +92,8 @@ ROTATEOBJS = ASPRotate.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
 
 ZAPOBJS = ASPZap.o ZapCmdLine.o AllocRunMode.o ReadASPAsc.o ReadHdr.o \
 	ReadASPHdr.o ReadPSRFITSHdr.o ReadData.o ReadASPData.o \
-	ReadPSRFITSData.o Dedisperse.o MakeStokes.o BMask.o Sort.o FindPeak.o \
+	ReadPSRFITSData.o Dedisperse.o GetPoly.o PhaseShift.o MakeStokes.o \
+	BMask.o Sort.o FindPeak.o \
 	DutyLookup.o MakePol.o Zero.o MaxMin.o ArrayZero.o BinDown.o cprofc.o \
 	RotateProf.o PhaseCalc.o
 

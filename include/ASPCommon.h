@@ -175,6 +175,7 @@ void   MakeStokes(struct ASPHdr *,struct RunVars *, struct StdProfs *,double *,
 int    Dedisperse(struct StdProfs *, struct RunVars *, 
 		  struct ASPHdr *, struct SubHdr *, 
 		  int i_chan);
+int MakePoly(char *, struct ASPHdr *);
 int    PhaseShift(struct Polyco *, int , struct StdProfs *, struct RunVars *, 
 		  struct ASPHdr *, struct SubHdr *, int );
 void   BinDown(struct RunVars *, struct StdProfs *, struct StdProfs *);

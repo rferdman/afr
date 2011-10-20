@@ -26,5 +26,7 @@ struct Polyco {
 
 int GetPoly(char *, char *, struct Polyco *, double, double);
 //int GetPoly(struct asp_params *obs_params, struct Polyco *pc, double ChanFreq);
+
+
 #endif
 

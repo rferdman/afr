@@ -8,7 +8,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "ASPCommon.h"
-#include "CmdLine.h"
+//#include "CmdLine.h"
 
 #define FREQTOL 0.003
 
@@ -149,12 +149,12 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
 /* Routine to make polyco file, and read it using GetPoly() above, given the pulsar 
    name or par file -- at the moment this will only be in tempo1 format */
 
-int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr) 
+int MakePoly(char* ParFile, struct ASPHdr *Hdr) 
 {  
   
   int  i_chan;
   char ParDir[256], tempstr[10];
-  char ParFile[256];
+  //  char ParFile[256];
   char tempo_cmd[256];
   FILE *Fpoly, *Ftempo;
   
@@ -169,18 +169,19 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
   /* Get par file -- Are we using a user-provided par file, or are we looking in the 
      default par directory? */
   
-  if(Cmd->ParFileP){
+  //  if(Cmd->ParFileP){
     /* Check that input par file exists */
-    if(FileExists(Cmd->ParFile)){
-      strcpy(ParFile, Cmd->ParFile);
+    if(FileExists(ParFile)){
+      //      strcpy(ParFile, Cmd->ParFile);
       printf("Creating polycos for PSR %s from input parameter file %s.\n", 
 	     Hdr->target.PSRName, ParFile);
     }
     else{
-      fprintf(stderr,"Could not open file %s.\n", Cmd->ParFile);
+      fprintf(stderr,"Could not open file %s.\n", ParFile);
       return -1;
     }
-  }
+    //  }
+#if 0
   else if(Cmd->PSRNameP){
     printf("Looking for par file in directory %s for pulsar %s, provided by user.\n",
 	   ParDir, Cmd->PSRName);
@@ -197,6 +198,8 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
       return -1;
     }
   }
+#endif
+#if 0
   else{
     printf("Looking for par file in directory %s that matches pulsar name %s ",
 	   ParDir, Hdr->target.PSRName);
@@ -234,6 +237,8 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
       }
     }
   }
+#endif
+
   
   /* If we made it this far, we have a par file we can now use to create a polyco file. */
   
@@ -287,15 +292,8 @@ int MakePoly(Cmdline *Cmd, struct ASPHdr *Hdr)
 
   }
 
-  /* Finally, set appropriate variables to let main AFR program know that it 
-     can go ahead and read in an existing par file (poly_final.dat in 
-     this case) */
-  Cmd->PolyfileP=1;
-  Cmd->PolyfileC=1;
-  Cmd->Polyfile = (char *) malloc(64);
-  strcpy(Cmd->Polyfile,"poly_final.dat");
 
-  return 0;
+ return 1;
 }
 
 

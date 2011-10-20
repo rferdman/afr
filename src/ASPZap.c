@@ -15,14 +15,20 @@
 #include "fitsio.h"
 #include "ZapCmdLine.h" 
 #include "ASPCommon.h"
+#include "polyco.h"
 #include "cpgplot.h"
 #include "cpgplot_def.h"
+
 
 #define YES 1
 #define NO  0
 
 #define FREQMODE 0
 #define TIMEMODE 1
+
+#define YES_WRAP 1
+#define NO_WRAP  0
+
 
 /* Structure to bundle all grayscale properties into one object */
 struct gray 
@@ -46,6 +52,7 @@ struct plot_info
   char y_label[64];   // y-axis label
 };
 
+// int MakePoly(Cmdline *, struct ASPHdr *);
 int NormProf(int, float *, char *);
 void GetGray(float *, int *, int, int, int, int, int, 
 	     float, float, float, float,
@@ -53,11 +60,11 @@ void GetGray(float *, int *, int, int, int, int, int,
 void PlotGray(struct gray *, float *, struct plot_info *);
 void PlotProf(int, float *, float, float);
 void GetHistArray(int, float *, int *, int *, float *);
-int GetHist(int, float *, int, float *, float *);
+int  GetHist(int, float *, int, float *, float *);
 void PlotHist(int, float *, float *, char *, char *);
 void PlotAllHist(int , float *, float *, float *, float *, float *, float *, 
 		 float *, float *, int);
-void GetHistLimits(float *);
+void GetHistLimits(float *, int);
 void DrawHistLimits(int , float *, float *, float *);
 void PlotAllProf(float *, int *, float *, int *, struct ASPHdr, float, float, float, float, 
 		 struct gray *, struct plot_info *, struct gray *, struct plot_info *);
@@ -111,6 +118,10 @@ int main(int argc, char *argv[])
   float *ShiftBinVal, *ShiftHist, *eShiftBinVal, *eShiftHist, *ScaleBinVal, *ScaleHist;
   float Sideband, ChanBW;
   Cmdline *Cmd;
+
+  double          StartMJD;
+  struct Polyco   *Polycos;
+  int             n_poly=0;
 
   int dev_rms_gray, dev_prof_gray, dev_prof_plot, dev_hist;
   int i_min, i_max;
@@ -215,6 +226,16 @@ int main(int argc, char *argv[])
 	   ProgName,FitsFile);
     exit(2);
   }
+  
+  /* Dynamically allocate RunMode variables */
+  if (AllocRunMode(&RunMode) < 0){
+    printf("Could not allocate RunMode structure.  Exiting...\n");
+    exit(2);
+  }
+  strcpy(RunMode.Infile,Cmd->Infile); 
+  
+  RunMode.NBins = RunMode.NBinsOut = Hdr.redn.RNBinTimeDump;
+  
 
  printf("\n==========================\n");
   if(!strcmp(Hdr.gen.BEName, "xASP")) 
@@ -224,10 +245,6 @@ int main(int argc, char *argv[])
   else
     printf("Unknown FITS Header %s\n", Hdr.gen.HdrVer);
   printf("==========================\n\n");fflush(stdout);
-
-  //  printf("\n==========================\n");
-  //  printf("ASP FITS Header %s\n",Hdr.gen.HdrVer);
-  //  printf("==========================\n\n");fflush(stdout);
   
   printf("Input file:  %s\n\n",FitsFile);fflush(stdout);
 
@@ -243,6 +260,7 @@ int main(int argc, char *argv[])
     n_bin_hist = Cmd->NBinHist;
   else
     n_bin_hist = 25;
+
   /* Malloc histogram arrays */
   RMSBinVal = (float *)malloc(n_bin_hist*sizeof(float));
   RMSHist = (float *)malloc(n_bin_hist*sizeof(float));
@@ -258,7 +276,7 @@ int main(int argc, char *argv[])
 
 
 
-  NDump = 0;
+  // NDump = 0;
   /* Get number of HDUs in fits file */
   fits_get_num_hdus(Fin, &NumHDU, &status);
   RunMode.Dedisp = 0;
@@ -271,6 +289,10 @@ int main(int argc, char *argv[])
 
   /**** Get number of dumps based on which file type this is ****/  
   if(!strcmp(Hdr.gen.BEName, "xASP")) {
+
+    RunMode.NDumps = Hdr.redn.RNTimeDumps;
+
+#if 0
     if(!strcmp(Hdr.gen.HdrVer,"Ver1.0")){
       NDump = NumHDU-3;  /* the "3" is temporary, depending on how 
 			    many non-data tables we will be using */
@@ -283,6 +305,7 @@ int main(int argc, char *argv[])
       printf("This header %s. Exiting...\n",Hdr.gen.HdrVer);fflush(stdout);
       exit(3);
     }
+
     /* Now check last dump to make sure it wrote properly if scan 
        was ctrl-c'd -- if so, reduce NDumps by 1 to avoid disaster */
     fits_get_num_hdus(Fin, &NumHDU, &status);
@@ -296,12 +319,18 @@ int main(int argc, char *argv[])
       NDump--;      
     }
     Hdr.redn.RNTimeDumps = NDump;
+#endif
+
   }
   else {
     if(!strcmp(Hdr.gen.FitsType, "PSRFITS")) {
       /* Set to dedisperse input profiles before processing */
-      RunMode.Dedisp = 1;
+      if(!Cmd->NoDedispP)
+	RunMode.Dedisp = 1;
+      else
+	printf("Dedispersion turned off.\n\n");
       // NDump = Hdr.redn.RNTimeDumps;
+      RunMode.NDumps = Hdr.redn.RNTimeDumps;
       NPtsProf = Hdr.redn.RNBinTimeDump;
     }
     else {
@@ -374,14 +403,50 @@ int main(int argc, char *argv[])
   /* Convert NObs to integer for possible use in calculating parallactic angle */
   sscanf(Hdr.obs.ObsvtyCode,"%s",NObs);
 
-  /* Move to the first data table HDU in the fits file */
-  /*****  if(!strcmp(Hdr.gen.HdrVer,"Ver1.0"))
-    fits_movnam_hdu(Fin, BINARY_TBL, "STOKES0", 0, &status);
-  else if (!strcmp(Hdr.gen.HdrVer,"Ver1.0.1"))
-  fits_movnam_hdu(Fin, ASCII_TBL, "DUMPREF0", 0, &status); ****/
 
-  /* Get the current HDU number */
-  /**** fits_get_hdu_num(Fin, &NFirstTable); ****/
+  /* Read/make polycos here, if requested by user, for eventual 
+     realignment of profiles */
+  
+    /* Make polyco file on the fly if requested by user, which will be 
+     seen and used by GetPoly routine */
+  if (Cmd->ParFileP) {
+    if(MakePoly(Cmd->ParFile, &Hdr) < 0){
+      fprintf(stderr, "Could not make polycos. Exiting...\n");
+      exit(2);
+    }
+    /* Finally, set appropriate variables to let main AFR program know that 
+       it can go ahead and read in an existing par file (poly_final.dat in 
+       this case) */
+    Cmd->PolyfileP=1;
+    Cmd->PolyfileC=1;
+    Cmd->Polyfile = (char *) malloc(64);
+    strcpy(Cmd->Polyfile,"poly_final.dat");
+  }
+  //printf("PolyfileP = %d, Polyfile = %s\n\n", Cmd->PolyfileP, Cmd->Polyfile);
+ /* Read in polyco.dat file and get polyco structure if requested on 
+     command line */
+  if(Cmd->PolyfileP){
+    if(Cmd->PolyfileC == 0) sprintf(Cmd->Polyfile,"polyco.dat");
+    printf("Polyco file name:  %s\n",Cmd->Polyfile);
+    StartMJD = (double)Hdr.obs.IMJDStart + 
+      ((double)Hdr.obs.StartTime)/86400.;
+    /* malloc Polyco structure to number of dumps */
+    Polycos = (struct Polyco *)malloc(MAX_PC_SETS*Hdr.obs.NChan*
+				      sizeof(struct Polyco));    
+    for(i_chan=0;i_chan<Hdr.obs.NChan;i_chan++){
+      if((n_poly=GetPoly(Cmd->Polyfile, RunMode.Source, 
+			 &Polycos[i_chan*MAX_PC_SETS], 
+			 Hdr.obs.ChanFreq[i_chan], 
+			 StartMJD)) < 1) {
+	printf("Could not find polycos for all input profiles of \n");
+	printf("PSR %s given as input.  Will not shift profiles.\n",
+	       RunMode.Source);
+	Cmd->PolyfileP=0;
+      }
+      //printf("%lf MHz:  %d polyco sets found...\n", Hdr.obs.ChanFreq[i_chan], n_poly);
+    }
+    if (Cmd->PolyfileP) printf("Polycos successfully found.\n\n");
+  }
 
 
 
@@ -393,20 +458,6 @@ int main(int argc, char *argv[])
   if(Cmd->PazP)  
     printf("Writing paz-compatible command line to file %s\n\n",PazFile);
 
-   /* Dynamically allocate RunMode variables */
-  if (AllocRunMode(&RunMode) < 0){
-    printf("Could not allocate RunMode structure.  Exiting...\n");
-    exit(2);
-  }
-  strcpy(RunMode.Infile,Cmd->Infile); 
-
-  // RunMode.AddChans = 0;
-  // RunMode.AddDumps = 0;
-  // RunMode.NScanOmit = 0;
-  // IZero(RunMode.DumpOmit,MAXOMIT);
-  // IZero(RunMode.ChanOmit,MAXOMIT);
-  // IZero(RunMode.ZapChan,Hdr.obs.NChan);
-  RunMode.NBins = RunMode.NBinsOut = Hdr.redn.RNBinTimeDump;
   
 
   /* Malloc the temporary array to go into histogram making routine to be the maximum 
@@ -483,7 +534,6 @@ int main(int argc, char *argv[])
 
     /* If xASP format, move to next dump's data */
     if(!strcmp(Hdr.gen.BEName, "xASP")) {
-      fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
       if(!strcmp(Hdr.gen.HdrVer,"Ver1.0")){
 	fits_movabs_hdu(Fin, NFirstTable+i_dump, &hdutype, &status); 
       }
@@ -491,6 +541,7 @@ int main(int argc, char *argv[])
 	fits_movabs_hdu(Fin,NFirstTable+(i_dump)*2+1,&hdutype,&status);
 	fits_movrel_hdu(Fin, -1, NULL, &status);
       }
+      fits_get_num_rows(Fin, &NPtsProf, &status);status=0; 
     }
 
     /* ReadASPStokes(&Hdr, &SubHdr, Fin, NPtsProf, 
@@ -510,7 +561,7 @@ int main(int argc, char *argv[])
 
     for(i_chan=0;i_chan<Hdr.obs.NChan;i_chan++){
       
-	  /* Construct Stokes parameters */
+ 	  /* Construct Stokes parameters */
 	  MakeStokes(&Hdr, &RunMode, &Profile[i_chan], 
 		     ASquared[i_chan], BSquared[i_chan],
 		     ReAconjB[i_chan], ImAconjB[i_chan],
@@ -526,166 +577,184 @@ int main(int argc, char *argv[])
 	      exit(1);
 	    }
 	  }
-	  
-      i_array = i_chan*Hdr.redn.RNTimeDumps + i_dump;
 
-
-      /* Only calculate RMS and template cross correlation quantities is this 
-	 is our first time through */
-      if(first_pass) {
-
-      /* Check that profile is not zeroed out, or contains NaNs */
-      bad_array = ArrayZero(Profile[i_chan].rstds, Hdr.redn.RNBinTimeDump);
-      
-  
-
-
-      if (bad_array) {
-	ProfWgt[i_array] = 0;
-	if(bad_array==1) 
-	  printf("Scan %d, channel %d is a zeroed-out profile\n", i_dump, i_chan);
-	if(bad_array==2) 
-	  printf("Scan %d, channel %d has at least some bins that are NaN\n",
-		 i_dump, i_chan);		
-	if(bad_array==3) 
-	  printf("Scan %d, channel %d has at least some bins that are not finite\n",
-		 i_dump, i_chan);		
-      }
-      // MakePol(&RunMode,RunMode.NBins, &Profile[i_chan]);
-      
-      Duty = DutyLookup(Hdr.target.PSRName);
-      BMask(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&Duty,FinalMask);
-      Baseline(Profile[i_chan].rstds,FinalMask,&Hdr.redn.RNBinTimeDump,
-	       &SBase,&Srms);
-
- 
-      // SPeak =  FindPeak(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&spk);
-      // Profile[i_chan].SNR = SPeak*Srms;
-
-      /* Build up array of off-pulse RMSs -- 1D representation of a 2D array, for pgplot */
-      //i_array = i_dump*Hdr.obs.NChan + i_chan;
-      //  printf("i_array = %d, n_array = %d\n", i_array, Hdr.obs.NChan*Hdr.redn.RNTimeDumps);
-      //      if (Srms > 0.) 
-
-      /* Can still have a bad profile that is not full of NaNs and is finite; if
-       the signal is weak or if there is RFI such that the pulse is lost, 
-      BMask will have trouble creating a mask for getting off-pulse RMS.  
-      FinalMask will be zeroes and RMS will be NaNs.  So in addition to testing
-      for profiles flagged as being zeroed-out or having NaNs or not finite, we
-      must test to see if the calculated RMS is reasonable, i.e. no itself a NaN
-      and not infinite. */
-      RMS = (float)(1./Srms);
-      if(isnan(RMS) || !isfinite(RMS)) ProfWgt[i_array] = 0;
-
-      if (ProfWgt[i_array])  // if the RMS is finite
-	ProfRMS[i_array] = RMS;
-      else 
-	ProfRMS[i_array] = 0.;  // will hopefully avoid NaNs this way...
-
-
-      /*      if(i_array==186){
-	printf("BLAH BLAH Srms[186] = %lf, ProfRMS[186] = %f\n", Srms, ProfRMS[186]);fflush(stdout);
-	double temp_count=0.0;
-	for(i=0;i<Hdr.redn.RNBinTimeDump;i++) {
-	  
-	  printf("%.3f %.3lf     ",Profile[i_chan].rstds[i], FinalMask[i]);
-	  temp_count += FinalMask[i];
-	}
-	
-	printf("temp_count = %lf\nHOO-WAH!!!\n", temp_count)	 ; 
-	exit(0);
-	} */
-      
-      
-      //ProfRMS[i_array] = (float)(i_chan+i_dump);
-      //if(i_chan==8) ProfRMS[i_array] = 0.;
-	
-      /* If user has supplied a template profile, build up array of shifts, shift errors, 
-	 and sclae factors */
-      if(Cmd->TemplateP){
-	struct StdProfs ShiftProf;
-	struct RunVars  ShiftRunMode;
-	
-	if(ProfWgt[i_array]) { // i.e. good data
-	  /* Bin down data profile here for shift calculation, if needed */
-	  if(bin_down){
-	    ShiftRunMode.BinDown = 1;
-	    ShiftRunMode.NBins = Hdr.redn.RNBinTimeDump;
-	    ShiftRunMode.NBinsOut = NBins;
-	    ShiftRunMode.Verbose = Cmd->VerboseP;
-
-	    BinDown(&ShiftRunMode, &Profile[i_chan], &ShiftProf);
+	  /* Shift phases by appropriate amounts if requested on command line 
+	     -- do for each dump and channel */
+	  if(Cmd->PolyfileP){
+	    if(i_dump==0 && i_chan==0) {
+	      printf("Applying polyco-based phase shifts...\n");
+	      fflush(stdout);
+	    }
+	    if(PhaseShift(&Polycos[i_chan*MAX_PC_SETS], n_poly, 
+			  &Profile[i_chan], &RunMode,
+			  &Hdr, &SubHdr, i_chan) < 0) {
+	      printf("Unable to shift profile phases.  Exiting...\n");
+	      fflush(stdout);
+	      exit(11); 
+	    }
 	  }
-	  else{
-	    memcpy(&ShiftProf, &Profile[i_chan], 
-		   sizeof(struct StdProfs));	  
-	  }
-	  memcpy(profs,ShiftProf.rstds,sizeof(float)*NBINMAX);
-	  /* Now fftfit to find shift required in second profile */
-	  fftfit_(profs,&stdamps[1],&stdphas[1],
-		  &NBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);  
-	  ProfShift[i_array] = Shift;
-	  ProfeShift[i_array] = EShift;
-	  ProfScale[i_array] = b;
-	}
-      }
-      
-      }
-      /* Add prof in channels, and then in dumps, then all together, only using 
-	 non-zapped scans */
-      if(ProfWgt[i_array]) { // i.e. good data
 
-	for (i_bin=0; i_bin<Hdr.redn.RNBinTimeDump; i_bin++){
-	  /* Total summed profile */
-	  ProfAll[i_bin] += 
-	    ((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
-	  /* profiles over frequencies  (NChan profiles) */
-	  ProfChan[i_chan*Hdr.redn.RNBinTimeDump + i_bin] += 
-	    ((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
-	  /* Profiles over time (NDump profiles) */
-	  ProfDump[i_dump*Hdr.redn.RNBinTimeDump + i_bin] += 
-	    ((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
-	  //  if(isnan(Profile[i_chan].rstds[i_bin]))
-	    //  printf("***ALERT!!!*** i_dump = %d,  i_chan = %d, i_bin = %d is NaN!!\n", i_dump, i_chan, i_bin);
-	  /* Make mask = 1 once the first non-zero-weight profile is found, since 
-	     there will be at least *one* good profile going into the sum */
-	  ProfChanMask[i_chan*Hdr.redn.RNBinTimeDump + i_bin] = 1;
-	  ProfDumpMask[i_dump*Hdr.redn.RNBinTimeDump + i_bin] = 1;
-	}
-	/*	n_prof_all++;
+
+	  i_array = i_chan*Hdr.redn.RNTimeDumps + i_dump;
+	  
+	  
+	  /* Only calculate RMS and template cross correlation quantities is 
+	     this is our first time through */
+	  if(first_pass) {
+	    
+	    /* Check that profile is not zeroed out, or contains NaNs */
+	    bad_array = ArrayZero(Profile[i_chan].rstds, Hdr.redn.RNBinTimeDump);
+	    
+	    
+	    
+	    
+	    if (bad_array) {
+	      ProfWgt[i_array] = 0;
+	      if(bad_array==1) 
+		printf("Scan %d, channel %d is a zeroed-out profile\n", i_dump, i_chan);
+	      if(bad_array==2) 
+		printf("Scan %d, channel %d has at least some bins that are NaN\n",
+		       i_dump, i_chan);		
+	      if(bad_array==3) 
+		printf("Scan %d, channel %d has at least some bins that are not finite\n",
+		       i_dump, i_chan);		
+	    }
+	    // MakePol(&RunMode,RunMode.NBins, &Profile[i_chan]);
+	    
+	    Duty = DutyLookup(Hdr.target.PSRName);
+	    BMask(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&Duty,FinalMask);
+	    Baseline(Profile[i_chan].rstds,FinalMask,&Hdr.redn.RNBinTimeDump,
+		     &SBase,&Srms);
+	    
+	    
+	    // SPeak =  FindPeak(Profile[i_chan].rstds,&Hdr.redn.RNBinTimeDump,&spk);
+	    // Profile[i_chan].SNR = SPeak*Srms;
+	    
+	    /* Build up array of off-pulse RMSs -- 1D representation of a 2D array, for pgplot */
+	    //i_array = i_dump*Hdr.obs.NChan + i_chan;
+	    //  printf("i_array = %d, n_array = %d\n", i_array, Hdr.obs.NChan*Hdr.redn.RNTimeDumps);
+	    //      if (Srms > 0.) 
+	    
+	    /* Can still have a bad profile that is not full of NaNs and is 
+	       finite; if the signal is weak or if there is RFI such that the 
+	       pulse is lost, BMask will have trouble creating a mask for 
+	       getting off-pulse RMS.  FinalMask will be zeroes and RMS will be 
+	       NaNs.  So in addition to testing for profiles flagged as being 
+	       zeroed-out or having NaNs or not finite, we must test to see if 
+	       the calculated RMS is reasonable, i.e. no itself a NaN and not 
+	       infinite. */
+	    RMS = (float)(1./Srms);
+	    if(isnan(RMS) || !isfinite(RMS)) ProfWgt[i_array] = 0;
+	    
+	    if (ProfWgt[i_array])  // if the RMS is finite
+	      ProfRMS[i_array] = RMS;
+	    else 
+	      ProfRMS[i_array] = 0.;  // will hopefully avoid NaNs this way...
+	    
+	    
+	    /*      if(i_array==186){
+		    printf("BLAH BLAH Srms[186] = %lf, ProfRMS[186] = %f\n", Srms, ProfRMS[186]);fflush(stdout);
+		    double temp_count=0.0;
+		    for(i=0;i<Hdr.redn.RNBinTimeDump;i++) {
+		    
+		    printf("%.3f %.3lf     ",Profile[i_chan].rstds[i], FinalMask[i]);
+		    temp_count += FinalMask[i];
+		    }
+		    
+		    printf("temp_count = %lf\nHOO-WAH!!!\n", temp_count)	 ; 
+		    exit(0);
+		    } */
+	    
+	    
+	    //ProfRMS[i_array] = (float)(i_chan+i_dump);
+	    //if(i_chan==8) ProfRMS[i_array] = 0.;
+	    
+	    /* If user has supplied a template profile, build up array of shifts, shift errors, 
+	       and sclae factors */
+	    if(Cmd->TemplateP){
+	      struct StdProfs ShiftProf;
+	      struct RunVars  ShiftRunMode;
+	      
+	      if(ProfWgt[i_array]) { // i.e. good data
+		/* Bin down data profile here for shift calculation, if needed */
+		if(bin_down){
+		  ShiftRunMode.BinDown = 1;
+		  ShiftRunMode.NBins = Hdr.redn.RNBinTimeDump;
+		  ShiftRunMode.NBinsOut = NBins;
+		  ShiftRunMode.Verbose = Cmd->VerboseP;
+		  
+		  BinDown(&ShiftRunMode, &Profile[i_chan], &ShiftProf);
+		}
+		else{
+		  memcpy(&ShiftProf, &Profile[i_chan], 
+			 sizeof(struct StdProfs));	  
+		}
+		memcpy(profs,ShiftProf.rstds,sizeof(float)*NBINMAX);
+		/* Now fftfit to find shift required in second profile */
+		fftfit_(profs,&stdamps[1],&stdphas[1],
+			&NBins,&Shift,&EShift,&SNR,&ESNR,&b,&errb,&ngood);  
+		ProfShift[i_array] = Shift;
+		ProfeShift[i_array] = EShift;
+		ProfScale[i_array] = b;
+	      }
+	    }
+	    
+	  }
+	  /* Add prof in channels, and then in dumps, then all together, only using 
+	     non-zapped scans */
+	  if(ProfWgt[i_array]) { // i.e. good data
+	    
+	    for (i_bin=0; i_bin<Hdr.redn.RNBinTimeDump; i_bin++){
+	      /* Total summed profile */
+	      ProfAll[i_bin] += 
+		((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
+	      /* profiles over frequencies  (NChan profiles) */
+	      ProfChan[i_chan*Hdr.redn.RNBinTimeDump + i_bin] += 
+		((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
+	      /* Profiles over time (NDump profiles) */
+	      ProfDump[i_dump*Hdr.redn.RNBinTimeDump + i_bin] += 
+		((float)ProfWgt[i_array])*Profile[i_chan].rstds[i_bin];
+	      //  if(isnan(Profile[i_chan].rstds[i_bin]))
+	      //  printf("***ALERT!!!*** i_dump = %d,  i_chan = %d, i_bin = %d is NaN!!\n", i_dump, i_chan, i_bin);
+	      /* Make mask = 1 once the first non-zero-weight profile is found, since 
+		 there will be at least *one* good profile going into the sum */
+	      ProfChanMask[i_chan*Hdr.redn.RNBinTimeDump + i_bin] = 1;
+	      ProfDumpMask[i_dump*Hdr.redn.RNBinTimeDump + i_bin] = 1;
+	    }
+	    /*	n_prof_all++;
 		n_prof_chan[i_chan]++;
 		n_prof_dump[i_dump]++; */
-      }
-
-    /* Normalize each channel profile if this is the last dump */
-      if(i_dump == Hdr.redn.RNTimeDumps-1){
-	if(NormProf(Hdr.redn.RNBinTimeDump, 
-		    &ProfChan[i_chan*Hdr.redn.RNBinTimeDump], 
-		    &Hdr.target.PSRName[0]) < 0){
-	  printf("Added Profile across channel %d (%.6lf) could not be ",
-		 i_chan, Hdr.obs.ChanFreq[i_chan]);
-	  printf("normalised.  Have left as is.\n");
-	}
-      }
-
+	  }
+	  
+	  /* Normalize each channel profile if this is the last dump */
+	  if(i_dump == Hdr.redn.RNTimeDumps-1){
+	    if(NormProf(Hdr.redn.RNBinTimeDump, 
+			&ProfChan[i_chan*Hdr.redn.RNBinTimeDump], 
+			&Hdr.target.PSRName[0]) < 0){
+	      printf("Added Profile across channel %d (%.6lf) could not be ",
+		     i_chan, Hdr.obs.ChanFreq[i_chan]);
+	      printf("normalised.  Have left as is.\n");
+	    }
+	  }
+	  
     }
     
     /* Normalize each dump profile now that it is all added at this point */
     if(NormProf(Hdr.redn.RNBinTimeDump, &ProfDump[i_dump*Hdr.redn.RNBinTimeDump], 
 		Hdr.target.PSRName) < 0){
-     	  printf("Added Profile across subint %d could not be ", i_dump);
-	  printf("normalised.  Have left as is.\n");
+      printf("Added Profile across subint %d could not be ", i_dump);
+      printf("normalised.  Have left as is.\n");
     }
-
+    
     if(Cmd->VerboseP) printf("\n");fflush(stdout);
   }
-
+  
   /* Normalize total added profile to have values between 0 and 1 */
   if (NormProf(Hdr.redn.RNBinTimeDump, ProfAll, Hdr.target.PSRName) < 0){
     printf("Total cumulative profile across all subints and channels could ");
     printf("not be normalised.  Have left as is.\n");
   }
-
+  
   /* Finally, initialise current RMS, Shift, eShift, and Scale factor limits
    * before going interactive */
   if (first_pass) {
@@ -912,7 +981,7 @@ int main(int argc, char *argv[])
 	//printf("input string is _%s_ you know, and %d in length\n", input_str, (int)(strlen(input_str)));
 	
 	/* Get limits from user input */
-	GetHistLimits(tempRMSLim);
+	GetHistLimits(tempRMSLim, NO_WRAP);
 	/* Draw lines to show chosen limits */
 	DrawHistLimits(n_bin_hist, RMSBinVal, RMSHist, tempRMSLim);
 	printf("You have chosen to exclude all profiles with off-pulse RMS outside ");
@@ -924,29 +993,36 @@ int main(int argc, char *argv[])
 	  printf("\nEnter desired limits for cross correlation shift ");
 	  printf("histogram [leave as is]:  ");
 	  /* Get limits from user input */
-	  GetHistLimits(tempShiftLim);
+	  GetHistLimits(tempShiftLim, YES_WRAP);
 	  /* Draw lines to show chosen limits */
 	  DrawHistLimits(n_bin_hist, ShiftBinVal, ShiftHist, tempShiftLim);
-	  printf("You have chosen to exclude all profiles with shift outside ");
-	  printf("the limits [%d, %d]\n", 
-		 (int)tempShiftLim[0], (int)tempShiftLim[1]);
+	  if(tempShiftLim[0] > tempShiftLim[1]){  /* i.e. will wrap around edge */
+	    printf("You have chosen to exclude all profiles with shift *inside* ");
+	    printf("the limits [%.1lf, %.1lf]\n", 
+		   tempShiftLim[1], tempShiftLim[0]);
+	  } 
+	  else {
+	    printf("You have chosen to exclude all profiles with shift *outside* ");
+	    printf("the limits [%.1lf, %.1lf]\n", 
+		   tempShiftLim[0], tempShiftLim[1]);
+	  }
 	  
 	  cpgpanl(1,3);
 	  printf("\nEnter desired x,y limits for cross correlation shift error  ");
 	  printf("histogram [leave as is]:  ");
 	  /* Get limits from user input */
-	  GetHistLimits(tempeShiftLim);
+	  GetHistLimits(tempeShiftLim, NO_WRAP);
 	  /* Draw lines to show chosen limits */
 	  DrawHistLimits(n_bin_hist, eShiftBinVal, eShiftHist, tempeShiftLim);
 	  printf("You have chosen to exclude all profiles with shift error outside ");
-	  printf("the limits [%d, %d]\n", 
-		 (int)tempeShiftLim[0], (int)tempeShiftLim[1]);
+	  printf("the limits [%.2lf, %.2lf]\n", 
+		 tempeShiftLim[0], tempeShiftLim[1]);
 	  
 	  cpgpanl(1,4);
 	  printf("\nEnter desired limits for cross correlation scale factor ");
 	  printf("histogram [leave as is]:  ");
 	  /* Get limits from user input */
-	  GetHistLimits(tempScaleLim);
+	  GetHistLimits(tempScaleLim, NO_WRAP);
 	  /* Draw lines to show chosen limits */
 	  DrawHistLimits(n_bin_hist, ScaleBinVal, ScaleHist, tempScaleLim);
 	  printf("You have chosen to exclude all profiles with scale factor ");
@@ -994,9 +1070,16 @@ int main(int argc, char *argv[])
 	   ProfRMS[i_array] > RMSLim[1]) 
 	  ProfWgt[i_array] = 0;
 	if(Cmd->TemplateP){
-	  if(ProfShift[i_array] < ShiftLim[0] || 
-	     ProfShift[i_array] > ShiftLim[1]) 
-	    ProfWgt[i_array] = 0;
+	  if(ShiftLim[0] < ShiftLim[1]){
+	    if(ProfShift[i_array] < ShiftLim[0] || 
+	       ProfShift[i_array] > ShiftLim[1]) 
+	      ProfWgt[i_array] = 0;
+	  }
+	  else{
+	    if(ProfShift[i_array] < ShiftLim[0] && 
+	       ProfShift[i_array] > ShiftLim[1]) 
+	      ProfWgt[i_array] = 0;
+	  }
 	  if(ProfeShift[i_array] < eShiftLim[0] || 
 	     ProfeShift[i_array] > eShiftLim[1]) 
 	    ProfWgt[i_array] = 0;
@@ -1809,7 +1892,10 @@ void PlotAllHist(int n_bin_hist, float *RMSBinVal, float *RMSHist,
 
 
 /* Get and organise input from user for rejection based on histograms */
-void GetHistLimits(float *HistLim)
+/* If AcceptInverse is 0, first limit in array can be larger than second, allowing 
+   kept region to wrap around right edge of histogram, e.g. for template shift
+   values */
+void GetHistLimits(float *HistLim, int AcceptWrap)
 {
  
   int   i;
@@ -1849,12 +1935,13 @@ void GetHistLimits(float *HistLim)
 	printf("change in limits.\n");
       }
       else{
-	/* Quick check that limits are in correct order. If not, switch them */
-	if(x_lim_lo > x_lim_hi){
+	/* Quick check that limits are in correct order. If not, switch them, only if 
+	   we are not allowing the kept region to wrap around histogram edge */
+	if(x_lim_lo > x_lim_hi && !AcceptWrap){
 	  temp_limit = x_lim_lo;
 	  x_lim_lo = x_lim_hi;
-	  x_lim_hi = temp_limit;
-	}
+	  x_lim_hi = temp_limit; 
+	} 
 	/* Now assign limits to array to be returned IF they are inside the current 
 	   limits.  Otherwise, just keep them at current limits. */
 	if(x_lim_lo > HistLim[0]) 
@@ -1886,13 +1973,17 @@ void DrawHistLimits(int n_bin, float *x, float *y, float *lim)
     //    cpgdraw(lim[0], y_max);
   cpgsfs(3);
   cpgshs(45.0, 2.0, 0.0);
-  cpgrect(x_min-0.1, lim[0], y_min-0.1, y_max+0.1);
-
-  //    cpgmove(lim[1], 0.0);
-  //    cpgdraw(lim[1], y_max);
-  cpgshs(-45.0, 2.0, 0.0);
-  cpgrect(lim[1], x_max+0.1, y_min-0.1, y_max+0.1);
-
+  if(lim[0] > lim[1]){  /* region being kept is wrapping around edge of histogram */
+    cpgrect(lim[1], lim[0], y_min-0.1, y_max+0.1);
+  }
+  else{
+    cpgrect(x_min-0.1, lim[0], y_min-0.1, y_max+0.1);
+    
+    //    cpgmove(lim[1], 0.0);
+    //    cpgdraw(lim[1], y_max);
+    cpgshs(-45.0, 2.0, 0.0);
+    cpgrect(lim[1], x_max+0.1, y_min-0.1, y_max+0.1);
+  }
 }
 
 /* Simple routine to get a yes or no input from user */
