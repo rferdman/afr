@@ -17,7 +17,7 @@
 #define MAXSPLIT 32
 #define NFILEMAX 1000
 #define MAXDUMPS 1024
-#define MAXOMIT  65536
+#define MAXOMIT  131072
 #define NCHMAX 2048
 #define NCOLMAX 999
 

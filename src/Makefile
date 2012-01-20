@@ -91,7 +91,7 @@ ROTATEOBJS = ASPRotate.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
 	cprofc.o MakePol.o Zero.o WrtASPHdr.o WrtASPStokes.o ffft.o
 
 ZAPOBJS = ASPZap.o ZapCmdLine.o AllocRunMode.o ReadASPAsc.o ReadHdr.o \
-	ReadASPHdr.o ReadPSRFITSHdr.o ReadData.o ReadASPData.o \
+	ReadASPHdr.o ReadPSRFITSHdr.o Freq2Chan.o ReadData.o ReadASPData.o \
 	ReadPSRFITSData.o Dedisperse.o GetPoly.o PhaseShift.o MakeStokes.o \
 	BMask.o Sort.o FindPeak.o \
 	DutyLookup.o MakePol.o Zero.o MaxMin.o ArrayZero.o BinDown.o cprofc.o \

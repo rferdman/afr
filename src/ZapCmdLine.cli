@@ -34,9 +34,16 @@ Flag -nodedisp NoDedisp {Turn off dedispersion}
 ## STRING OPTIONS
 ########################################################################
 
-## Input file (ASP ascii file for DoRotate and ASP FITS for ASPRotate)
+## Input data file (ASP ascii file for DoRotate and ASP FITS for ASPRotate)
 String -infile Infile {Input ASP data file} \
     -m \
+    -c 1 1
+
+## Optional input zap file.  If the name of this file is the same as the 
+## suggested zap file name, the new output file will be given a "_new" 
+## qualifier.  Input zap file will be used to initialize zap array before 
+## reading input data file.
+String -zapfile ZapIn {Input zap file with same format as output file.  Will be used to initialize zap array} \
     -c 1 1
 
 ## Optional standard template profile to match against each input scan 

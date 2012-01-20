@@ -53,6 +53,7 @@ struct plot_info
 };
 
 // int MakePoly(Cmdline *, struct ASPHdr *);
+int ReadZap(struct ASPHdr *, char *, int *);
 int NormProf(int, float *, char *);
 void GetGray(float *, int *, int, int, int, int, int, 
 	     float, float, float, float,
@@ -140,7 +141,7 @@ int main(int argc, char *argv[])
   float RMSLim[2], ShiftLim[2], eShiftLim[2], ScaleLim[2];
   float tempRMSLim[2], tempShiftLim[2], tempeShiftLim[2], tempScaleLim[2];
   float ClickVal[2];
-  char  char_input[2], first_click_char[2];
+  char  char_input[128], first_click_char[128];
 
   struct RunVars  RunMode;
 
@@ -196,13 +197,21 @@ int main(int argc, char *argv[])
   }
   /* Find position of last "." */
   
-
   /* Open output zap file */
   sprintf(ZapFile, "%s.zap.dat", OutRoot);
+  
+  if(Cmd->ZapInP){
+    if(!strcmp(ZapFile, Cmd->ZapIn))
+      sprintf(ZapFile, "%s_new.zap.dat", OutRoot);
+  }
+  //  else {    
   if((FZap = fopen(ZapFile, "w")) == NULL){
     fprintf(stderr, "Error in opening output zap file %s.\n", ZapFile);
     exit(1);
   }
+    //  }
+  
+
 
   /* If paz-compatible output is requested, open data file for that. */
   if(Cmd->PazP){
@@ -364,13 +373,25 @@ int main(int argc, char *argv[])
     } */
 
 
-
-
-  /* malloc an array of size (Hdr.redn.RNTimeDumps * NChan) and fill it with ones to start */
+  /* malloc an array of size (Hdr.redn.RNTimeDumps * NChan) and initialize it 
+     with ones to start */
   /* This will be our final "Zap" grid */
   ProfWgt = (int *)malloc(Hdr.redn.RNTimeDumps*Hdr.obs.NChan*sizeof(int));
   for (i=0; i<Hdr.redn.RNTimeDumps*Hdr.obs.NChan; i++) ProfWgt[i]=1;
   
+
+  /* If input zap file given, open it and read in to assign ProfWgt values
+     accordingly */
+  if(Cmd->ZapInP) {
+    if(ReadZap(&Hdr, Cmd->ZapIn, ProfWgt) < 0){
+      fprintf(stderr, "Problem reading input zap file or initializing zap ");
+      fprintf(stderr, "array.  Exiting.");
+      exit(2);
+    }
+  }
+  
+
+
   printf("Number of channels:  %d\n",Hdr.obs.NChan);
   printf("Number of dumps:     %d\n\n",Hdr.redn.RNTimeDumps);
 
@@ -448,6 +469,9 @@ int main(int argc, char *argv[])
     if (Cmd->PolyfileP) printf("Polycos successfully found.\n\n");
   }
 
+
+  if(Cmd->ZapInP)
+    printf("Will use input zap file %s to initialize zap array.\n\n", Cmd->ZapIn);
 
 
 
@@ -601,23 +625,25 @@ int main(int argc, char *argv[])
 	  /* Only calculate RMS and template cross correlation quantities is 
 	     this is our first time through */
 	  if(first_pass) {
+
+	    /* Check that profile doesn't already have a zero weight attached 
+	       to it (from and input zap file) already, so we don't waste time */
+	    if(ProfWgt[i_array]!=0){
 	    
-	    /* Check that profile is not zeroed out, or contains NaNs */
-	    bad_array = ArrayZero(Profile[i_chan].rstds, Hdr.redn.RNBinTimeDump);
-	    
-	    
-	    
-	    
-	    if (bad_array) {
-	      ProfWgt[i_array] = 0;
-	      if(bad_array==1) 
-		printf("Scan %d, channel %d is a zeroed-out profile\n", i_dump, i_chan);
-	      if(bad_array==2) 
-		printf("Scan %d, channel %d has at least some bins that are NaN\n",
-		       i_dump, i_chan);		
-	      if(bad_array==3) 
-		printf("Scan %d, channel %d has at least some bins that are not finite\n",
-		       i_dump, i_chan);		
+	      /* Check that profile is not zeroed out, or contains NaNs */
+	      bad_array = ArrayZero(Profile[i_chan].rstds, Hdr.redn.RNBinTimeDump);
+	      
+	      if (bad_array) {
+		ProfWgt[i_array] = 0;
+		if(bad_array==1) 
+		  printf("Scan %d, channel %d is a zeroed-out profile\n", i_dump, i_chan);
+		if(bad_array==2) 
+		  printf("Scan %d, channel %d has at least some bins that are NaN\n",
+			 i_dump, i_chan);		
+		if(bad_array==3) 
+		  printf("Scan %d, channel %d has at least some bins that are not finite\n",
+			 i_dump, i_chan);		
+	      }
 	    }
 	    // MakePol(&RunMode,RunMode.NBins, &Profile[i_chan]);
 	    
@@ -879,7 +905,7 @@ int main(int argc, char *argv[])
 
   PlotProf(Hdr.redn.RNBinTimeDump, ProfAll, 0.0, 1.0);
 
-  /*****************************************************/
+  /****************************************************/
 
   /**************** Plot histograms ******************/
 
@@ -2423,6 +2449,65 @@ int UndoZap(float *ProfArray, int *ProfMask, struct ASPHdr Hdr,
  
   printf("UNZAPINDEX = %d  %d\n\n", ZapIndex[0], ZapIndex[1]);
 
+  return 1;
+
+}
+
+int ReadZap(struct ASPHdr *hdr, char *ZapIn, int *ProfWgt){
+
+  int    i_chan, i_dump, i_array;
+  double freq; 
+  char   ZapLine[128];
+  FILE   *FZapIn;
+
+  /* Open the input zap file */
+  if((FZapIn = fopen(ZapIn, "r")) == NULL){
+    fprintf(stderr, "Error in opening output zap file %s.\n", ZapIn);
+    exit(1);
+  }
+
+  while (fgets(ZapLine, 128, FZapIn) != NULL){
+    sscanf(ZapLine, "%d %lf", &i_dump, &freq);
+    /* Check first whether frequency is negative.  If so, all channel of the 
+       given dump number are flagged for zapping */
+    if(freq < 0.0){
+      for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
+	i_array = i_chan*hdr->redn.RNTimeDumps + i_dump;
+	ProfWgt[i_array] = 0;
+      }
+    }
+    else {
+      /* Now we know frequency is not negative. So, map frequency to integer 
+	 channel array number */
+      if((i_chan = Freq2Chan(freq, hdr->obs.ChanFreq, hdr->obs.NChan)) < 0) {
+	/* If mapping unsuccessful, quit out with error */
+	fprintf(stderr, "Error in scan omission file. Frequency %f does not ",
+		freq);
+	fprintf(stderr, "map to any channel for this data file. \n");
+	return -1;
+      }
+      
+      /* Now check whether dump number is negative. If so, all dumps at the 
+	 given frequency are flagged for omission */
+      if(i_dump < 0){
+	for (i_dump=0; i_dump<hdr->redn.RNTimeDumps; i_dump++){
+	  i_array = i_chan*hdr->redn.RNTimeDumps + i_dump;
+	  ProfWgt[i_array] = 0;
+	}	
+      }
+      else{
+	/* Finally, if we got to here, then neither frequency nor dump number 
+	   are negative.  In this case, flag this dump/channel combination 
+	   as one for omission */
+	i_array = i_chan*hdr->redn.RNTimeDumps + i_dump;
+	ProfWgt[i_array] = 0;
+      }
+      
+    }
+  }
+  
+  fclose(FZapIn);
+  
   return 1;
 
 }
