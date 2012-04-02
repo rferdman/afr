@@ -23,7 +23,7 @@
 
 int NormProf(int, float *, char *);
 // double XInterp(int, float *, int, int, double, double, double *);
-double XInterp2D(double *, double *, double, double, double *);
+double XInterp2D(double *, double *, double, double, double, double *);
 void PlotProf(int, float *, float, float);
 
 int main(int argc, char **argv)
@@ -37,7 +37,7 @@ int main(int argc, char **argv)
   double Duty, PeakHeight, Height, SBase;
   double FinalMask[NBINMAX];
   double ProfLow, ProfHigh;
-  double Width, WidthErr;
+  double Width, WidthErr, BinErr, y_err;
   double phase_seg[2];
   /* bounding valus going into estimating interpolated x value: */
   double x_int[2], y_int[2]; 
@@ -65,19 +65,20 @@ int main(int argc, char **argv)
 
   /* Begin plottingsetting up pgplot section */
 
-  if ((dev_prof_plot = cpgopen("/xs")) < 1) {
-    printf("Warning:  pgplot device could not be initialized.\n");
-    exit(1);
+  if (Cmd->PlotP){
+    if ((dev_prof_plot = cpgopen("/xs")) < 1) {
+      printf("Warning:  pgplot device could not be initialized.\n");
+      exit(1);
+    }
+    cpgpap(8., 0.618034);
+    cpgsch(1.8);  
+
+    /* Set limiting x and y-axis coordinates for all the windows */
+    xaxis_min = 0.11;
+    xaxis_max = 0.97;
+    yaxis_min = 0.12;
+    yaxis_max = 0.97;
   }
-  cpgpap(8., 0.618034);
-  cpgsch(1.8);  
-
-  /* Set limiting x and y-axis coordinates for all the windows */
-  xaxis_min = 0.11;
-  xaxis_max = 0.97;
-  yaxis_min = 0.12;
-  yaxis_max = 0.97;
-
   /* End pgplot setup */
 
   /* Determine the number of phase ranges we will have */
@@ -85,7 +86,7 @@ int main(int argc, char **argv)
   fpout = (FILE **)malloc(n_range*sizeof(FILE *));
   /* Open output file(s) for each range */
   if(n_range == 1){
-    sprintf(outfile, "%s.w%.0lf.dat", Cmd->PSRName, Cmd->PercentHeight);
+    sprintf(outfile, "%s.w%.1lf.dat", Cmd->PSRName, Cmd->PercentHeight);
     if ((fpout[0] = fopen(outfile,"w"))==NULL){
       fprintf(stderr, "Could not open file %s.  Exiting.\n", outfile);
       exit(2);
@@ -101,7 +102,7 @@ int main(int argc, char **argv)
 	phase_seg[1] = 1.0;
       else 
 	phase_seg[1] = Cmd->PhaseSplit[i_range];
-      sprintf(outfile, "%s.w%.0lf.%.1f_%.1f.dat", Cmd->PSRName, 
+      sprintf(outfile, "%s.w%.1lf.%.1f_%.1f.dat", Cmd->PSRName, 
 	      Cmd->PercentHeight, phase_seg[0], phase_seg[1]);
       if ((fpout[i_range] = fopen(outfile,"w"))==NULL){
 	fprintf(stderr, "Could not open file %s.  Exiting.\n", outfile);
@@ -137,13 +138,16 @@ int main(int argc, char **argv)
       printf("Profile could not be normalised.  Have left as is.\n");
     }
     
-    /* Plot profile */
-    cpgslct(dev_prof_plot);
-    cpgpage();
-    cpgsvp(xaxis_min, xaxis_max, yaxis_min, yaxis_max);
-    
-    PlotProf(NBins, Profile.rstds, 0.0, 1.0);
-    /* End plot profile */
+    if (Cmd->PlotP){
+      /* Plot profile */
+      cpgslct(dev_prof_plot);
+      cpgpage();
+      cpgsvp(xaxis_min, xaxis_max, yaxis_min, yaxis_max);
+      
+      PlotProf(NBins, Profile.rstds, 0.0, 1.0);
+      /* End plot profile */
+    }
+
 
     /* Get off-pulse rms and also get off-pulse phase bins using BMask */
     Duty = DutyLookup(Cmd->PSRName);
@@ -151,6 +155,14 @@ int main(int argc, char **argv)
     Baseline(Profile.rstds,FinalMask,&NBins,&SBase,&Profile.Srms);
     Profile.Srms = 1.0/Profile.Srms;
 
+    /* Calculate uncertainty in x value due to finite bin size */
+    if(Cmd->BinErrP)
+      BinErr = Cmd->BinErr/((double)NBins);
+    else /* Default bin error is 0.5 */
+      BinErr = 0.5/((double)NBins);
+
+    printf("You have chosen a phase uncertainty of %.2f bins.\n\n", 
+	   BinErr*((double)NBins));
 
     /* Now split off into separate phase ranges, and get widths for component 
        of profile within each of these ranges.  If n_range == 1, then use 
@@ -175,7 +187,10 @@ int main(int argc, char **argv)
       PeakHeight =  FindPeak(&Profile.rstds[bin_seg[0]],&TempNBins,&i_pk);
       Profile.SNR = PeakHeight*Profile.Srms;
       Height = 0.01*Cmd->PercentHeight*PeakHeight;
-    
+      y_err = Profile.Srms;  /* +/- half rms */
+
+
+
       if (Cmd->VerboseP){
 	printf("Requested width: %lf\nPeak Height: %lf\nWidth Height: %lf\nRMS: %lf\n\n",
 	       Cmd->PercentHeight, PeakHeight, Height, Profile.Srms);
@@ -212,11 +227,11 @@ int main(int argc, char **argv)
       /* Now interpolate between the two bins to get the phase at the 
 	 requested pulse height */
       //      x0 = XInterp(NBins, Profile.rstds, i_low, i_high, Height, Profile.Srms, &x0_err);
-      x_int[0] = (double)i_low;
-      x_int[1] = (double)i_high;
+      x_int[0] = (double)i_low/((double)NBins);
+      x_int[1] = (double)i_high/((double)NBins);
       y_int[0] = (double)Profile.rstds[i_low];
       y_int[1] = (double)Profile.rstds[i_high];
-      x0 = XInterp2D(x_int, y_int, Height, Profile.Srms, &x0_err);
+      x0 = XInterp2D(x_int, y_int, Height, BinErr, y_err, &x0_err);
       printf("Pre-interp phases:  %lf  ", (double)i_bin/(double)NBins);
 
       /* Now start from the right side, going left */
@@ -242,23 +257,27 @@ int main(int argc, char **argv)
       /* Now interpolate between the two bins to get the phase at the 
 	 requested pulse height */
       //      x1 = XInterp(NBins, Profile.rstds, i_low, i_high, Height, Profile.Srms, &x1_err);
-      x_int[0] = (double)i_low;
-      x_int[1] = (double)i_high;
+      x_int[0] = (double)i_low/((double)NBins);
+      x_int[1] = (double)i_high/((double)NBins);
       y_int[0] = (double)Profile.rstds[i_low];
       y_int[1] = (double)Profile.rstds[i_high];
-      x1 = XInterp2D(x_int, y_int, Height, Profile.Srms, &x1_err);
+      x1 = XInterp2D(x_int, y_int, Height, BinErr, y_err, &x1_err);
       printf("%lf\n\n", (double)i_bin/(double)NBins);
     
 
       /* Width is just the difference between the two */
+      /* x0 and x1 are in units of bins, so we divide by the number of 
+	 bins to get widths (and then width errors) in units of pulse
+	 phase. */
       if(x1 > x0) {
-	Width = (x1 - x0)/((double)NBins);
+	Width = (x1 - x0); // /((double)NBins);
       }
-      else {   /* Need to deal with case of profile wrapping through phase 1 and 
-		  back from 0 again */
-	Width = (x1 - x0 + (double)NBins)/((double)NBins);
+      else {   /* Need to deal with case of profile wrapping through phase 1 
+		  and back through 0 again */
+	//	Width = (x1 - x0 + (double)NBins)/((double)NBins);
+	Width = (x1 - x0 + 1.); // /((double)NBins);
       }
-	WidthErr = sqrt(x0_err*x0_err + x1_err*x1_err)/((double)NBins);
+      WidthErr = sqrt(x0_err*x0_err + x1_err*x1_err); // /((double)NBins);
 
 
       printf("%s   %.15lf  %s   %lf   %lf\n", Cmd->Infile[i_prof], 
@@ -266,47 +285,62 @@ int main(int argc, char **argv)
       fprintf(fpout[i_range], "%.15lf  %lf   %lf\n", 
 	      iMJDStart+(sMJDStart/86400.0), Width, WidthErr);
 
-      /* Draw vertical lines at phases between which width will be calculated */
-      cpgsci(c_red);
-      cpgsls(l_dashed);
-      cpgqlw(&l_width); /* Get current line width */
-      cpgslw(5*l_width);
+      if (Cmd->PlotP){
+/* Draw vertical lines at phases between which width will be calculated */
+	cpgsci(c_red);
+	cpgsls(l_dashed);
+	cpgqlw(&l_width); /* Get current line width */
+	cpgslw(5*l_width);
     
-      y_min = FMin(Profile.rstds, NBins, &i_ymin);
-      y_max = FMax(Profile.rstds, NBins, &i_ymax);
+	y_min = FMin(Profile.rstds, NBins, &i_ymin);
+	y_max = FMax(Profile.rstds, NBins, &i_ymax);
 
-      cpgmove((float)x0/(float)NBins, y_min-0.1);
-      cpgdraw(x0/(float)NBins, Height);
-      cpgmove((float)x1/(float)NBins, y_min-0.1);
-      cpgdraw(x1/(float)NBins, Height);
-      if(x1 > x0){
-	cpgmove((float)x0/(float)NBins, Height);
+	/*	cpgmove((float)x0/(float)NBins, y_min-0.1);
+	cpgdraw(x0/(float)NBins, Height);
+	cpgmove((float)x1/(float)NBins, y_min-0.1);
 	cpgdraw(x1/(float)NBins, Height);
+	if(x1 > x0){
+	  cpgmove((float)x0/(float)NBins, Height);
+	  cpgdraw(x1/(float)NBins, Height);
+	}
+	else {
+	  cpgmove((float)x0/(float)NBins, Height);
+	  cpgdraw(1.01, Height);
+	  cpgmove((float)x1/(float)NBins, Height);
+	  cpgdraw(-0.01, Height);     
+	  } */
+	cpgmove((float)x0, y_min-0.1);
+	cpgdraw((float)x0, Height);
+	cpgmove((float)x1, y_min-0.1);
+	cpgdraw((float)x1, Height);
+	if(x1 > x0){
+	  cpgmove((float)x0, Height);
+	  cpgdraw((float)x1, Height);
+	}
+	else {
+	  cpgmove((float)x0, Height);
+	  cpgdraw(1.01, Height);
+	  cpgmove((float)x1, Height);
+	  cpgdraw(-0.01, Height);     
+	}
+	/* Faintly draw dotted line where phase splitting occurs */
+	/* Comapring i_range to n_range and not n_range-1 here since 
+	   i_range will have been already augmented by 1 here */      
+	if(i_range<n_range-1){ 
+	  cpgsci(c_blue);
+	  cpgsls(l_dotted);
+	  cpgslw(3*l_width);
+	  cpgmove((float)Cmd->PhaseSplit[i_range], y_min-0.1);
+	  cpgdraw((float)Cmd->PhaseSplit[i_range], y_max+0.1);
+	}
+	
+	cpgsci(1); /* Back to default */
+	cpgsls(l_full);
+	cpgslw(l_width); /* reset to default line width) */
       }
-      else {
-	cpgmove((float)x0/(float)NBins, Height);
-	cpgdraw(1.01, Height);
-	cpgmove((float)x1/(float)NBins, Height);
-	cpgdraw(-0.01, Height);     
-      }
-      /* Faintly draw dotted line where phase splitting occurs */
-      /* Comapring i_range to n_range and not n_range-1 here since 
-	 i_range will have been already augmented by 1 here */      
-      if(i_range<n_range-1){ 
-	cpgsci(c_blue);
-	cpgsls(l_dotted);
-	cpgslw(3*l_width);
-	cpgmove((float)Cmd->PhaseSplit[i_range], y_min-0.1);
-	cpgdraw((float)Cmd->PhaseSplit[i_range], y_max+0.1);
-      }
-
-      cpgsci(1); /* Back to default */
-      cpgsls(l_full);
-      cpgslw(l_width); /* reset to default line width) */
+      /* End plotting section */
     }
-    
 
-    /* End plotting section */
   }
   
   for (i_range=0; i_range<n_range; i_range++)
@@ -423,18 +457,30 @@ double XInterp(int NBins, float *Profile, int i_low, int i_high, double y_val,
 
 
 double XInterp2D(double *x, double *y, double y_val, 
-	       double y_err, double *x_err)
+		 double x_err_in, double y_err_in, double *x_err_out)
 {
 
   double x_interp, slope;
+  double x_diff, y_diff;
 
-  slope = (y[1] - y[0])/(x[1] - x[0]);
+  x_diff = x[1] - x[0];
+  y_diff = y[1] - y[0];
+
+  slope = y_diff/x_diff;
 
   x_interp = x[0] + (y_val - y[0])/slope;
 
-  *x_err = y_err*sqrt( (1.0/(slope*slope)) 
+  /* *x_err = y_err*sqrt( (1.0/(slope*slope)) 
 		    + 2.0*(y_val-y[0])*(y_val-y[0])
-		    / (slope*slope*slope*slope) );
+		    / (slope*slope*slope*slope) ); */
+
+  *x_err_out = sqrt(x_err_in*x_err_in + 
+		    ( (y_val - y[0])*(y_val - y[0]) * (x_diff*x_diff) /
+		      (y_diff*y_diff) ) * 
+		    ( ((y_err_in*y_err_in)/(y[0]*y[0])) + 
+		      ((2.0*x_err_in*x_err_in)/(x_diff*x_diff)) +
+		      ((2.0*y_err_in*y_err_in)/(y_diff*y_diff)) ) );
+  
     
   return x_interp;
 

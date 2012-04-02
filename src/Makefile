@@ -38,7 +38,7 @@ CFLAGS = -Wall -c -g -DASP -I$(ASP_INCLUDE_DIR) -I$(FITS_INCLUDE_DIR) -I$(PGPLOT
 
 ### GFORTRAN FLAGS ###
 F77 = gfortran
-F77FLAGS = -c -Wall -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -O -I$(ASP_INCLUDE_DIR)
+F77FLAGS = -c -Wall -ffixed-form -ffixed-line-length-none -fPIC -std=legacy -I$(ASP_INCLUDE_DIR)
 
 ### G77 FLAGS ###
 # F77 = g77
@@ -113,7 +113,7 @@ DIFFOBJS = ASPDiff.o DiffCmdLine.o AllocRunMode.o RotateProf.o ReadASPAsc.o \
 
 TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o AllocRunMode.o \
 	ReadASPAsc.o cprofc.o ReadASPStokes.o ArrayZero.o RotateProf.o \
-	MakePol.o Zero.o Median.o WriteStokes.o DutyLookup.o Sort.o \
+	BinDown.o MakePol.o Zero.o Median.o WriteStokes.o DutyLookup.o Sort.o \
 	FindPeak.o BMask.o
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \

@@ -24,6 +24,9 @@ Commandline tool
 ## Verbose mode
 Flag -v Verbose {Switch on verbose program operation}
 
+## Plot profiles with width boundaries as they are being calculated
+Flag -plot Plot {Plot profiles with width boundaries as they are being calculated}
+
 
 ########################################################################
 ## STRING OPTIONS
@@ -52,3 +55,8 @@ Double -height PercentHeight {Heights at which to calculate profile width as a p
 Double -phasesplit PhaseSplit {Phases between 0 and 1 at which to split the profile so as to calculate separate widths for each segment} \
      -r 0.0 1.0 \
      -c 1 16
+
+## Choose Bin Error
+Double -binerr BinErr {Choose uncertainty in phase in units of bins [0.5]} \
+     -r 0 2048 \
+     -c 1 1

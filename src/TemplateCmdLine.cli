@@ -39,13 +39,14 @@ Flag -rotate Rotate {Rotate input profiles to match template profile before addi
 ## Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noiweight is used)
 Flag -norm Normalize {Normalize the output template profile by the sum of the weights (each of which is 1.0 if -noweight is used)}
 
-Flag -scalebefore ScaleBefore {Scale each input profile to lie between values of zero and one}
-
-Flag -scaleafter ScaleAfter {Scale the final output profile to lie between values of zero and one}
-
 ## Output file that lists all omitted scans for checking purposes
 Flag -checkomit CheckOmit {Output file that lists all omitted scans for checking purposes}
 
+# Scale each input profile to an input template, argument to this option
+Flag -scalebefore ScaleBefore {Scale each input profile to input template, or to lie in interval [0,1] if no template given} 
+
+# Scale the output profile to an input template, argument to this option
+Flag -scaleafter ScaleAfter {Scale the final output profile to input template, or to lie in interval [0,1] if no template given} 
 
 
 ########################################################################
@@ -58,7 +59,7 @@ String -infile Infile {Input ASP format .stokes.fits data files} \
 
 ## Input ASP ascii (or .stokes.fits) existing standard profile to which 
 ##  we would like to add .stokes.fits files (soon to be ascii files) 
-String -stdfile Stdfile {Existing standard profile to build on} \
+String -template Template {Existing standard profile to build on} \
     -c 1 1
 
 String -psr Pulsar {Pulsar name for which to create standard profile} \

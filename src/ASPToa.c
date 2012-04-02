@@ -222,7 +222,7 @@ int main(int argc, char *argv[])
     /* Get number of HDUs in fits file */
     fits_get_num_hdus(Fstokes, &NumHDU, &status);
   
-    /* Temporary -- need to write to and read this from Header */
+   /* Temporary -- need to write to and read this from Header */
     if(!strcmp(Hdr.gen.HdrVer,"Ver1.0")){
       NDumps = NumHDU-3;  /* the "3" is temporary, depending on how 
 			     many non-data tables we will be using */
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
     //  if(Cmd->NFiles > 1)
     //    printf("Total number of dumps: %d\n",NDumps);
   
-    if(Cmd->VerboseP){
+   if(Cmd->VerboseP){
       printf("Number of channels:  %d\n",Hdr.obs.NChan);
       printf("Number of dumps:     %d\n\n",NDumps);
     }
@@ -305,7 +305,7 @@ int main(int argc, char *argv[])
 	exit(6);
       }
 
-      for(i_chan=0;i_chan<Hdr.obs.NChan;i_chan++){
+     for(i_chan=0;i_chan<Hdr.obs.NChan;i_chan++){
 
 	/*********** READING DONE.  BEGIN PHASE DETERMINATION ************/
 
@@ -479,7 +479,7 @@ int main(int argc, char *argv[])
       
       if(Cmd->VerboseP) printf("\n");fflush(stdout);
     }
-    
+   
     /* Free memory used by Profiles structure since we will be re-malloc'ing
        it in the next loop-around */
     free(Profiles);
