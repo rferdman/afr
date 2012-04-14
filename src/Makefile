@@ -117,7 +117,7 @@ TEMPLATEOBJS = ASPTemplate.o TemplateCmdLine.o ReadASPHdr.o AllocRunMode.o \
 	FindPeak.o BMask.o
 
 TOAOBJS = ASPToa.o ToaCmdLine.o ReadASPAsc.o ReadASPHdr.o ReadASPStokes.o \
-	Sum.o cprofc.o
+	Sum.o cprofc.o GetPoly.o PhaseCalc.o
 
 PHASEOBJS = GetPhases.o PhaseCmdLine.o GetPoly.o PhaseCalc.o # FileExists.o
 

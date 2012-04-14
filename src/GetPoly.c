@@ -171,16 +171,16 @@ int MakePoly(char* ParFile, struct ASPHdr *Hdr)
   
   //  if(Cmd->ParFileP){
     /* Check that input par file exists */
-    if(FileExists(ParFile)){
-      //      strcpy(ParFile, Cmd->ParFile);
-      printf("Creating polycos for PSR %s from input parameter file %s.\n", 
-	     Hdr->target.PSRName, ParFile);
-    }
-    else{
-      fprintf(stderr,"Could not open file %s.\n", ParFile);
-      return -1;
-    }
-    //  }
+  if(FileExists(ParFile)){
+    //      strcpy(ParFile, Cmd->ParFile);
+    printf("Creating polycos for PSR %s from input parameter file %s.\n", 
+	   Hdr->target.PSRName, ParFile);
+  }
+  else{
+    fprintf(stderr,"Could not open file %s.\n", ParFile);
+    return -1;
+  }
+  //  }
 #if 0
   else if(Cmd->PSRNameP){
     printf("Looking for par file in directory %s for pulsar %s, provided by user.\n",
@@ -238,7 +238,7 @@ int MakePoly(char* ParFile, struct ASPHdr *Hdr)
     }
   }
 #endif
-
+  
   
   /* If we made it this far, we have a par file we can now use to create a polyco file. */
   
@@ -256,7 +256,7 @@ int MakePoly(char* ParFile, struct ASPHdr *Hdr)
     /* Construct command line based on Header information:  Frequency, 
        start MJD, and get scan length using dump length and number of dumps */
     sprintf(tempo_cmd,
-	 "tempo -f %s -Zpsr=%s -Zfreq=%lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s",
+        "tempo -f %s -Zpsr=%s -Zfreq=%lf -Ztobsh=%lf -Zstart=%lf -Zspan=%d -Zsite=%s",
 	    /* Channel frequency must be 3 decimal places for tempo1 predictors */
 	    ParFile, Hdr->target.PSRName, Hdr->obs.ChanFreq[i_chan], 
 	    /* allow an extra 2 hours of polycos */

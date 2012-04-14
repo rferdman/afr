@@ -63,6 +63,11 @@ String -toafile Toafile {Output TOA file name} \
 String -t2flags T2Flags {Append these tempo2 flags to the end of the TOA line} \
     -c 1 1
 
+## Optional par file input.  Will use to calculate phases of each 
+## time stamp and TOA found.
+String -parfile ParFile {Use parameter file to calculate phases of each time stamp and TOA found} \
+    -c 1 1
+
 
 ########################################################################
 ## DOUBLE OPTIONS

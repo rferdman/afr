@@ -10,11 +10,12 @@
 #include "fitsio.h"
 #include "ToaCmdLine.h"  // change to a new Cmd file like ToaCmd.h
 #include "ASPCommon.h"
+#include "phase_calc.h"
 
 int main(int argc, char *argv[])
 {
 
-  int i_bin, i_file, i_scan, i_chan, i_char; // counters
+  int i_bin, i_file, i_scan, i_chan, i_char; // counters  
   int NFirstTable, NumHDU, hdutype, status=0; // FITS int's
   int RootIndex=0, LastSlashIndex=0; // filename indices
   int bin[NBINMAX], StdBins, NDumps=0; // profile info
@@ -51,6 +52,12 @@ int main(int argc, char *argv[])
 
   fitsfile *Fstokes; // file pointer for ASP *.stokes.fits file
 
+  /* Declare polyco-related variables */
+  int    n_poly=0, poly_set_used;
+  double StartMJD, DumpMiddleDays, TimeStampRefPhase, TimeStampRefFreq, TOARefPhase, TOARefFreq;
+  struct Polyco  *Polycos;
+  FILE *Fphase;
+  
   Cmdline *Cmd; // stores command line arguments
                               
 
@@ -245,6 +252,45 @@ int main(int argc, char *argv[])
     
     Profiles = (struct StdProfs *)malloc(Hdr.obs.NChan*sizeof(struct StdProfs));
 
+    /* Make a polyco file encompassing the entire data set is requested by user. */
+    /* Final polyco file will be named "poly_final.dat" */
+    if (Cmd->ParFileP) {
+
+
+      /* Start off output file with table of timestamps, TOAs, and phases */
+      if ( (Fphase=fopen("TOA_phase_file.dat", "w"))==NULL){
+	fprintf(stderr, "Cannot open phase file TOA_phase_file.dat.  Exiting...\n");
+	exit(2);
+      }
+      fprintf(Fphase, "%22s  %12s  %22s  %12s\n", "TIME STAMP", "PHASE", "TOA", "PHASE");
+      if(MakePoly(Cmd->ParFile, &Hdr) < 0){
+	fprintf(stderr, "Could not make polycos. Exiting...\n");
+	exit(2);
+      }
+      /* Read in polyco.dat file and get polyco structure */
+      StartMJD = (double)Hdr.obs.IMJDStart + 
+	((double)Hdr.obs.StartTime)/86400.;
+      Polycos = (struct Polyco *)malloc(MAX_PC_SETS*Hdr.obs.NChan*
+					sizeof(struct Polyco));    
+      for(i_chan=0;i_chan<Hdr.obs.NChan;i_chan++){
+	if((n_poly=GetPoly("poly_final.dat", Hdr.target.PSRName, 
+			   &Polycos[i_chan*MAX_PC_SETS], 
+			   Hdr.obs.ChanFreq[i_chan], 
+			   StartMJD)) < 1) {
+	  printf("Could not find polycos for all input profiles of \n");
+	  printf("PSR %s given as input.  Will not shift profiles.\n",
+		 Hdr.target.PSRName);
+	}
+	else {
+	  printf("Polycos successfully found.\n\n");
+	}
+	//printf("%lf MHz:  %d polyco sets found...\n", Hdr.obs.ChanFreq[i_chan], n_poly);
+      }      
+    }
+
+
+ 
+
     /* Convert Ra and Dec, mainly for use with parallactic angle 
        calculation if needed */
     if(Hdr.target.RA > 0. && fabs(Hdr.target.Dec) > 0. ){
@@ -309,7 +355,7 @@ int main(int argc, char *argv[])
 
 	/*********** READING DONE.  BEGIN PHASE DETERMINATION ************/
 
-	  /* Bad scans are zeroed so if summ of the profile is zero, it's 
+	  /* Bad scans are zeroed so if sum of the profile is zero, it's 
 	     not to be used in summation */
 	ProfSum = FSum(&Profiles[i_chan].rstds[0], NPtsProf);
 	if(ProfSum != 0.0) { // i.e. good data
@@ -348,7 +394,7 @@ int main(int argc, char *argv[])
 	  if(Shift < 0.0) Shift +=StdBins;
 	  
 	 /* Change in rot. phase = (phase shift) - (initial phase of profile) */
-	  PhaseChange = Shift/(double)StdBins-StokesSubHdr.DumpRefPhase[i_chan];
+	  PhaseChange = Shift/(double)StdBins - StokesSubHdr.DumpRefPhase[i_chan];
 	  /* Make sure it's positive */
 	  if (PhaseChange < 0.0) PhaseChange += 1.0;
 	  
@@ -377,6 +423,8 @@ int main(int argc, char *argv[])
 	  
 	  //	MJDPaste(MJD0,FracMJD,TOA);
 	  
+
+
 	  /* Past together MJD into a string */
 	  
 	  if (Cmd->Tempo2P) { // can afford more decimal places :)
@@ -390,6 +438,29 @@ int main(int argc, char *argv[])
 	  NToa++; // count up TOAs
 	  //	TotToa++;
 	  
+	  /* Find the phase of the original time stamp, then the calculated TOA fo this
+	     given dump and channel, if requested by user */
+	  if (Cmd->ParFileP){
+	    DumpMiddleDays = StokesSubHdr.DumpMiddleSecs /86400.;  // time stamp
+	    if ( (poly_set_used = PhaseCalc(&Polycos[i_chan*MAX_PC_SETS], n_poly, 
+					    Hdr.obs.IMJDStart, DumpMiddleDays, 
+					    &TimeStampRefPhase, &TimeStampRefFreq)) < 0) {
+	      fprintf(stderr, "Could not find any polyco sets to match MJD. Exiting...\n");
+	      exit(2);
+	    }
+	    /* TOA phase calculation */
+	    if ( (poly_set_used = PhaseCalc(&Polycos[i_chan*MAX_PC_SETS], n_poly, 
+					    MJD0, FracMJD, 
+					    &TOARefPhase, &TOARefFreq)) < 0) {
+	      fprintf(stderr, "Could not find any polyco sets to match MJD. Exiting...\n");
+	      exit(2);
+	    }
+	    fprintf(Fphase, "%22.16lf  %.10lf  %22s  %.10lf\n", 
+		    Hdr.obs.IMJDStart+DumpMiddleDays, TimeStampRefPhase, TOA, TOARefPhase);
+	  }
+
+
+
 	  strncpy(Source,Hdr.target.PSRName,7);
 	  strncpy(&Source[7],"\0",1);
 	  
@@ -431,13 +502,13 @@ int main(int argc, char *argv[])
 	     frequencies AND frequency of current TOA is within restricted
 	     range, then allow writing based on frequency */
 	  if (!Cmd->FreqRangeP || ( Cmd->FreqRangeP && 
-			   (Hdr.obs.ChanFreq[i_chan] >= Cmd->FreqRange[0] && 
-			    Hdr.obs.ChanFreq[i_chan] <= Cmd->FreqRange[1]) ) )
+				    (Hdr.obs.ChanFreq[i_chan] >= Cmd->FreqRange[0] && 
+				     Hdr.obs.ChanFreq[i_chan] <= Cmd->FreqRange[1]) ) )
 	    freqwrite=1;
 	  
-	  if  (!Cmd->MJDRangeP || ( Cmd->MJDRangeP && 
-				((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
-				 (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
+	  if (!Cmd->MJDRangeP || ( Cmd->MJDRangeP && 
+				   ((double)MJD0+FracMJD >= Cmd->MJDRange[0] && 
+				    (double)MJD0+FracMJD <= Cmd->MJDRange[1]) ) ) 
 	    mjdwrite=1;
 
 	  /* If user set a cutoff value for TOA error, then include the TOA 
