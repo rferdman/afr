@@ -49,7 +49,7 @@ struct ObservationMode
   double   ObsLength;             /* Length of Observation (sec) */
   float    IonRM;                 /* Ionospheric Rotation measure correction */
   double   ClockOffset;           /* [Obs.Std - GPS] (microsec) */
-  char     ObsvtyCode[3];         /* Observatory code (TEMPO-compatible) */
+  char     ObsvtyCode[16];         /* Observatory code (TEMPO-compatible) */
   int      NChanOrig;             /* No. of frequency channels */
   int      NChan;                 /* No. of frequency channels */
   int      NPoln;                 /* No. of polarizations */

@@ -161,6 +161,9 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
   /* Don't bother to get this DM/RM info if this is a cal file */
   if (strncmp(hdr->gen.ObsMode, "CAL", 3) &&
       strncmp(hdr->gen.ObsMode, "FOF", 3) &&
+      /* Not sure what FON is, but got this bringing up errors in
+	 this if statement, so ignore if ObsMode is "FON"... */
+      strncmp(hdr->gen.ObsMode, "FON", 3) &&
       strncmp(hdr->gen.ObsMode, "SEARCH", 6) ) {
       
       /* If this is GUPPI data, we need to read in DM/RM from the ephemeris table */
@@ -172,7 +175,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
 	/* Now try PSRPARAM table */
 	status=0;
 	if(fits_movnam_hdu(Fin, BINARY_TBL, "PSRPARAM", 0, &status)) {
-	  fprintf(stderr, "ERROR ReadPSRFITSHdr: neither PSREPHEM nor PSRPARAM tables exist!\n");
+	  fprintf(stderr, "ReadPSRFITSHdr ERROR: neither PSREPHEM nor PSRPARAM tables exist!\n");
 	  return -1;
 	}
 	else {
@@ -371,13 +374,13 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
        Will put in a safeguard at some point */
     if(fits_read_key(Fin, TINT, "NSUBOFFS", &hdr->obs.NSubOffs, NULL, &status)) {
       if(!strncmp(hdr->gen.ObsMode, "CAL", 3)){
-	fprintf(stderr, "ReadPSRFITSData WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
+	fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
 	printf("Proceeding with CAL file reading.\n");	
 	status=0;  /* Otherwise next fits routine will crash */
 	
       } 
       else {
-	fprintf(stderr, "ReadPSRFITSData WARNING:  Could not read NSUBOFFS keyword from SUBINT extension.\n");
+	fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not read NSUBOFFS keyword from SUBINT extension.\n");
 	printf("Proceeding with reading of data.  Time stamps likely not correct.\n");	
 	hdr->obs.NSubOffs=0;
 	//sleep(2);

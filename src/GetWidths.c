@@ -63,7 +63,7 @@ int main(int argc, char **argv)
   /* Normally use this somewhere, and not showOptionValues */
   Cmd->tool = Cmd->tool;
 
-  /* Begin plottingsetting up pgplot section */
+  /* Begin setting up pgplot section */
 
   if (Cmd->PlotP){
     if ((dev_prof_plot = cpgopen("/xs")) < 1) {
