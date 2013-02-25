@@ -372,7 +372,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin)
     /* NOTE that there is a separate DAT_FREQ table for each row...  
        hopefully will be the same for all integrations!  
        Will put in a safeguard at some point */
-    if(fits_read_key(Fin, TINT, "NSUBOFFS", &hdr->obs.NSubOffs, NULL, &status)) {
+    if(fits_read_key(Fin, TINT, "NSUBOFFS", &hdr->obs.NSubOffs, NULL, &status)){
       if(!strncmp(hdr->gen.ObsMode, "CAL", 3)){
 	fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
 	printf("Proceeding with CAL file reading.\n");	

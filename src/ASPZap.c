@@ -592,7 +592,7 @@ int main(int argc, char *argv[])
 		     JyPerCount);
 	  
 	  /* Now dedisperse to the centre frequency before further 
-	     processing, if required */	  
+	     processing, if required */	 
 	  if(RunMode.Dedisp){
 	    if (Dedisperse(&Profile[i_chan], &RunMode, 
 			   &Hdr, &SubHdr, 

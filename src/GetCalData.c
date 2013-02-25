@@ -46,8 +46,8 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
       
     if(!omit){
 
-      Median(ASquared[chan], MedA, RunMode->NBins, NumNearest);
-      Median(BSquared[chan], MedB, RunMode->NBins, NumNearest);
+      MedianFilter(ASquared[chan], MedA, RunMode->NBins, NumNearest);
+      MedianFilter(BSquared[chan], MedB, RunMode->NBins, NumNearest);
 
       
       if(CalMode->ForcePhase >= 0.0) { // forced phase bin
@@ -215,7 +215,7 @@ int GetCalPhases(double *Profile, int NPtsProf, int *BinChange)
 
   NumNearest = 100; // MUST BE EVEN!!!
 
-  Median(Profile, MedProf, NPtsProf, NumNearest);
+  MedianFilter(Profile, MedProf, NPtsProf, NumNearest);
 
   /* finished median smoothing */
   

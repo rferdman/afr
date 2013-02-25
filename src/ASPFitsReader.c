@@ -203,6 +203,8 @@ int main(int argc, char **argv)
   }
 
   if(RunMode.Verbose){
+    printf("Front End Polarization = %s\n", InHdr.gen.FEPol);
+    printf("Polarization Type = %s\n", InHdr.obs.PolnType);
     printf("AddChans = %d\n",Cmd->AddChansP);fflush(stdout);
     printf("NChan = %d\n",InHdr.obs.NChan);fflush(stdout);
     printf("NOutChans = %d\n",RunMode.NOutChans);fflush(stdout);

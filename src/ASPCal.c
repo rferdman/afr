@@ -53,7 +53,8 @@ int main(int argc, char **argv)
 
   double         JyPerCount[NCHMAX][4], JyPerCal[NCHMAX][4];
   double         Tsys[2][2], Tant, Tcal;
-  double         TsysRatio[NCHMAX][2], AvgTsysRatio[2];
+  double         TsysRatio[NCHMAX][2], TempTsysRatio[NCHMAX];
+  double         AvgTsysRatio[2], MedTsysRatio[2];
   // double         Gain;
   // double         ThetaBB;
 
@@ -565,12 +566,13 @@ int main(int argc, char **argv)
 	   determine ON and OFF Source */
 	  ContCalFrac[i] = ContCalHeight[i]/OffAvg[i];
 
+
 	}
 
 	
 
-	//	if(OffAvg[0] > OffAvg[1]){
-	if(ContCalFrac[0] < ContCalFrac[1]){
+	if(OffAvg[0] > OffAvg[1]){
+	// if(ContCalFrac[0] < ContCalFrac[1]){
 	  if((j>0 && pol==0) && ONSource==1) { // i.e. opposite to last channel result -- also both pol's must agree
 	    printf("Ambiguity as to which continuum scan is ON source and ");
 	    printf("which is OFF source. Check command line and try again.\n");
@@ -664,7 +666,7 @@ int main(int argc, char **argv)
 	   Tsys is negative, then skip that channel */
 	if (i_loop == n_loop-1){
 	  if (Tsys[0][0] < 0. || Tsys[1][0] < 0. ||
-	      Tsys[1][0] < 0. || Tsys[1][1] <0.){
+	      Tsys[1][0] < 0. || Tsys[1][1] < 0.){
 	    printf("Channel %d = %.4lf MHz has one or more negative ",
 		   j, ContHdr[0].obs.ChanFreq[j]);
 	    printf("calculated Tsys.  Skipping this channel.\n");
@@ -682,13 +684,27 @@ int main(int argc, char **argv)
     if(CalCmd->ChooseMethodP){
       AvgTsysRatio[ONSource] /= (double)ContHdr[0].obs.NChan;
       AvgTsysRatio[OFFSource] /= (double)ContHdr[0].obs.NChan;
-      if(AvgTsysRatio[ONSource] > CalCmd->ChooseMethod ||
-	 AvgTsysRatio[OFFSource] > CalCmd->ChooseMethod){
+      /* Get Median value of Tsys values for each of On and OFF source */
+      for(j=0; j<ContHdr[0].obs.NChan; j++)
+	TempTsysRatio[j] = TsysRatio[j][ONSource];
+      MedTsysRatio[ONSource] = Median(TempTsysRatio, ContHdr[0].obs.NChan);
+      for(j=0; j<ContHdr[0].obs.NChan; j++)
+	TempTsysRatio[j] = TsysRatio[j][OFFSource];
+      MedTsysRatio[OFFSource] = Median(TempTsysRatio, ContHdr[0].obs.NChan);
+      /*       if(AvgTsysRatio[ONSource] > CalCmd->ChooseMethod ||
+	       AvgTsysRatio[OFFSource] > CalCmd->ChooseMethod){ */
+      if(MedTsysRatio[ONSource] > CalCmd->ChooseMethod ||
+	 MedTsysRatio[OFFSource] > CalCmd->ChooseMethod){
 	printf("\nMean Tsys ratio for ON Source cal:  %5.1lf%%\n",
 	       AvgTsysRatio[ONSource]);
 	printf("Mean Tsys ratio for OFF Source cal: %5.1lf%%\n\n",
 	       AvgTsysRatio[OFFSource]);
-	printf("At least one of these is larger than the %5.1lf%% threshold.  ",
+	printf("Median Tsys ratio for ON Source cal:  %5.1lf%%\n",
+	       MedTsysRatio[ONSource]);
+	printf("Median Tsys ratio for OFF Source cal: %5.1lf%%\n\n",
+	       MedTsysRatio[OFFSource]);
+	printf("At least one of these median values is larger than the ");
+	printf("%5.1lf%% threshold.  ",
 	       CalCmd->ChooseMethod);
 	printf("Reverting to the constant Tsys method...\n\n");
 	sleep(4);
@@ -712,7 +728,12 @@ int main(int argc, char **argv)
 	       AvgTsysRatio[ONSource]);
 	printf("Mean Tsys ratio for OFF Source cal: %5.1lf%%\n\n",
 	       AvgTsysRatio[OFFSource]);
-	printf("Both are within the %5.1lf%% threshold. Will continue ",
+	printf("Median Tsys ratio for ON Source cal:  %5.1lf%%\n",
+	       MedTsysRatio[ONSource]);
+	printf("Median Tsys ratio for OFF Source cal: %5.1lf%%\n\n",
+	       MedTsysRatio[OFFSource]);
+	printf("Both median values are within the %5.1lf%% threshold. ");
+	printf("Will continue ",
 	       CalCmd->ChooseMethod);
 	printf("using constant gain assumption.\n\n");
 	break;

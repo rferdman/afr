@@ -160,7 +160,8 @@ int    GetCalPhases(double *, int , int *);
 double GetCalHeight(double *, int , int *, int *, double *, double *);
 int    FileExists(char *);
 int    QuickPlot(double *, int);
-int    Median(double *, double *, int, int);
+double    Median(double *, int);
+int    MedianFilter(double *, double *, int, int);
 int    ReadData(struct ASPHdr *, struct SubHdr *, struct RunVars *, 
 		fitsfile *, int, int, 
 		double **, double **, double **, double **, long **);

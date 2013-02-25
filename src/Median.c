@@ -3,8 +3,27 @@
 
 void   DSort(int , double *);
 
-int Median(double *InArray, double *OutArray, int NPts, int NumNearest)
+/* Simple median calculator */
+double Median(double *InArray, int NPts)
+{
 
+  int i;
+  double Med;
+ 
+  DSort(NPts, InArray);
+  for(i=0; i<NPts; i++)
+  if(NPts%2==0){ /* even number of array elements */
+    Med =  (InArray[NPts/2] + InArray[(NPts/2)-1]) / 2.;
+  }
+  else{  /* Odd number of array elements */
+    Med =  InArray[NPts/2]; /* Will round off to the correct element */
+  }
+
+  return Med;
+}
+
+/* Runs median fileter over an array to output a smoothed array */
+int MedianFilter(double *InArray, double *OutArray, int NPts, int NumNearest)
 {
 
   int    i, j;
