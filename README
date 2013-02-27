@@ -1,0 +1,24 @@
+AFR is a software package that includes various routines and tools allowing the
+user to reduce, process, and manipulate pulsar data, and create
+times-of-arrival compatible with tempo and tempo2 timing software.
+
+Dependencies:
+-------------
+
+To use afr, you will need to install:
+
+- cfitsio, a FITS reading and writing library: 
+   - on mac OS X, just install using homebrew (along with anything else you 
+     are able to install with homebrew!)
+   - website: http://heasarc.gsfc.nasa.gov/fitsio/
+- pgplot, for real-time plotting functions:
+   - http://www.astro.caltech.edu/~tjp/pgplot/
+- clig, a command-line interface and parsing library:
+   - http://wsd.iitb.fhg.de/~geg/clighome/
+- tempo, a pulsar timing and data analysis package:
+   - http://sourceforge.net/projects/tempo/
+
+Documentation is on its way -- until then, any of the descriptions and
+command-line options for a given executable can be found by running it with a
+"-h" flag (or any other flag not recognized by the routine).
+
