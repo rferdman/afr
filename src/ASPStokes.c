@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
   int OutRootIndex=0, LastSlashIndex=0, FileNo;
   int DumpRange[2];
   char TempInFile[128],FitsFile[128], OutRoot[128], ProgName[32];
-  char StokesFile[64], ParAngFile[64], OutFileEnd[16];
+  char StokesFile[128], ParAngFile[64], OutFileEnd[16];
   fitsfile **Fstokes;
   FILE *fpStokes;
   FILE *fpParAng[NCHMAX];
@@ -236,7 +236,6 @@ int main(int argc, char *argv[])
 		  StokesHdr.obs.ObsvtyCode, 1, StokesHdr.target.PSRName, 
 		  StokesSubHdr.DumpRefPhase[i]);             
 	}
-
 	sprintf(StokesFile,"%s.%4.4d.%4.4d.%4.4d.%s",
 		OutRoot,(int)StokesHdr.obs.ChanFreq[i],
 		(int)(10000*(StokesHdr.obs.ChanFreq[i]
@@ -245,7 +244,7 @@ int main(int argc, char *argv[])
 	if ((fpStokes = fopen(StokesFile,"w")) == 0)
 	  { printf("Cannot open %s. Exiting...\n",StokesFile); exit(1); }
 	fprintf(fpStokes,"%s\n",StokesHead);
-      
+
 	Duty = DutyLookup(StokesHdr.target.PSRName);
 	BMask(StokesProfs[i].rstds,&StokesHdr.redn.RNBinTimeDump,&Duty,FinalMask);
 	Baseline(StokesProfs[i].rstds,FinalMask,&StokesHdr.redn.RNBinTimeDump,
@@ -282,8 +281,9 @@ int main(int argc, char *argv[])
 	/* Calculate linear polarization, position angle, and PA error */
 
 	if(i==0){
-	  printf("Writing ascii files %s.*.%4.4d.%s\n\n",OutRoot,nscan,
-		 OutFileEnd);
+	  /*	  printf("Writing ascii files %s.*.%4.4d.%s\n\n",OutRoot,nscan,
+		  OutFileEnd); */
+	  printf("Writing ascii files %s\n\n",StokesFile);
 	  fflush(stdout);
 	}
 
@@ -331,7 +331,7 @@ int main(int argc, char *argv[])
 	  if (x > 4.) ptype=43.5;
 	  if (x > 5.) ptype=43.6;
 	  fprintf(fpStokes,
-		  "%5d%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%6.1f\n",j,
+		  "%5d%17.7f%17.7f%17.7f%17.7f%17.7f%17.7f%17.7f%7.1f\n",j,
 		  StokesProfs[i].rstds[j],StokesProfs[i].rstdq[j],
 		  StokesProfs[i].rstdu[j],StokesProfs[i].rstdv[j],
 		  /* phi in degrees */

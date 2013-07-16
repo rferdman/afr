@@ -11,7 +11,7 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
   
   int linenum, retval=0; 
   float  lin[NBINMAX], phi[NBINMAX], phierr[NBINMAX], smptype[NBINMAX];  
-  char line[256];
+  char line[512];
   FILE *fpin;
   
   // printf("Opening file %s\n",Infile);
@@ -22,7 +22,7 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
     return -1;;
   }
   linenum=-1;
-  while ((fgets(line,128,fpin) != NULL)){
+  while ((fgets(line,256,fpin) != NULL)){
     if(linenum<0){
       //      strcpy(Healine,Headerline);
       strcpy(Headerline,line);

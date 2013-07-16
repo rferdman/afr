@@ -113,7 +113,7 @@ int main(int argc, char **argv)
   }
 
 
-
+    
 
   // }
   // OutProfile=(struct StdProfs *)malloc(OutChans*sizeof(struct StdProfs));
@@ -161,16 +161,16 @@ int main(int argc, char **argv)
     strcpy(PSRName,Cmd->Pulsar);
     strcpy(RunMode.Source,Cmd->Pulsar);
     RemoveBase(&RunMode, NStdBins, &StdProfile);
-
+  }
     /* If Template was provided, then set up fourier space components 
        for fftfit'ing later */
-    if (Cmd->TemplateP){
-      cprofc(StdProfile.rstds,NStdBins,
-	     StdProfile.stdamps,StdProfile.stdphas);
-      
-      memcpy(amps,StdProfile.stdamps,sizeof(float)*NBINMAX);
-      memcpy(phas,StdProfile.stdphas,sizeof(float)*NBINMAX);     
-
+  if (Cmd->TemplateP){
+    cprofc(StdProfile.rstds,NStdBins,
+	   StdProfile.stdamps,StdProfile.stdphas);
+    
+    memcpy(amps,StdProfile.stdamps,sizeof(float)*NBINMAX);
+    memcpy(phas,StdProfile.stdphas,sizeof(float)*NBINMAX);     
+    
   }
 
   if (!Cmd->InfileP){
@@ -253,7 +253,6 @@ int main(int argc, char **argv)
     /* read in all input files and add each to the final profile */
     Fin = (fitsfile **)malloc(Cmd->InfileC*sizeof(fitsfile));
     Hdr = (struct ASPHdr *)malloc(Cmd->InfileC*sizeof(struct ASPHdr));
-
     /* read in all input file headers */
     NPtsProf=0;
     for (i_file=0;i_file<Cmd->InfileC;i_file++){
@@ -716,7 +715,7 @@ int main(int argc, char **argv)
 	    0.);             
     //	  Subhdr.DumpRefPhase[i_chan]);             
 
-  }
+    //}
 
   /* Open file for writing */
   if(Cmd->OutfileP)
@@ -742,7 +741,7 @@ int main(int argc, char **argv)
     if (x > 3.) ptype=43.4;
     if (x > 4.) ptype=43.5;
     if (x > 5.) ptype=43.6;
-    fprintf(Fout,"%5d%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%6.1f\n",i_bin,
+    fprintf(Fout,"%8d%19.7f%19.7f%19.7f%19.7f%19.7f%19.7f%19.7f%9.1f\n",i_bin,
 	    OutProfile.rstds[i_bin],OutProfile.rstdq[i_bin],
 	    OutProfile.rstdu[i_bin],
 	    OutProfile.rstdv[i_bin],
