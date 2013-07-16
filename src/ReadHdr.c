@@ -1,13 +1,13 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "ASPHeader.h"
+#include "ASPCommon.h"
 #include "fitsio.h"
 
-int ReadASPHdr(struct ASPHdr *, fitsfile *);
-int ReadPSRFITSHdr(struct ASPHdr *, fitsfile *);
+//int ReadASPHdr(struct ASPHdr *, fitsfile *);
+//int ReadPSRFITSHdr(struct ASPHdr *, fitsfile *, struct RunVars *);
 
-int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin)
+int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 {
   int     hdutype, status=0;
 
@@ -47,7 +47,7 @@ int ReadHdr(struct ASPHdr *hdr, fitsfile *Fin)
       //printf("PSRFITS Data!!\n");
 
       /* Read in values for header variables */
-      if(ReadPSRFITSHdr(hdr, Fin) < 0){
+      if(ReadPSRFITSHdr(hdr, Fin, RunMode) < 0){
 	/* Return with error */
 	return -1;
       }

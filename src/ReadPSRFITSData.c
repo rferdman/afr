@@ -11,21 +11,16 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 		    double **ReAconjB, double **ImAconjB)
 {
   
-  int  i_chan, i_poly, i_poln, i_bin, i_data, i_coeff;
-  int  hdutype, anynul, status=0;
+  int  i_chan, i_poln, i_bin, i_data;
+  int  anynul, status=0;
   int  colnum, colnum_wts, colnum_scl, colnum_offs, colnum_data;
-  int  NColumns, n_poly, FileStartSecs;
+  int  NColumns, FileStartSecs;
   //  static int  n_suboffs=0;   
   double  *tempprof;
   //short int  *tempprof;
   float  *Weights, *Offsets, *Scales;
   static double TotalTDump=0.;
-  double ref_mjd, OffsSub, DumpMiddleDays, RefPhase, RefFreq;
-  char Rawfile[100], tempstr[8];
-  struct Polyco Polycos[MAX_PC_SETS];
-
-  FILE *s;
-
+  double OffsSub, DumpMiddleDays, RefPhase, RefFreq;
 
   fits_get_num_cols(Fin, &NColumns, &status);status=0;
 
@@ -69,6 +64,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 
   /* Read in polycos from FITS file -- first move to POLYCO extension */
 
+#if 0
+  /***********************/
   if(fits_movnam_hdu(Fin, BINARY_TBL, "POLYCO", 0, &status)) {
     fprintf(stderr, "ReadPSRFITSData WARNING: POLYCO table does not exist\n");
     fprintf(stderr, "Continuing, with no pulse phase information.\n");
@@ -78,6 +75,30 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
      initial alignment */
     n_poly = 0;
     Polycos[0].FSkyRef = hdr->obs.FSkyCent;
+    
+    /* Try to find par file extension -- either PSRPARAM or PSREPHEM -- and 
+       write it to a temporary par file from which to calculate polycos 
+       corresponding to this observation */
+    sprintf(&outpar[0], "temp.par");
+    if (WrtPSRFITSPar(Fin, outpar) < 0){
+      fprintf(stderr, "Problem getting par file from FITS input file %s.",
+	      Cmd->Infile);
+      return -1;
+    }
+    /* Run tempo on output par file to get polycos.  Default is to calculate
+       a polyco set for each frequency observed. */
+    
+
+    /* Read polyco file and get parameter values */
+    if((n_poly=GetPoly(polytempfile, RunMode.Source, 
+			 &Polycos[i_chan*MAX_PC_SETS], 
+			 InHdr.obs.ChanFreq[i_chan_in], 
+			 StartMJD)) < 1) {
+	printf("Could not find polycos for all input profiles of \n");
+	printf("PSR %s given as input.  Will not shift profiles.\n",
+	       RunMode.Source);
+    
+
   }
   /* Read in number of rows, ie. number of polyco sets */
   else{
@@ -187,6 +208,10 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     }
     
   }
+
+  /***********************/
+#endif
+
   
   /* Move to SUBINT extension */
   if(fits_movnam_hdu(Fin, BINARY_TBL, "SUBINT", 0, &status)) {
@@ -255,12 +280,12 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
    OFFS_SUB column */
   
    if(fits_get_colnum (Fin, CASEINSEN, "OFFS_SUB", &colnum, &status)){
-    fprintf(stderr, "ReadPSRFITSData ERROR: No TSUBINT in FITS file?\n");
+    fprintf(stderr, "ReadPSRFITSData ERROR: No OFFS_SUB in FITS file?\n");
     return -1;
   }
   if(fits_read_col(Fin, TDOUBLE, colnum, 1+i_dump, 1, 1, NULL, &OffsSub,
 		   &anynul, &status)){
-    fprintf(stderr, "ReadPSRFITSData ERROR: Unable to read TSUBINT...\n");
+    fprintf(stderr, "ReadPSRFITSData ERROR: Unable to read OFFS_SUB...\n");
     return -1;
   }
  /* Check that polyco falls inside NMinutes/2 of subint time */
@@ -286,31 +311,59 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	   hdr->obs.IMJDStart+DumpMiddleDays);
   }
 
-  if(PhaseCalc(Polycos, n_poly, hdr->obs.IMJDStart, DumpMiddleDays, 
-	       &RefPhase, &RefFreq) < 0){
-    printf("ReadPSRFITSData WARNING: Could not find any polyco sets to \n");
-    printf("match MJD for PSRFITS file.\n");
-    printf("Phase and period information not known.  Will not be able to \n");
-    printf("realign using polycos.\n\n");
-    return -1;
+  /* If we have polycos, then get phases for the current profiles */
+  if(hdr->redn.NPoly > 0){
+    for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
+      /* For DFB polycos, we've calculated them for each channel separately */
+      if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod")){
+	if(PhaseCalc(&hdr->redn.Polycos[i_chan*MAX_PC_SETS], hdr->redn.NPoly, 
+		     hdr->obs.IMJDStart, DumpMiddleDays, 
+		     &RefPhase, &RefFreq) < 0){	  
+	  printf("ReadPSRFITSData WARNING: Could not find any polyco sets to\n");
+	  printf("match MJD for PSRFITS file.\n");
+	  printf("Phase and period information  known. Will not be able to\n");
+	  printf("realign using polycos.\n\n");
+	  hdr-> redn.NPoly = 0;  /* Set to zero for future usage */
+	  break; /* Don't bother with remaining channels if there's an error */
+	}
+      }
+      else{
+	/* Only need to do for first channel since they wwe are only
+	   calculating polycos for the centre frequency */
+	if(i_chan==0){
+	  if(PhaseCalc(hdr->redn.Polycos, hdr->redn.NPoly, 
+		       hdr->obs.IMJDStart, DumpMiddleDays, 
+		       &RefPhase, &RefFreq) < 0){
+	    printf("ReadPSRFITSData WARNING: Could not find any polyco sets ");
+	    printf("to match MJD for PSRFITS file.\n");
+	    printf("Phase and period information unknown. Will not be able ");
+	    printf("to realign using polycos.\n\n");
+	    hdr-> redn.NPoly = 0;  /* Set to zero for future usage */
+	  }
+	}
+      }
+    
+      /*** IF NO VALID POLYCOS BECAUSE FITS FILE DATES ARE OFF... 
+	   THEN FIND PHASE WITH FFTFIT AND SET REFPERIOD TO 0 ***/
+      /*** AND IF NO NEW POLYCO FILE IS GIVEN ON COMMAND LINE, 
+	   GIVE A WARNING THAT IT'S PROBABLY NEEDED ***/
+      //  printf("JUST READ IN POLYCO AT frac MJD %lf AND FOUND PHASE = %lf\n", DumpMiddleDays, RefPhase);
+      
+      /* If PSRFITS data does not store different polycos for 
+	 different observing frequency channels, we will have to assign each 
+	 period/phase combo to be the same. Can correct by inputting a new 
+	 polyco file which will be used later in data processing chain */
+      subhdr->DumpRefPeriod[i_chan] = 1./RefFreq;
+      subhdr->DumpRefPhase[i_chan]  = RefPhase;
+    }
+  } 
+  else{
+    printf("ReadPSRFITSData WARNING: Could not calculate phases for ");
+    printf("profile data.\n");
+    printf("Will proceed without phase information.\n");
   }
 
-  /*** IF NO VALID POLYCOS BECAUSE FITS FILE DATES ARE OFF... 
-       THEN FIND PHASE WITH FFTFIT AND SET REFPERIOD TO 0 ***/
-  /*** AND IF NO NEW POLYCO FILE IS GIVEN ON COMMAND LINE, 
-       GIVE A WARNING THAT IT'S PROBABLY NEEDED ***/
-  //  printf("JUST READ IN POLYCO AT frac MJD %lf AND FOUND PHASE = %lf\n", DumpMiddleDays, RefPhase);
 
-  /* In general, PSRFITS data does not store different polycos for different 
-     observing frequency channels, so will have to assign each period/phase 
-     combo by hand here. Can correct by inputting a new polyco file which will 
-     be used later in data processing chain */
-  for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
-    subhdr->DumpRefPeriod[i_chan] = 1./RefFreq;
-    subhdr->DumpRefPhase[i_chan]  = RefPhase;
-  }
-
- 
 
   /* Find colnum for each of weights, offsets, and scales */
   if(fits_get_colnum (Fin, CASEINSEN, "DAT_WTS", &colnum_wts, &status)){
@@ -322,6 +375,18 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
     return -1;
   }
 
+  /* Update OmitFlag array to reflect zero-weighted scans */  
+
+  for (i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
+    if(Weights[i_chan] < FLTTOL){
+      //      printf("Found zap!  dump %d, channel %d = %f Mhz, value = %f\n",
+      //	     i_dump, i_chan, hdr->obs.ChanFreq[i_chan], Weights[i_chan]);
+      RunMode->OmitFlag[i_dump*hdr->obs.NChan + i_chan] = 1;
+    }
+  }  
+  
+
+  
   
   if(fits_get_colnum (Fin, CASEINSEN, "DAT_OFFS", &colnum_offs, &status)){
     fprintf(stderr, "ReadPSRFITSData ERROR: No data offsets in fits file?\n");
@@ -434,7 +499,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	if(RunMode->Swap){
 	  for(i_bin=0; i_bin<hdr->redn.RNBinTimeDump; i_bin++) {
 	    /* If LIN, with A/B pol swap */
-	    ASquared[i_chan][i_bin] = (double) 
+	    ASquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] -
@@ -442,7 +508,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    BSquared[i_chan][i_bin] = (double) 
+	    BSquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] +
@@ -450,12 +517,14 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    ReAconjB[i_chan][i_bin] = (double)
+	    ReAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[2 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[2 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[2 * hdr->obs.NChan + i_chan]);
 	    
-	    ImAconjB[i_chan][i_bin] = -1.0 * (double)
+	    ImAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      -1.0 * (double)
 	      (Scales[3 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[3 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[3 * hdr->obs.NChan + i_chan]);
@@ -465,7 +534,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	else {
 	  for(i_bin=0; i_bin<hdr->redn.RNBinTimeDump; i_bin++) {
 	    /* If LIN, no swap */
-	    ASquared[i_chan][i_bin] = (double) 
+	    ASquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] +
@@ -473,7 +543,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    BSquared[i_chan][i_bin] = (double) 
+	    BSquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] -
@@ -481,12 +552,14 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    ReAconjB[i_chan][i_bin] = (double)
+	    ReAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[2 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[2 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[2 * hdr->obs.NChan + i_chan]);
 	    
-	    ImAconjB[i_chan][i_bin] = (double)
+	    ImAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[3 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[3 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[3 * hdr->obs.NChan + i_chan]);
@@ -498,7 +571,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	if(RunMode->Swap){
 	  for(i_bin=0; i_bin<hdr->redn.RNBinTimeDump; i_bin++) {
 	    /* If CIRC, with A/B pol swap */
-	    ASquared[i_chan][i_bin] = (double) 
+	    ASquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] -
@@ -506,7 +580,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[4 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[4 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    BSquared[i_chan][i_bin] = (double) 
+	    BSquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] +
@@ -514,12 +589,14 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[4 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[4 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    ReAconjB[i_chan][i_bin] = (double)
+	    ReAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[1 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]);
 	    
-	    ImAconjB[i_chan][i_bin] = -1.0 * (double)
+	    ImAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      -1.0 * (double)
 	      (Scales[2 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[2 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[2 * hdr->obs.NChan + i_chan]);
@@ -528,7 +605,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	else {
 	  for(i_bin=0; i_bin<hdr->redn.RNBinTimeDump; i_bin++) {
 	    /* If CIRC, no swap */
-	    ASquared[i_chan][i_bin] = (double) 
+	    ASquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] +
@@ -536,7 +614,8 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[4 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[4 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    BSquared[i_chan][i_bin] = (double) 
+	    BSquared[i_chan][i_bin] = Weights[i_chan] *
+	      (double) 
 	      (Scales[0 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[0 * hdr->obs.NChan + i_chan] -
@@ -544,12 +623,14 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	       ((float)tempprof[4 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[4 * hdr->obs.NChan + i_chan]) ; 
 	    
-	    ReAconjB[i_chan][i_bin] = (double)
+	    ReAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[1 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[1 * hdr->obs.NChan + i_chan]);
 	    
-	    ImAconjB[i_chan][i_bin] = (double)
+	    ImAconjB[i_chan][i_bin] = Weights[i_chan] *
+	      (double)
 	      (Scales[2 * hdr->obs.NChan + i_chan]*
 	       ((float)tempprof[2 * hdr->redn.RNBinTimeDump + i_bin]) +
 	       Offsets[2 * hdr->obs.NChan + i_chan]);
@@ -577,23 +658,26 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	/* Now factor in weighting, scaling, and offsets:
 	   weight*(data*scale + offsets) */
 	
-	
-	ASquared[i_chan][i_bin] =  (double) //tempprof[i_data+i_bin];
+	ASquared[i_chan][i_bin] =  Weights[i_chan] * 
+	  (double) //tempprof[i_data+i_bin];
 	  (Scales[0 * hdr->obs.NChan + i_chan]*
 	   ((float)tempprof[0 * hdr->redn.RNBinTimeDump + i_bin]) +
 	   Offsets[0 * hdr->obs.NChan + i_chan]);  	
 	//	if(i_poln==1)
-	BSquared[i_chan][i_bin] = (double)
+	BSquared[i_chan][i_bin] = Weights[i_chan] * 
+	  (double)
 	  (Scales[1 * hdr->obs.NChan + i_chan]*
 	   ((float)tempprof[1 * hdr->redn.RNBinTimeDump + i_bin]) +
 	   Offsets[1 * hdr->obs.NChan + i_chan]);
 	//	if(i_poln==2)
-	ReAconjB[i_chan][i_bin] = (double)
+	ReAconjB[i_chan][i_bin] = Weights[i_chan] * 
+	  (double)
 	  (Scales[2 * hdr->obs.NChan + i_chan]*
 	   ((float)tempprof[2 * hdr->redn.RNBinTimeDump + i_bin]) +
 	   Offsets[2 * hdr->obs.NChan + i_chan]);
 	//	if(i_poln==3)
-	ImAconjB[i_chan][i_bin] = (double)
+	ImAconjB[i_chan][i_bin] = Weights[i_chan] * 
+	  (double)
 	  (Scales[3 * hdr->obs.NChan + i_chan]*
 	   ((float)tempprof[3 * hdr->redn.RNBinTimeDump + i_bin]) +
 	   Offsets[3 * hdr->obs.NChan + i_chan]);
