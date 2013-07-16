@@ -101,6 +101,7 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
         if (mjdmid < 20000) mjdmid += 39126.;
 //        if (!strncmp(name0,obs_params->psr_name,10) && (ChanFreq == RefFreq)) {
 	/* Ensure that pulsar names match, and that frequencies match within tolerance */
+	//	printf("name0 = %s, psr_name = %s\nfabsf(ChanFreq - RefFreq) = %f, FREQTOL = %f\n", name0, psr_name, fabsf(ChanFreq - RefFreq), FREQTOL);
         if (!strncmp(name0,psr_name,10) && 
 	    (fabsf(ChanFreq - RefFreq) <= FREQTOL) ) {
             mjdcheck = mjdmid + mjd1mid;

@@ -204,6 +204,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
     RunMode->Sideband = 1;   /* upper sideband */
   else
     RunMode->Sideband = -1;  /* lower sideband */
+
   
 
   //  printf("MinChan = %lf,  MaxChan = %lf\n\n",MinChan,MaxChan);fflush(stdout);
