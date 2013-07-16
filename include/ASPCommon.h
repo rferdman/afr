@@ -28,6 +28,8 @@ struct RunVars {
   int    Dedisp;
   int    OldFits;
   int    Cal;
+  int    PolyTable;
+  int    EphTable;
   int    ThetaBBFlag;
   int    NScanOmit;
   int    NumAllDumpOmit;
@@ -151,9 +153,10 @@ void   fftfit_(float *, float *, float *, int *, float *, float *, float *,
 
 void   InitPars(struct ASPHdr *);
 int    AllocRunMode(struct RunVars *);
-int    ReadHdr(struct ASPHdr *, fitsfile *);
+int    WrtPSRFITSPar(fitsfile *, char *);
+int    ReadHdr(struct ASPHdr *, fitsfile *, struct RunVars *);
 int    ReadASPHdr(struct ASPHdr *, fitsfile *);
-int    ReadPSRFITSHdr(struct ASPHdr *, fitsfile *);
+int    ReadPSRFITSHdr(struct ASPHdr *, fitsfile *, struct RunVars *);
 int    GetTelescope(struct ASPHdr *, struct Telescope *Tel);
 void   GetCal(struct ASPHdr *, struct RunVars *, double **);
 int    GetCalPhases(double *, int , int *);

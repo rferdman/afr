@@ -31,5 +31,7 @@
 /* THRESHOLD WHEN COMPARING TWO DOUBLES */
 //#define DBLEPS 0.000001
 #define DBLEPS 0.00011
+/* Tolerance for determining zero values */
+#define FLTTOL 0.0000001
 
 
