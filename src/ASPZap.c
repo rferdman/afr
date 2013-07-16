@@ -79,7 +79,6 @@ int main(int argc, char *argv[])
 {
   
   int first_pass=1, read_data=0;
-  int NDump;
   int NFirstTable, NumHDU, hdutype;
   struct ASPHdr Hdr;
   struct SubHdr SubHdr;
@@ -230,7 +229,7 @@ int main(int argc, char *argv[])
   }
   
   /* Read in values for header variables */
-  if(ReadHdr(&Hdr, Fin) < 0){
+  if(ReadHdr(&Hdr, Fin, &RunMode) < 0){
     printf("%s> Unable to read Header from file %s.  Exiting...\n",
 	   ProgName,FitsFile);
     exit(2);

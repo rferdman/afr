@@ -15,7 +15,7 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
 
 
   /*   int            A2Bin[2][2], B2Bin[2][2], ReBin[2][2], ImBin[2][2];   */
-  int     bin, omit, nomit, chan, nchans;
+  int     i_phase, bin, omit, nomit, chan, nchans;
   double  APlusB[NBINMAX], MedA[NBINMAX], MedB[NBINMAX];
   double  NormA[NBINMAX], NormB[NBINMAX];
   double  CalHeight, LowAvg;//, HighAvg;
@@ -50,28 +50,65 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
       MedianFilter(BSquared[chan], MedB, RunMode->NBins, NumNearest);
 
       
-      if(CalMode->ForcePhase >= 0.0) { // forced phase bin
-	TempPhaseBin[0] = (int)(floor(CalMode->ForcePhase
-				      *((double)RunMode->NBins+0.5)));
-	TempPhaseBin[1] = (int)(floor(fabs(0.5-CalMode->ForcePhase)
-				      *((double)RunMode->NBins+0.5)));
-      }
-      else { // finding phases from the data
-	if(GetCalPhases(MedA, RunMode->NBins, TempPhaseBin) < 0){
+      if(CalMode->ForcePhase < 0.0) { // finding phases from the data
+	if(GetCalPhases(MedA, RunMode->NBins, PhaseBin) < 0){
 	  printf("Error finding phase bins for individual Prof, chan %d (%lf MHz).\n",
 		 chan, hdr->obs.ChanFreq[chan]) ;
 	  printf("Exiting...\n");	fflush(stdout);
 	  return -3;
 	}         
       }
+      else{ // forced phase bin - assumes 0.5 duty cycle
+	for (i_phase=0; i_phase<2; i_phase++){
+	  PhaseBin[i_phase] = (int)(floor((0.5*i_phase + CalMode->ForcePhase)
+					      *((double)RunMode->NBins)));
+	  //	  printf("PhaseBin = %d\n",
+	  //		 PhaseBin[i_phase]);fflush(stdout);
+	  /* Correct to be > 0 and <= NBins-1 */
+	  if(PhaseBin[i_phase] < 0)
+	    PhaseBin[i_phase] += RunMode->NBins;
+	  if(PhaseBin[i_phase] >= RunMode->NBins)
+	    PhaseBin[i_phase] -= RunMode->NBins;
+	}
+	
+
+	/* Now just ensure that bin 0 < bin 1*/
+	if(PhaseBin[0] > PhaseBin[1]){
+	  junk = PhaseBin[0];
+	  PhaseBin[0] = PhaseBin[1];
+	  PhaseBin[1] = junk;
+	}
+	
+	/* PhaseBin[0] = (int)(floor(CalMode->ForcePhase
+				      *((double)RunMode->NBins+0.5)));
+           PhaseBin[1] = (int)(floor(0.5+CalMode->ForcePhase
+	                              *((double)RunMode->NBins+0.5))); */
+      }
       
-      Range1[0]=TempPhaseBin[0]+3; Range1[1]=TempPhaseBin[1]-3;
-      Range2[0]=TempPhaseBin[1]+3; Range2[1]=TempPhaseBin[0]-3;
- 
-/*      CalHeight = GetCalHeight(MedA, RunMode->NBins,TempPhaseBin,
+      /* Cut off the outside 3 bins from each side of cal ranges */
+      Range1[0]=PhaseBin[0]+3; Range1[1]=PhaseBin[1]-3;
+      Range2[0]=PhaseBin[1]+3; Range2[1]=PhaseBin[0]-3;
+      /* Ensure these are > 0 and < NBins */
+      for(i_phase=0; i_phase<2; i_phase++){
+	if(Range1[i_phase] < 0)
+	  Range1[i_phase] += RunMode->NBins;
+	if(Range2[i_phase] < 0)
+	  Range2[i_phase] += RunMode->NBins;
+	if(Range1[i_phase] >= RunMode->NBins)
+	  Range1[i_phase] -= RunMode->NBins;
+	if(Range2[i_phase] >= RunMode->NBins)
+	  Range2[i_phase] -= RunMode->NBins;	
+      }
+
+      //      printf("Range1 = [%d, %d]\nRange2 = [%d, %d]\n",
+      //	     Range1[0], Range1[1], Range2[0], Range2[1]);fflush(stdout);
+
+/*      CalHeight = GetCalHeight(MedA, RunMode->NBins,PhaseBin,
 			       &LowAvg,&HighAvg);  */
-      CalHeight = GetCalHeight(MedA, RunMode->NBins,Range1,Range2,
-			       &Avg1,&Avg2);
+      CalHeight = GetCalHeight(MedA, RunMode->NBins, Range1, Range2,
+			       &Avg1, &Avg2);
+
+      //      printf("CalHeight = %lf\n", CalHeight);fflush(stdout);exit(0);
 
       /* Determine which average is low and which is high */
       if(Avg1<Avg2) 
@@ -82,15 +119,12 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
       for (bin=0;bin<RunMode->NBins;bin++)
 	NormA[bin] = (ASquared[chan][bin] - LowAvg)/fabs(CalHeight);
 
-      
-      if(CalMode->ForcePhase >= 0.0) { // forced phase bin
-	TempPhaseBin[0] = (int)(floor(CalMode->ForcePhase
-				      *((double)RunMode->NBins+0.5)));
-	TempPhaseBin[1] = (int)(floor(fabs(0.5-CalMode->ForcePhase)
-				      *((double)RunMode->NBins+0.5)));
-      }
-      else{ // finding phases from the data
-	if(GetCalPhases(MedB, RunMode->NBins, TempPhaseBin) < 0){
+      /* Now calculate NormB */
+
+      /* PhaseBin already decided in case of forced phase bin, so only get it 
+         this time if phase switch bin needs to be calculated from data */
+      if(CalMode->ForcePhase < 0.0) { 
+	if(GetCalPhases(MedB, RunMode->NBins, PhaseBin) < 0){
 	  printf("Error finding phase bins for individual Prof, chan %d (%lf MHz).\n",
 		 chan, hdr->obs.ChanFreq[chan]) ;
 	  printf("Exiting...\n");
@@ -99,14 +133,25 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
 	}    
       }      
      
-      Range1[0]=TempPhaseBin[0]+3; Range1[1]=TempPhaseBin[1]-3;
-      Range2[0]=TempPhaseBin[1]+3; Range2[1]=TempPhaseBin[0]-3;
+      Range1[0]=PhaseBin[0]+3; Range1[1]=PhaseBin[1]-3;
+      Range2[0]=PhaseBin[1]+3; Range2[1]=PhaseBin[0]-3;
+      /* Ensure these are > 0 and < NBins */
+      for(i_phase=0; i_phase<2; i_phase++){
+	if(Range1[i_phase] < 0)
+	  Range1[i_phase] += RunMode->NBins;
+	if(Range2[i_phase] < 0)
+	  Range2[i_phase] += RunMode->NBins;
+	if(Range1[i_phase] >= RunMode->NBins)
+	  Range1[i_phase] -= RunMode->NBins;
+	if(Range2[i_phase] >= RunMode->NBins)
+	  Range2[i_phase] -= RunMode->NBins;	
+      }
  
-/*      CalHeight = GetCalHeight(MedB, RunMode->NBins,TempPhaseBin,
+/*      CalHeight = GetCalHeight(MedB, RunMode->NBins,PhaseBin,
 			       &LowAvg,&HighAvg); */
-      //  printf("FORCEPHASE= %f, TEMPPHASEBIN[0] = %d, TEMPPHASEBIN[1] = %d\n",CalMode->ForcePhase, TempPhaseBin[0], TempPhaseBin[1]);fflush(stdout);
+      //  printf("FORCEPHASE= %f, TEMPPHASEBIN[0] = %d, TEMPPHASEBIN[1] = %d\n",CalMode->ForcePhase, PhaseBin[0], PhaseBin[1]);fflush(stdout);
 
-     CalHeight = GetCalHeight(MedB, RunMode->NBins,Range1,Range2,
+      CalHeight = GetCalHeight(MedB, RunMode->NBins,Range1,Range2,
 			      &Avg1,&Avg2);
 
       /* Determine which average is low and which is high */
@@ -116,7 +161,7 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
         LowAvg = Avg2;
 
       for (bin=0;bin<RunMode->NBins;bin++)
-	NormB[bin] = (BSquared[chan][bin] - LowAvg)/CalHeight; 
+	NormB[bin] = (BSquared[chan][bin] - LowAvg)/fabs(CalHeight);
 
       for (bin=0;bin<RunMode->NBins;bin++){
 	APlusB[bin] += NormA[bin] + NormB[bin];
@@ -126,14 +171,10 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
   }
   for (bin=0;bin<RunMode->NBins;bin++) APlusB[bin] /= ((float)(2*nchans));
 
-  /* Now find phases where cal turns on and off */
-  if(CalMode->ForcePhase >= 0.0) { // forced phase bin
-    PhaseBin[0] = (int)(floor(CalMode->ForcePhase
-			      *((double)RunMode->NBins+0.5)));
-    PhaseBin[1] = (int)(floor(fabs(0.5-CalMode->ForcePhase)
-			      *((double)RunMode->NBins+0.5)));
-  }
-  else{ // finding phases from the data
+  /* Now find phases where cal turns on and off, this time using 
+     averaged cal profile */
+  /* Again, if -force option was used, this is already done. */
+  if(CalMode->ForcePhase < 0.0) { // forced phase bin
     if(GetCalPhases(APlusB, RunMode->NBins, PhaseBin) < 0){
       printf("Error finding phase bins Exiting...\n");
       fflush(stdout);
@@ -156,6 +197,7 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
   N1=N2=0;
   Avg1=Avg2=0.;
 
+  /* This should work whether or not one of the phase ranges wraps in phase */
   for(bin=0; bin<RunMode->NBins;bin++) {
     if(bin>SmallBin+3 && bin<LargeBin-3){
       Avg1 += APlusB[bin];
@@ -169,7 +211,7 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
   
   Avg1 /= ((double)N1);
   Avg2 /= ((double)N2); 
-
+ 
   if(Avg1 < Avg2) {
     OffBin[0]=SmallBin+3; OffBin[1]=LargeBin-3;
     OnBin[0]=LargeBin+3;  OnBin[1]=SmallBin-3;
@@ -178,6 +220,17 @@ int GetPhases(struct ASPHdr *hdr, struct RunVars *RunMode,
     OnBin[0]=SmallBin+3;  OnBin[1]=LargeBin-3;
     OffBin[0]=LargeBin+3; OffBin[1]=SmallBin-3;
   } 
+  /* Ensure these are > 0 and < NBins */
+  for(i_phase=0; i_phase<2; i_phase++){
+    if(OnBin[i_phase] < 0)
+      OnBin[i_phase] += RunMode->NBins;
+    if(OffBin[i_phase] < 0)
+      OffBin[i_phase] += RunMode->NBins;
+    if(OnBin[i_phase] >= RunMode->NBins)
+      OnBin[i_phase] -= RunMode->NBins;
+    if(OffBin[i_phase] >= RunMode->NBins)
+      OffBin[i_phase] -= RunMode->NBins;	
+  }
 
   if(RunMode->Verbose){
     printf("ON Bins:   %d --> %d\n",OnBin[0],OnBin[1]);
@@ -431,15 +484,15 @@ double GetCalHeight(double *Profile, int NPtsProf, int *OnBin, int *OffBin,
     for (j=0;j<NPtsProf;j++){
 
       if(j>OnBin[0] && j<OnBin[1]){  /* Top of pulse */
-      //printf("Bin %d: Diff = %f, Rms1 = %lf\n",j,fabs(Profile[j]-Avg1),Rms1);
-        if (fabs(Profile[j]-AvgOn) < 3.*RmsOn){
+	//        if (fabs(Profile[j]-AvgOn) < 3.*RmsOn){
+        if (fabs(Profile[j]-AvgOn) < 3.*SDevOn){
 	  NOn++;
 	  SumOn += Profile[j];
         }
       }
       else if(j>OffBin[0] || j<OffBin[1]){
-      //printf("Bin %d: Diff = %f, Rms2 = %lf\n",j,fabs(Profile[j]-Avg2),Rms2);
-        if (fabs(Profile[j]-AvgOff) < 3.*RmsOff){
+	//	if (fabs(Profile[j]-AvgOff) < 3.*RmsOff){
+	if (fabs(Profile[j]-AvgOff) < 3.*SDevOff){
 	  NOff++;
 	  SumOff += Profile[j];	
         }
@@ -453,15 +506,15 @@ double GetCalHeight(double *Profile, int NPtsProf, int *OnBin, int *OffBin,
     for (j=0;j<NPtsProf;j++){
 
       if(j>OffBin[0] && j<OffBin[1]){  /* Top of pulse */
-      //printf("Bin %d: Diff = %f, Rms1 = %lf\n",j,fabs(Profile[j]-Avg1),Rms1);
-        if (fabs(Profile[j]-AvgOff) < 3.*RmsOff){
+	//        if (fabs(Profile[j]-AvgOff) < 3.*RmsOff){
+        if (fabs(Profile[j]-AvgOff) < 3.*SDevOff){
 	  NOff++;
 	  SumOff += Profile[j];
         }
       }
       else if(j>OnBin[0] || j<OnBin[1]){
-      //printf("Bin %d: Diff = %f, Rms2 = %lf\n",j,fabs(Profile[j]-Avg2),Rms2);
-        if (fabs(Profile[j]-AvgOn) < 3.*RmsOn){
+	//        if (fabs(Profile[j]-AvgOn) < 3.*RmsOn){
+        if (fabs(Profile[j]-AvgOn) < 3.*SDevOn){
 	  NOn++;
 	  SumOn += Profile[j];	
         }

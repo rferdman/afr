@@ -114,7 +114,7 @@ int main(int argc, char **argv)
     //    CalRunMode.NDumps = NumHDU-3;  
 
     /* Read in values for header variables */
-    if(ReadHdr(&CalHdr, Fcal) < 0){
+    if(ReadHdr(&CalHdr, Fcal, &CalRunMode) < 0){
       printf("Unable to read Header from CAL file %s.  Exiting...\n",
 	     CalRunMode.Infile);
       exit(2);
@@ -289,7 +289,7 @@ int main(int argc, char **argv)
 	   automatically.*/
 	if (CalHeight[i][pol] < 0.) {
 	  printf("WARNING: Did not calculate CalHeight correctly. ");
-	  printf("Skipping and will not write channel %.1lf to file.\n",
+	  printf("Skipping and will not write channel %.5lf to file.\n",
 		 CalHdr.obs.ChanFreq[i]);
 	  SkipChan[i]=1;
 	  // return -9;
@@ -380,7 +380,7 @@ int main(int argc, char **argv)
 	}  */
 
     /* Read in values for header variables */
-    if(ReadHdr(&ContHdr[i], Fcont[i]) < 0){
+    if(ReadHdr(&ContHdr[i], Fcont[i], &ContRunMode[i]) < 0){
       printf("Unable to read Header from continuum CAL file %s.  Exiting...\n",
 	     ContRunMode[i].Infile);
       exit(2);
@@ -612,7 +612,7 @@ int main(int argc, char **argv)
 			 ONSource, OFFSource, 
 			 &JyPerCal[j][pol], &JyPerCount[j][pol], 
 			 Tsys[pol], &Tant, &Tcal) < 0){
-	    printf("Could not get Cal Temperatures through the constant gain ");
+	    printf("Could not get Cal Temperatures through the constant Tsys ");
 	    printf("assumption.  Exiting...");
 	    fflush(stdout);
 	    exit(2);
@@ -732,10 +732,9 @@ int main(int argc, char **argv)
 	       MedTsysRatio[ONSource]);
 	printf("Median Tsys ratio for OFF Source cal: %5.1lf%%\n\n",
 	       MedTsysRatio[OFFSource]);
-	printf("Both median values are within the %5.1lf%% threshold. ");
-	printf("Will continue ",
+	printf("Both median values are within the %5.1lf%% threshold. ",
 	       CalCmd->ChooseMethod);
-	printf("using constant gain assumption.\n\n");
+	printf("Will continue using constant gain assumption.\n\n");
 	break;
       }
     }
