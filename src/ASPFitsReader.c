@@ -94,11 +94,12 @@ int main(int argc, char **argv)
   
   /* Read in values for header variables */
   //  if(ReadASPHdr(&InHdr, Fin) < 0){
-  if(ReadHdr(&InHdr, Fin) < 0){
+  if(ReadHdr(&InHdr, Fin, &RunMode) < 0){
     printf("%s ERROR: Unable to read Header from file %s.  Exiting...\n",
 	   ProgName, Cmd->Infile);
     exit(2);
   }
+
 
   //  printf("CHANNELS:\n\n");
   //for(i=5; i<25; i++) printf("%lf\n", InHdr.obs.ChanFreq[i]);
@@ -264,7 +265,7 @@ int main(int argc, char **argv)
 
   /* Parse omission file and set up omission scans etc. */
   if (GetOmit(&InHdr, Cmd, &RunMode) < 0){
-    printf("Unable to read or parse omit file %s. Exiting...\n",Cmd->Zapfile);
+    printf("Unable to read or parse zap file %s. Exiting...\n",Cmd->Zapfile);
     fflush(stdout);
     exit(6);
   }
@@ -343,7 +344,7 @@ int main(int argc, char **argv)
     StartMJD = (double)InHdr.obs.IMJDStart + 
       ((double)InHdr.obs.StartTime)/86400.;
     /* malloc Polyco structure to number of dumps */
-    Polycos = (struct Polyco *)malloc(MAX_PC_SETS*InHdr.obs.NChan*
+    Polycos = (struct Polyco *)malloc(InHdr.obs.NChan*MAX_PC_SETS*
 				      sizeof(struct Polyco));    
     for(i_chan_in=0;i_chan_in<InHdr.obs.NChan;i_chan_in++){
       if((n_poly=GetPoly(Cmd->Polyfile, RunMode.Source, 
@@ -517,16 +518,24 @@ int main(int argc, char **argv)
 /* Shift phases by appropriate amounts if requested on command line 
 	     -- do for each dump and channel */
 	  if(Cmd->PolyfileP){
-	    if(i_dump_in==0 && i_chan_in==0) {
-	      printf("Applying polyco-based phase shifts...\n\n");
-	      fflush(stdout);
+	    if(InHdr.redn.NPoly > 0){
+	      if(i_dump_in==0 && i_chan_in==0) {
+		printf("Applying polyco-based phase shifts...\n\n");
+		fflush(stdout);
+	      }
+	      if(PhaseShift(&Polycos[i_chan_in*MAX_PC_SETS], n_poly, 
+			    &InputProfs[i_chan_in], &RunMode,
+			    &InHdr, &SubInHdr[i_dump_in], i_chan_in) < 0) {
+		printf("Unable to shift profile phases.  Exiting...\n");
+		fflush(stdout);
+		exit(11); 
+	      }
 	    }
-	    if(PhaseShift(&Polycos[i_chan_in*MAX_PC_SETS], n_poly, 
-			  &InputProfs[i_chan_in], &RunMode,
-			  &InHdr, &SubInHdr[i_dump_in], i_chan_in) < 0) {
-	      printf("Unable to shift profile phases.  Exiting...\n");
-	      fflush(stdout);
-	      exit(11); 
+	    else{
+	      if(i_dump_in==0 && i_chan_in==0) {
+		printf("ASPFitsReader WARNING: No polycos found. Will not ");
+		printf("realign profiles.\n");
+	      }
 	    }
 	  }
 	  
@@ -598,7 +607,6 @@ int main(int argc, char **argv)
 	    }  /**** end add ***/
 
 	  } /* end of if (OmitFlag) */
-	  
 	
 	} /* end of i_chan_in loop */
 	
