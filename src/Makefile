@@ -56,7 +56,7 @@ ALLEXECS = ASPFitsReader ASPStokes ASPCal ASPThetaBB ASPBinDown ASPRotate \
 #-------------------
 
 OBJS1 = ASPFitsReader.o CmdLine.o AllocRunMode.o GetOptions.o GetChans.o \
-	GetOmit.o Sum.o Freq2Chan.o InitPars.o ReadCal.o \
+	GetOmit.o Sum.o Freq2Chan.o InitPars.o ReadCal.o WrtPSRFITSPar.o \
 	ReadHdr.o ReadASPHdr.o ReadPSRFITSHdr.o GetTelescope.o GetPoly.o \
 	cprofc.o ReadData.o ReadASPData.o ReadPSRFITSData.o \
 	Dedisperse.o MakeStokes.o PhaseShift.o PhaseCalc.o BinDown.o \
@@ -71,11 +71,13 @@ STOKESOBJS = ASPStokes.o StokesCmdLine.o ReadASPHdr.o GetTelescope.o \
 	GetLST.o
 
 CALOBJS = ASPCal.o CalCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
+	WrtPSRFITSPar.o GetPoly.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalOpt.o BMask.o \
 	FindPeak.o DutyLookup.o MakePol.o Zero.o GetCalData.o ReadData.o \
 	ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o Sort.o Median.o
 
 THETAOBJS = ASPThetaBB.o ThetaCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
+	WrtPSRFITSPar.o GetPoly.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o GetCalData.o \
 	ReadData.o ReadASPData.o ReadPSRFITSData.o PhaseCalc.o MaxMin.o \
 	Sort.o Median.o Zero.o Freq2Chan.o
@@ -92,8 +94,9 @@ ROTATEOBJS = ASPRotate.o RotateCmdLine.o AllocRunMode.o RotateProf.o \
 	cprofc.o MakePol.o Zero.o WrtASPHdr.o WrtASPStokes.o ffft.o
 
 ZAPOBJS = ASPZap.o ZapCmdLine.o AllocRunMode.o ReadASPAsc.o ReadHdr.o \
+	WrtPSRFITSPar.o GetPoly.o \
 	ReadASPHdr.o ReadPSRFITSHdr.o Freq2Chan.o ReadData.o ReadASPData.o \
-	ReadPSRFITSData.o Dedisperse.o GetPoly.o PhaseShift.o MakeStokes.o \
+	ReadPSRFITSData.o Dedisperse.o PhaseShift.o MakeStokes.o \
 	BMask.o Sort.o FindPeak.o \
 	DutyLookup.o MakePol.o Zero.o MaxMin.o ArrayZero.o BinDown.o cprofc.o \
 	RotateProf.o PhaseCalc.o
@@ -129,6 +132,8 @@ TESTOBJS = TestPSRFITS.o TestCmdLine.o InitPars.o ReadHdr.o ReadASPHdr.o \
 	ReadPSRFITSHdr.o GetTelescope.o AllocRunMode.o ReadData.o \
 	ReadASPData.o ReadPSRFITSData.o Dedisperse.o Zero.o PhaseCalc.o \
 	RotateProf.o cprofc.o plot_profile.o 
+
+TESTPAROBJS = TestPSRFITSPar.o WrtPSRFITSPar.o
 
 %.o: %.f
 	$(F77) $(F77FLAGS) $<
@@ -207,6 +212,10 @@ GetWidths: ${WIDTHOBJS} ${SAP_BIN_DIR}
 TestPSRFITS: ${TESTOBJS} ${OBJS2} ${ASP_BIN_DIR}
 	${CC} -o $(ASP_BIN_DIR)/TestPSRFITS ${TESTOBJS} ${OBJS2} \
 	${LCFITSIO}   $(LCPGPLOT)
+
+TestPSRFITSPar: ${TESTPAROBJS} ${ASP_BIN_DIR}
+	${CC} -o $(ASP_BIN_DIR)/TestPSRFITSPar ${TESTPAROBJS} \
+	${LCFITSIO} 
 
 CmdLine.c CmdLine.h: CmdLine.cli
 	clig -d CmdLine.cli
@@ -306,6 +315,8 @@ GetWidths.o: GetWidths.c WidthCmdLine.h
 
 TestPSRFITS.o: TestPSRFITS.c TestCmdLine.h
 
+TestPSRFITSPar.o: TestPSRFITSPar.c 
+
 $(ASP_BIN_DIR):
 	mkdir $(ASP_BIN_DIR)
 
@@ -361,7 +372,7 @@ widthclean:
 	/bin/rm -f ${WIDTHOBJS} $(ASP_BIN_DIR)/GetWidths core* *~ WidthCmdLine.[ch]
 
 testclean:
-	/bin/rm -f ${TESTOBJS} $(ASP_BIN_DIR)/TestPSRFITS core* *~ TestCmdLine.[ch]
+	/bin/rm -f ${TESTOBJS} ${TESTPAROBJS} $(ASP_BIN_DIR)/TestPSRFITS $(ASP_BIN_DIR)/TestPSRFITSPar core* *~ TestCmdLine.[ch]
 
 includeclean:
 	/bin/rm -f $(ASP_INCLUDE_DIR)/*CmdLine.h
