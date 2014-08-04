@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   }
 #endif
 
-  while ((fgets(line,128,fpin) != NULL)){
+  while ((fgets(line,256,fpin) != NULL)){
     if(linenum<0){
       if (Cmd->m4headP){ // m4-style header in
 	sscanf(line,"%f%d%s%f",&Freq,&NBinsIn,RunMode.Source,&Wgt);
@@ -130,7 +130,7 @@ int main(int argc, char **argv)
 
   //  printf("Header:\n%s\n",Headerline);fflush(stdout);
 
-  MakePol(&RunMode,RunMode.NBins,&OutputProfs);
+  MakePol(&RunMode,RunMode.NBinsOut,&OutputProfs);
 
   WriteStokes(&RunMode,&OutputProfs,Headerline,Outfile);
 

@@ -16,7 +16,7 @@ int main(int argc, char **argv)
   int             i_file,i_dump,i_chan,i_bin,n_omit,status=0;
   int             NFirstTable, NumHDU, NDumps, TotDumps=0, hdutype;
   int             spk;
-  int             got_bins=0, got_mjd1=0, good_freqs=1;
+  int             got_bins=0, got_mjd1=0, good_freqs=1, bad_freqs;
   int             bin[NBINMAX], NStdBins;
   int             ngood;
 
@@ -269,7 +269,7 @@ int main(int argc, char **argv)
       }
 
 
-      /* Do check of Frequency range here.  If none of profile is within range, then there
+      /* Do check of Frequency range here.  If NONE of profile is within range, then there
 	 is no point in continuing to read this file. For now ALL frequencies MUST be within
 	 range, so user must choose range wisely.. */
       if(Cmd->VerboseP){
@@ -280,17 +280,34 @@ int main(int argc, char **argv)
 	       FreqRange[0], FreqRange[1]);
 	fflush(stdout);
       }
+      
       if(Hdr[i_file].obs.ChanFreq[0] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]){
-	good_freqs = (FreqRange[0] <= Hdr[i_file].obs.ChanFreq[0] ||
-		      FreqRange[1] >= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+	printf("\n\nFrequency range = %.3lf --> %.3lf\n", 
+	       Hdr[i_file].obs.ChanFreq[0],
+	       Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+	bad_freqs = ( (FreqRange[0] < Hdr[i_file].obs.ChanFreq[0]) && 
+		      (FreqRange[1] < Hdr[i_file].obs.ChanFreq[0]) ) ||
+	  ( (FreqRange[0] > Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]) && 
+	    (FreqRange[1] > Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]) );
+	
+	//	good_freqs = (FreqRange[0] >= Hdr[i_file].obs.ChanFreq[0] ||
+	//	      FreqRange[1] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
       }
       else{
-	good_freqs = (FreqRange[1] >= Hdr[i_file].obs.ChanFreq[0] ||
-		      FreqRange[0] <= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+	printf("\n\nFrequency range = %.3lf --> %.3lf\n",
+	       Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1],
+	       Hdr[i_file].obs.ChanFreq[0]);
+	bad_freqs = ( (FreqRange[0] > Hdr[i_file].obs.ChanFreq[0]) && 
+		      (FreqRange[1] > Hdr[i_file].obs.ChanFreq[0]) ) ||
+	  ( (FreqRange[0] < Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]) && 
+	    (FreqRange[1] < Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]) );
+	//good_freqs = (FreqRange[1] <= Hdr[i_file].obs.ChanFreq[0] ||
+	//	      FreqRange[0] >= Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
 
       }
-      printf("\n\nFrequency range = %.3lf --> %.3lf\n", Hdr[i_file].obs.ChanFreq[0],
-	     Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+      //      printf("\n\nFrequency range = %.3lf --> %.3lf\n", Hdr[i_file].obs.ChanFreq[0],
+      //	     Hdr[i_file].obs.ChanFreq[Hdr[i_file].obs.NChan-1]);
+      good_freqs = !bad_freqs;
       printf("Frequency restrict range: %.3lf --> %.3lf\n", FreqRange[0], FreqRange[1]);
       printf("good_freqs = %d\n\n", good_freqs);
 
@@ -490,7 +507,7 @@ int main(int argc, char **argv)
 		       profile */
 		    if(NPtsProf > NStdBins){
 		      printf("Template profile has fewer bins that input profile(s).  ");
-		      printf("Binning down template to match data before scaling.\n\n");
+		      printf("Binning down data to match template before scaling.\n\n");
 		      TempRunMode.BinDown = 1;
 		      TempRunMode.NBins = NPtsProf;
 		      TempRunMode.NBinsOut = NStdBins;
@@ -561,9 +578,11 @@ int main(int argc, char **argv)
 	      
 	    } /* if (within frequency range) */
 	    else {
-	      printf("Scan %d, channel %d (%.2lf MHz) omitted, since it does not fall within ",
-		     i_dump, i_chan, Hdr[i_file].obs.ChanFreq[i_chan]);
-	      printf("specified frequency range.\n");
+	      if(Cmd->VerboseP){
+		printf("Scan %d, channel %d (%.2lf MHz) omitted, since it does not fall within ",
+		       i_dump, i_chan, Hdr[i_file].obs.ChanFreq[i_chan]);
+		printf("specified frequency range.\n");
+	      }
 	    }
 	    
 	  }
@@ -651,7 +670,7 @@ int main(int argc, char **argv)
       if(Cmd->TemplateP){		    
 	if(NPtsProf > NStdBins){
 	  printf("Template profile has fewer bins that final output profile.  ");
-	  printf("Binning down template to match data before scaling.\n\n");
+	  printf("Binning down data to match template before scaling.\n\n");
 	  TempRunMode.BinDown = 1;
 	  TempRunMode.NBins = NPtsProf;
 	  TempRunMode.NBinsOut = NStdBins;
@@ -741,7 +760,7 @@ int main(int argc, char **argv)
     if (x > 3.) ptype=43.4;
     if (x > 4.) ptype=43.5;
     if (x > 5.) ptype=43.6;
-    fprintf(Fout,"%8d%19.7f%19.7f%19.7f%19.7f%19.7f%19.7f%19.7f%9.1f\n",i_bin,
+    fprintf(Fout,"%8d %22.7f %22.7f %22.7f %22.7f %22.7f %22.7f %22.7f %10.1f\n",i_bin,
 	    OutProfile.rstds[i_bin],OutProfile.rstdq[i_bin],
 	    OutProfile.rstdu[i_bin],
 	    OutProfile.rstdv[i_bin],

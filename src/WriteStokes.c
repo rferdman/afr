@@ -40,7 +40,7 @@ void WriteStokes(struct RunVars *RunMode,
     if (x > 3.) ptype=43.4;
     if (x > 4.) ptype=43.5;
     if (x > 5.) ptype=43.6;
-    fprintf(fpout,"%5d%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%15.7f%6.1f\n",i,
+    fprintf(fpout,"%5d %19.7f %19.7f %19.7f %19.7f %19.7f %19.7f %19.7f %6.1f\n",i,
 	    Profiles->rstds[i],Profiles->rstdq[i],
 	    Profiles->rstdu[i],Profiles->rstdv[i],
 	    Profiles->stdlin[i],Profiles->stdphi[i]*360.0/TWOPI, /* degrees */

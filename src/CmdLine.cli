@@ -52,7 +52,10 @@ Flag -pangleoff PAngleOff {Turn off corrections for parallactic angle}
 Flag -nobase NoBase {Turn off baseline subtraction}
 
 ## Dediperse input profiles to centre frequency before processing
-Flag -dedisp Dedisp {Dediperse input profiles to centre frequency before processing}
+# Flag -dedisp Dedisp {Dediperse input profiles to centre frequency before processing}
+
+## Force polyco generation from ephemeris stored in FITS file, using multiple channels
+Flag -forcepoly ForcePoly {Force multi-channel polyco generation from ephemeris stored in FITS file (For PSRFITS files only)}
 
 ## Don't write zeroed profiles (i.e. in which all scans were omitted) 
 ## if they exist.  I keep writing them as default for now for omission 
@@ -238,3 +241,14 @@ Int -scanomit ScanOmit {Dump(s) to omit from reduction completely} \
     -c 1 16384 \
     -r 0 16383
 
+## Dediperse input profiles to chosen frequency before processing
+Int -dedisp Dedisp {Dediperse input profiles to chosen frequency before processing (-1:lowest frequency; 1:highest frequency; 0:centre of band; no argument: infinite frequency)} \
+    -c 0 1 \
+    -r -1 1
+
+## Apply phase shift to data from dedisp calculation, without actually rotating the profile
+## Works same as -dedisp.  Useful for some PSRFITS data which have been pre-dedispersed, without 
+## phase shift being added.  Will be overrided by -dedisp if both are used.
+Int -ddphase DDPhaseShift {Will calculate phase shift from dedispersing, and will add the shift associated with the given profile, *without* actually shifting the profile (for pre-dedispersed data in PSRFITS format).  Arguments work identically to -dedisp (1:lowest frequency; 1:highest frequency; 0:centre of band; no argument: infinite frequency)} \
+    -c 0 1 \
+    -r -1 1

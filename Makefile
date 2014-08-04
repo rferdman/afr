@@ -24,8 +24,8 @@ LCFITSIO = -L${FITS_LIB_DIR} -lcfitsio -lm
 
 
 ### SPECIFY PGPLOT INCLUDE AND LIBRARY DIRECTORIES HERE ###
-PGPLOT_INCLUDE_DIR = /usr/local/include/pgplot
-PGPLOT_LIB_DIR = /usr/local/include/pgplot
+PGPLOT_INCLUDE_DIR = /usr/local/include
+PGPLOT_LIB_DIR = /usr/local/lib
 
 ### SPECIFY X11 LIBRARY DIRECTORY HERE ###
 X11_INCLUDE_DIR = /usr/X11R6/include

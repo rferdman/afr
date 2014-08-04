@@ -314,8 +314,10 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
   /* If we have polycos, then get phases for the current profiles */
   if(hdr->redn.NPoly > 0){
     for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
-      /* For DFB polycos, we've calculated them for each channel separately */
-      if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod")){
+      /* I've the user has used -forcepoly, we've calculated polycos 
+	 for each channel separately */
+      if(RunMode->ForcePoly){
+	//      if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod")){
 	if(PhaseCalc(&hdr->redn.Polycos[i_chan*MAX_PC_SETS], hdr->redn.NPoly, 
 		     hdr->obs.IMJDStart, DumpMiddleDays, 
 		     &RefPhase, &RefFreq) < 0){	  
@@ -328,7 +330,7 @@ int ReadPSRFITSData(struct ASPHdr *hdr, struct SubHdr *subhdr,
 	}
       }
       else{
-	/* Only need to do for first channel since they wwe are only
+	/* Only need to do for first channel since they we are only
 	   calculating polycos for the centre frequency */
 	if(i_chan==0){
 	  if(PhaseCalc(hdr->redn.Polycos, hdr->redn.NPoly, 

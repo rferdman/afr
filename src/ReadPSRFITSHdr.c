@@ -6,8 +6,9 @@
 
 int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 {
-  int     i_chan, i_param, n_param, i_poly, retval;
-  int     hdutype, colnum, anynul, status=0, tempint;
+  int     i_chan, i_param, n_param, i_poly, i_row, retval;
+  int     hdutype, colnum, anynul, status=0, tempint, dedisp;
+  int     dedisp_col[16]; /* Probably not more than 16 rows to HISTORY table */
   double  ref_mjd, StartMJD, tempdouble;
   long    nrows=0;
   /* tempstr1 is for reading PSRPARAM table -- has width 128 */
@@ -337,6 +338,51 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
       // }
   }
   
+  /* Will need to find out whether the PSRFITS profile data are already 
+     dedispersed */
+
+  /* Initialize header variable to zero, i.e. data has not already been 
+     dedispersed */
+  hdr->redn.Dedisp = 0;
+
+  /* Go to HISTORY table */
+  if(fits_movnam_hdu(Fin, BINARY_TBL, "HISTORY", 0, &status)) {
+    fprintf(stderr, "ERROR ReadASPHdr: HISTORY table does not exist!\n");
+    return -1;
+  } 
+  
+  /* Get number of rows */
+  fits_get_num_rows(Fin, &nrows, &status);
+  if(nrows > 0){
+  /* Read DEDISP table, and get the last row's value */
+    if(fits_get_colnum(Fin, CASEINSEN, "DEDISP", &colnum, &status)){
+      fprintf(stderr, "ReadPSRFITSHdr ERROR: Problem reading DEDISP column ");
+      fprintf(stderr, "in HISTORY table.\n");
+      return -1;
+    }
+    if(fits_read_col(Fin, TDOUBLE, colnum, 1, 1, 1, NULL, dedisp_col, &anynul, &status)) {
+      fprintf(stderr, "ReadPSRFITSHdr ERROR: Could not read DEDISP column ");
+      fprintf(stderr, "in HISTORY table.\n");
+      /* In this case, assume no dedispersion was done by default */
+      hdr->redn.Dedisp = 0; 
+    }
+    /* Sum DEDISP column values */
+    dedisp=0;
+    for (i_row=0; i_row<nrows; i_row++){
+      dedisp += dedisp_col[i_row];
+    }
+    if(dedisp > 0){ /* i.e. data HAS been dedispersed already */
+      hdr->redn.Dedisp = 1;
+      /* Turn off dedispersion, overriding possible command line input */
+      printf("Data is already dedispersed.\n");
+      if(RunMode->Dedisp) printf("Turning off dedispersion request.\n");
+      RunMode->Dedisp = 0;
+    }
+  }
+  /* If there are no rows or is no HISTORY table, assume no dedispersion 
+     was done -- header variable remains at zero */
+
+
 
   /* Dispersion Measure */
     //  fits_read_key(Fin, TDOUBLE, "DM", &hdr->obs.DM, NULL, &status); status=0; 
@@ -505,8 +551,9 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 
   /* Set BW -- should work for all backend versions of PSRFITS */
   hdr->obs.BW = hdr->obs.ChanWidth * ((double)hdr->obs.NChan);
-  /* Set Centre Frequency here -- should work for all versions of PSRFITS */
-  hdr->obs.FSkyCent = 0.5*(hdr->obs.ChanFreq[0] + hdr->obs.ChanFreq[hdr->obs.NChan-1]);
+  /* Set average Frequency here -- should work for all versions of PSRFITS */
+  //  hdr->obs.FSkyCent = 0.5*(hdr->obs.ChanFreq[0] + hdr->obs.ChanFreq[hdr->obs.NChan-1]);
+  hdr->obs.ChanFreqMean = 0.5*(hdr->obs.ChanFreq[0] + hdr->obs.ChanFreq[hdr->obs.NChan-1]);
 
 
 
@@ -517,8 +564,10 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
      on command line */
 
   /* First, allocate Header Polyco array: */
-  if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod"))
+  if(RunMode->ForcePoly)
+    //  if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod"))
     /* Allocate Polyco structure to number of channels */
+    /* For now, only needed if user has specified -forcepoly on command line */
     hdr->redn.Polycos = (struct Polyco *)malloc(hdr->obs.NChan*MAX_PC_SETS*
 						sizeof(struct Polyco));  
   else
@@ -648,6 +697,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
     }
     else{
       /* If POLYCO table was not found, read in pulsar ephemeris if found. */
+      printf("POLYCO table was not found.\n");
       printf("Will now create polycos from ephemeris contained in FITS file...\n");
       /* Try to find par file extension -- either PSRPARAM or PSREPHEM -- and 
 	 write it to a temporary par file from which to calculate polycos 
@@ -683,8 +733,10 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 				      - 3600.)/86400.,
 		/* default at 15 minutes valid span */
 		1800, hdr->obs.ObsvtyCode);
-	/* Now add of frequency/ies, depending on backend */
-	if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod")){
+	/* Now add on frequency/ies, depending on whether user wants to force 
+	 multi-channel polycos */
+	if(RunMode->ForcePoly){
+	  //	if(!strcmp(hdr->gen.BEName, "DFB") || !strcmp(hdr->gen.BEName, "Jod")){
 	  for(i_chan=0; i_chan<hdr->obs.NChan; i_chan++){
 	    sprintf(tempo_cmd, "%s -Zfreq=%lf", 
 		    tempo_cmd_0, hdr->obs.ChanFreq[i_chan]);

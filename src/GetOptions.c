@@ -11,7 +11,7 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
 		Cmdline *Cmd, struct ASPHdr *hdr)
 {
 
-  int    i, LastSlashIndex;
+  int    i, i_min, i_max, LastSlashIndex;
   char   TempChar[20];
   int    RootPosition;
 
@@ -30,14 +30,85 @@ int GetOptions(struct RunVars *RunMode, struct CalVars *CalMode,
   RunMode->Swap         = Cmd->SwapP;
   RunMode->OldFits      = Cmd->OldFitsP;
   RunMode->NoBase       = Cmd->NoBaseP;
-  /* Set to dedisperse input profiles before processing onlky if on 
-     command line, */
-  /* If we are inputting polycos to align anyway, don't need dedisp option */
+  RunMode->ForcePoly    = Cmd->ForcePolyP;
 
   /*  if (Cmd->PolyfileP) 
     RunMode->Dedisp = 0;
     else  */
+
+  /* Set to dedisperse input profiles before processing onlky if on 
+     command line, */
+  /* If we are inputting polycos to align anyway, don't need dedisp option */
   RunMode->Dedisp = Cmd->DedispP;
+  if(Cmd->DedispP){
+    printf("Will dedisperse profile data before any data processing or manipulation.\n");
+  /* Now set frequency to which we dedisperse.  Choices are:
+     - no argument:  infinite frequency 
+     - -1:           lowest frequency in band
+     - +1:           highest frequency in band
+     -  0:           centre frequency of band    */
+    if(Cmd->DedispC==0){ /* no arguments */
+      RunMode->DedispRefFreq = -999;
+      printf("Will dedisperse with respect to infinite frequency.\n");
+    }
+    else{
+      if(Cmd->Dedisp==-1){
+	RunMode->DedispRefFreq = Min(hdr->obs.ChanFreq, hdr->obs.NChan, &i_min);
+	printf("Will dedisperse with respect to the minimum frequency ");
+	printf("of the band (%.3lf MHz).\n", RunMode->DedispRefFreq);
+      }
+      else if (Cmd->Dedisp==1){
+	RunMode->DedispRefFreq = Max(hdr->obs.ChanFreq, hdr->obs.NChan, &i_max);
+	printf("Will dedisperse with respect to the maximum frequency ");
+	printf("of the band (%.3lf MHz).\n", RunMode->DedispRefFreq);
+      }
+      else if (Cmd->Dedisp==0){
+	RunMode->DedispRefFreq = hdr->obs.FSkyCent;
+	printf("Will dedisperse with respect to the centre frequency ");
+	printf("of the band (%.3lf MHz).\n", RunMode->DedispRefFreq);
+      }
+      else{
+	fprintf(stderr, "GetOptions ERROR: argument to -dedisp must be ");
+	fprintf(stderr, "either -1, 0, or 1. Exiting...\n");
+	return -1;
+      }
+    }
+  }
+  /* Check if -ddphase option was used, only if -dedisp was not.  This way the latter overrides the former. */
+  else if(Cmd->DDPhaseShiftP){
+    RunMode->DDPhaseShift = Cmd->DDPhaseShiftP;
+    /* Arguments work identically to -dedisp */
+    if(Cmd->DDPhaseShiftC==0){ /* no arguments */
+      RunMode->DedispRefFreq = -999;
+      printf("Will calculate dedispersion phase shift with respect to ");
+      printf("infinite frequency.\n");
+    }
+    else{
+      if(Cmd->DDPhaseShift==-1){
+	RunMode->DedispRefFreq = Min(hdr->obs.ChanFreq, hdr->obs.NChan, &i_min);
+	printf("Will calculate dedispersion phase shift with respect to the ");
+	printf("minimum frequency of the band (%.3lf MHz).\n", 
+	       RunMode->DedispRefFreq);
+      }
+      else if (Cmd->DDPhaseShift==1){
+	RunMode->DedispRefFreq = Max(hdr->obs.ChanFreq, hdr->obs.NChan, &i_max);
+	printf("Will calculate dedispersion phase shift with respect to the ");
+	printf("maximum frequency of the band (%.3lf MHz).\n", 
+	       RunMode->DedispRefFreq);
+      }
+      else if (Cmd->DDPhaseShift==0){
+	RunMode->DedispRefFreq = hdr->obs.FSkyCent;
+	printf("Will calculate dedispersion phase shift with respect to the ");
+	printf("centre frequency of the band (%.3lf MHz).\n", 
+	       RunMode->DedispRefFreq);
+      }
+      else{
+	fprintf(stderr, "GetOptions ERROR: argument to -ddphase must be ");
+	fprintf(stderr, "either -1, 0, or 1. Exiting...\n");
+	return -1;
+      }
+    }
+  } 
   
 
   /**** String Options ****/  

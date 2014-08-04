@@ -11,7 +11,7 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
   
   int linenum, retval=0; 
   float  lin[NBINMAX], phi[NBINMAX], phierr[NBINMAX], smptype[NBINMAX];  
-  char line[512];
+  char line[512], *ptr;
   FILE *fpin;
   
   // printf("Opening file %s\n",Infile);
@@ -26,6 +26,9 @@ int ReadASPAsc(char *Infile, char *Headerline, int *bin,
     if(linenum<0){
       //      strcpy(Healine,Headerline);
       strcpy(Headerline,line);
+      /* Strip off the newline character */
+      if( (ptr = strchr(Headerline, '\n')) != NULL)
+	*ptr = '\0';
       linenum++;
     }
     else{

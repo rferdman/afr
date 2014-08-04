@@ -21,11 +21,13 @@ struct RunVars {
   int    MakeStd;
   int    FlipPA;
   int    NoBase;
+  int    ForcePoly;
   int    Scale;
   int    Header;
   int    Verbose;
   int    Swap;
   int    Dedisp;
+  int    DDPhaseShift;
   int    OldFits;
   int    Cal;
   int    PolyTable;
@@ -70,6 +72,7 @@ struct RunVars {
   float  *MM;
   //  float  MM[16*NCHMAX];
   double FSky;
+  double DedispRefFreq;
   double *ThetaBB;
   //  double ThetaBB[NCHMAX];
 /*   double CalValue[2]; */

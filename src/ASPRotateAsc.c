@@ -41,11 +41,11 @@ int main(int argc, char **argv)
   }
 
   linenum=-1;
-  while ((fgets(line,128,fpin) != NULL)){
+  while ((fgets(line,256,fpin) != NULL)){
     if(linenum<0){
       strcpy(Headerline,line);
       linenum++;
-   }
+    }
     else{
       sscanf(line,"%d%f%f%f%f%f%f%f%f",
 	     &bin[linenum],&Profile.rstds[linenum],

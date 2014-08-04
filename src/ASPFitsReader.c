@@ -505,7 +505,7 @@ int main(int argc, char **argv)
 	  /* Now dedisperse to the centre frequency before further 
 	     processing, if required */	  
 	  //  RunMode.Dedisp=0;
-	  if(RunMode.Dedisp){
+	  if(RunMode.Dedisp || RunMode.DDPhaseShift){
 	    if (Dedisperse(&InputProfs[i_chan_in], &RunMode, 
 			   &InHdr, &SubInHdr[i_dump_in], 
 			   i_chan_in) < 0) {
@@ -518,23 +518,24 @@ int main(int argc, char **argv)
 /* Shift phases by appropriate amounts if requested on command line 
 	     -- do for each dump and channel */
 	  if(Cmd->PolyfileP){
-	    if(InHdr.redn.NPoly > 0){
+//  	    if(InHdr.redn.NPoly > 0){
+	    if(n_poly > 0){
 	      if(i_dump_in==0 && i_chan_in==0) {
-		printf("Applying polyco-based phase shifts...\n\n");
-		fflush(stdout);
+			  printf("Applying polyco-based phase shifts...\n\n");
+			  fflush(stdout);
 	      }
 	      if(PhaseShift(&Polycos[i_chan_in*MAX_PC_SETS], n_poly, 
-			    &InputProfs[i_chan_in], &RunMode,
-			    &InHdr, &SubInHdr[i_dump_in], i_chan_in) < 0) {
-		printf("Unable to shift profile phases.  Exiting...\n");
-		fflush(stdout);
-		exit(11); 
+		  				&InputProfs[i_chan_in], &RunMode,
+		  				&InHdr, &SubInHdr[i_dump_in], i_chan_in) < 0) {
+			  printf("Unable to shift profile phases.  Exiting...\n");
+			  fflush(stdout);
+			  exit(11); 
 	      }
 	    }
 	    else{
 	      if(i_dump_in==0 && i_chan_in==0) {
-		printf("ASPFitsReader WARNING: No polycos found. Will not ");
-		printf("realign profiles.\n");
+			  printf("ASPFitsReader WARNING: No polycos found. Will not ");
+			  printf("realign profiles.\n");
 	      }
 	    }
 	  }

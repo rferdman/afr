@@ -27,7 +27,7 @@ int WrtPSRFITSPar(fitsfile *Fin, char *outpar)
   
   /* Open temporary par file for writing */
   if ((Fpar = fopen(outpar, "w")) == NULL){
-    printf("Could not open file %s for writing.  Exiting...\n", "temp.par");
+    printf("Could not open file %s for writing.  Exiting...\n", outpar);
     return -1;
   }
   

@@ -78,6 +78,7 @@ struct ObservationMode
   int      NPoln;                 /* No. of polarizations */
   char     PolnType[STRINGLEN];   /* Polarization identifier (eg. AABBCRCI, IQUV, etc.) */
   double   FSkyCent;              /* Overall sky centre frequency */
+  double   ChanFreqMean;          /* Calculated mean of min and max channel frequencies */
   double   BW;                    /* Observing bandwidth */
   int      ChanIndx[NCHMAX];      /* Orig channel index in xASP */
   double   ChanFreq[NCHMAX];      /* Sky mid-frequency (MHz) */
@@ -164,6 +165,8 @@ struct Reduction
   char     RUserName[16];         /* Analyser's name */
   int      ROPModeCode;           /* Output mode code (binary-coded) */
   char     RCommString[120];      /* Command string given for analysis */
+/* Data has been dedispersed (HISTORY table in PSRFITS files) */
+  int      Dedisp;                 
   /* Include polyco here for PSRFITS data, from which we read (or create) polycos
      corresponding to original observation, of use when realigning profiles.  Will 
      allocate later, only once we know that we need them */
