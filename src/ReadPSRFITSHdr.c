@@ -347,41 +347,42 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 
   /* Go to HISTORY table */
   if(fits_movnam_hdu(Fin, BINARY_TBL, "HISTORY", 0, &status)) {
-    fprintf(stderr, "ERROR ReadASPHdr: HISTORY table does not exist!\n");
-    return -1;
+    fprintf(stderr, "ReadASPHdr WARNING: HISTORY table does not exist!\n");
+    // return -1;
+	status = 0;
   } 
-  
-  /* Get number of rows */
-  fits_get_num_rows(Fin, &nrows, &status);
-  if(nrows > 0){
-  /* Read DEDISP table, and get the last row's value */
-    if(fits_get_colnum(Fin, CASEINSEN, "DEDISP", &colnum, &status)){
-      fprintf(stderr, "ReadPSRFITSHdr ERROR: Problem reading DEDISP column ");
-      fprintf(stderr, "in HISTORY table.\n");
-      return -1;
-    }
-    if(fits_read_col(Fin, TDOUBLE, colnum, 1, 1, 1, NULL, dedisp_col, &anynul, &status)) {
-      fprintf(stderr, "ReadPSRFITSHdr ERROR: Could not read DEDISP column ");
-      fprintf(stderr, "in HISTORY table.\n");
-      /* In this case, assume no dedispersion was done by default */
-      hdr->redn.Dedisp = 0; 
-    }
-    /* Sum DEDISP column values */
-    dedisp=0;
-    for (i_row=0; i_row<nrows; i_row++){
-      dedisp += dedisp_col[i_row];
-    }
-    if(dedisp > 0){ /* i.e. data HAS been dedispersed already */
-      hdr->redn.Dedisp = 1;
-      /* Turn off dedispersion, overriding possible command line input */
-      printf("Data is already dedispersed.\n");
-      if(RunMode->Dedisp) printf("Turning off dedispersion request.\n");
-      RunMode->Dedisp = 0;
-    }
+  else{
+	  /* Get number of rows */
+	  fits_get_num_rows(Fin, &nrows, &status);
+	  if(nrows > 0){
+		  /* Read DEDISP table, and get the last row's value */
+		  if(fits_get_colnum(Fin, CASEINSEN, "DEDISP", &colnum, &status)){
+			  fprintf(stderr, "ReadPSRFITSHdr ERROR: Problem reading DEDISP column ");
+			  fprintf(stderr, "in HISTORY table.\n");
+			  return -1;
+		  }
+		  if(fits_read_col(Fin, TDOUBLE, colnum, 1, 1, 1, NULL, dedisp_col, &anynul, &status)) {
+			  fprintf(stderr, "ReadPSRFITSHdr ERROR: Could not read DEDISP column ");
+			  fprintf(stderr, "in HISTORY table.\n");
+			  /* In this case, assume no dedispersion was done by default */
+			  hdr->redn.Dedisp = 0; 
+		  }
+		  /* Sum DEDISP column values */
+		  dedisp=0;
+		  for (i_row=0; i_row<nrows; i_row++){
+			  dedisp += dedisp_col[i_row];
+		  }
+		  if(dedisp > 0){ /* i.e. data HAS been dedispersed already */
+			  hdr->redn.Dedisp = 1;
+			  /* Turn off dedispersion, overriding possible command line input */
+			  printf("Data is already dedispersed.\n");
+			  if(RunMode->Dedisp) printf("Turning off dedispersion request.\n");
+			  RunMode->Dedisp = 0;
+		  }
+	  }
+	  /* If there are no rows or is no HISTORY table, assume no dedispersion 
+	  was done -- header variable remains at zero */
   }
-  /* If there are no rows or is no HISTORY table, assume no dedispersion 
-     was done -- header variable remains at zero */
-
 
 
   /* Dispersion Measure */
@@ -462,7 +463,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
     
     /* Go to SUBINT table */
     if(fits_movnam_hdu(Fin, BINARY_TBL, "SUBINT", 0, &status)) {
-      fprintf(stderr, "ERROR ReadASPHdr: SUBINT table does not exist!\n");
+      fprintf(stderr, "ReadASPHdr ERROR: SUBINT table does not exist!\n");
       return -1;
     } 
   }
@@ -470,7 +471,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 
   /* Go to SUBINT table */
     if(fits_movnam_hdu(Fin, BINARY_TBL, "SUBINT", 0, &status)) {
-      fprintf(stderr, "ERROR ReadASPHdr: SUBINT table does not exist!\n");
+      fprintf(stderr, "ReadASPHdr ERROR: SUBINT table does not exist!\n");
       return -1;
     } 
     /* First, if not GUPPI data, read in DM and RM from this table's header */
@@ -507,18 +508,18 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
        Will put in a safeguard at some point */
     if(fits_read_key(Fin, TINT, "NSUBOFFS", &hdr->obs.NSubOffs, NULL, &status)){
       if(!strncmp(hdr->gen.ObsMode, "CAL", 3)){
-	fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
-	printf("Proceeding with CAL file reading.\n");	
-	status=0;  /* Otherwise next fits routine will crash */
+		  fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not get NSUBOFFS from SUBINT extension.\n");
+		  printf("Proceeding with CAL file reading.\n");	
+		  status=0;  /* Otherwise next fits routine will crash */
 	
       } 
       else {
-	fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not read NSUBOFFS keyword from SUBINT extension.\n");
-	printf("Proceeding with reading of data.  Time stamps likely not correct.\n");	
-	hdr->obs.NSubOffs=0;
-	//sleep(2);
-	status=0;  /* Otherwise next fits routine will crash */
-	//  fits_report_error(stderr, status); /* print any error message */
+		  fprintf(stderr, "ReadPSRFITSHdr WARNING:  Could not read NSUBOFFS keyword from SUBINT extension.\n");
+		  printf("Proceeding with reading of data.  Time stamps likely not correct.\n");	
+		  hdr->obs.NSubOffs=0;
+		  //sleep(2);
+		  status=0;  /* Otherwise next fits routine will crash */
+		  //  fits_report_error(stderr, status); /* print any error message */
 	
       }
     }

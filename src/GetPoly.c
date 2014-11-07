@@ -103,40 +103,43 @@ int GetPoly(char *polyco_file, char *psr_name, struct Polyco *pc, double ChanFre
 	/* Ensure that pulsar names match, and that frequencies match within tolerance */
 	//	printf("name0 = %s, psr_name = %s\nfabsf(ChanFreq - RefFreq) = %f, FREQTOL = %f\n", name0, psr_name, fabsf(ChanFreq - RefFreq), FREQTOL);
         if (!strncmp(name0,psr_name,10) && 
-	    (fabsf(ChanFreq - RefFreq) <= FREQTOL) ) {
-            mjdcheck = mjdmid + mjd1mid;
+	    	(fabsf(ChanFreq - RefFreq) <= FREQTOL) ) {
+				mjdcheck = mjdmid + mjd1mid;
 	    // printf("GETPOLY: ChanFreq = %lf, RefFreq = %lf\n",ChanFreq, RefFreq); fflush(stdout); 
-            if (fabs(mjd-mjdcheck) <= 0.5) {
-                pc[jsave].NMinutes = nblk0;
-		//                printf("GETPOLY: fabs = %f,   jobs = %d, mjdcheck = %f\n",fabs(mjd-mjdcheck), jobs, mjdcheck); 
-		//                printf("GETPOLY: minutes = %d\n",pc[jsave].NMinutes);
-                fflush(stdout); 
-                pc[jsave].NCoeff = ncoeff0;
-                pc[jsave].DM = dm0;
-                pc[jsave].EarthZ4 = z40;
-                pc[jsave].MjdMidInt = mjdmid;
-                pc[jsave].MjdMidFrac = mjd1mid;
-                pc[jsave].FRotRef = f0;
-                pc[jsave].PhRotRef = rphase;
-                pc[jsave].PhRotRef -= floor(pc[jsave].PhRotRef);
-                //if ((pc[jsave].PhRotRef < 0.) || 
-                //      (pc[jsave].PhRotRef > 1.)) {
-                //    /* Phase out of range = do something ??? */
-                //}
-                for(k=0;k<MAX_PC_COEFF;k++){        
-                    pc[jsave].Coeff[k] = coeff[k];
-                }
-                jsave++;
-            }
-        }
-    }
+			if (fabs(mjd-mjdcheck) <= 0.5) {
+				pc[jsave].NMinutes = nblk0;
+				//                printf("GETPOLY: fabs = %f,   jobs = %d, mjdcheck = %f\n",fabs(mjd-mjdcheck), jobs, mjdcheck); 
+				//                printf("GETPOLY: minutes = %d\n",pc[jsave].NMinutes);
+				fflush(stdout); 
+				pc[jsave].NCoeff = ncoeff0;
+				pc[jsave].DM = dm0;
+				pc[jsave].EarthZ4 = z40;
+				pc[jsave].MjdMidInt = mjdmid;
+				pc[jsave].MjdMidFrac = mjd1mid;
+				pc[jsave].FRotRef = f0;
+				pc[jsave].PhRotRef = rphase;
+				pc[jsave].PhRotRef -= floor(pc[jsave].PhRotRef);
+				//if ((pc[jsave].PhRotRef < 0.) || 
+				//      (pc[jsave].PhRotRef > 1.)) {
+				//    /* Phase out of range = do something ??? */
+				//}
+				for(k=0;k<MAX_PC_COEFF;k++){        
+					pc[jsave].Coeff[k] = coeff[k];
+				}
+				jsave++;
+			}
+		}
+	}
     fflush(stdout); 
 
 
-    if(jsave < 1){
-      printf("Found a mismatch -- ChanFreq=%.5lf not found...\n",
-	     ChanFreq);
-    }
+	if(jsave < 1){
+		printf("Found a mismatch -- ChanFreq=%.5lf not found...\n",
+		ChanFreq);
+		printf("Or else an MJD mismatch -- mjd = %lf, mjdcheck = %lf\n", mjd, mjdcheck); 
+		printf("Or else a name mismatch -- name0 = %s, psrname = %s\n", name0, psr_name);
+		 
+	}
 
     /* jsave comes out as the number of polyco sets found for this
      * pulsar.  we'll return this value
