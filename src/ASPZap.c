@@ -288,6 +288,8 @@ int main(int argc, char *argv[])
   /* Get number of HDUs in fits file */
   fits_get_num_hdus(Fin, &NumHDU, &status);
   RunMode.Dedisp = 0;
+  /* Assume no reference frequency for dedispersion, i.e. infinite ref frequency */
+  RunMode.DedispRefFreq = Hdr.obs.FSkyCent;
   /* Will always scale by off-pulse RMS since we are not using cals */
   RunMode.Scale = 1;
   RunMode.Swap = 0;
@@ -334,7 +336,7 @@ int main(int argc, char *argv[])
     if(!strcmp(Hdr.gen.FitsType, "PSRFITS")) {
       /* Set to dedisperse input profiles before processing */
       if(!Cmd->NoDedispP)
-	RunMode.Dedisp = 1;
+		  RunMode.Dedisp = 1;
       else
 	printf("Dedispersion turned off.\n\n");
       // NDump = Hdr.redn.RNTimeDumps;
@@ -593,6 +595,8 @@ int main(int argc, char *argv[])
 	  /* Now dedisperse to the centre frequency before further 
 	     processing, if required */	 
 	  if(RunMode.Dedisp){
+  	    if(i_dump==0 && i_chan==0) 
+		  fprintf(stdout, "Dedispersing data...\n");
 	    if (Dedisperse(&Profile[i_chan], &RunMode, 
 			   &Hdr, &SubHdr, 
 			   i_chan) < 0) {
