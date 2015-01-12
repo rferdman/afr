@@ -19,9 +19,11 @@ struct Polyco {
   double FRotRef;              /* Reference rotational frequency */
   double PhRotRef;             /* Reference rotational phase */
   double EarthZ4;              /* Earth motion correction to DM */
-  double MjdMidInt;            /* Integer part of MJD for this set */
-  double MjdMidFrac;           /* Fractional part of MJD for this set */
   double Coeff[MAX_PC_COEFF]; /* Actual coefficients */
+  long double MjdMidInt;            /* Integer part of MJD for this set */
+  long double MjdMidFrac;           /* Fractional part of MJD for this set */
+//  double MjdMidInt;            /* Integer part of MJD for this set */
+//  double MjdMidFrac;           /* Fractional part of MJD for this set */
 };
 
 int GetPoly(char *, char *, struct Polyco *, double, double);

@@ -9,7 +9,7 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
   int     i_chan, i_param, n_param, i_poly, i_row, retval;
   int     hdutype, colnum, anynul, status=0, tempint, dedisp;
   int     dedisp_col[16]; /* Probably not more than 16 rows to HISTORY table */
-  double  ref_mjd, StartMJD, tempdouble;
+  double  ref_mjd=0, StartMJD, tempdouble;
   long    nrows=0;
   /* tempstr1 is for reading PSRPARAM table -- has width 128 */
   char    tempRA[32], tempDec[32], tempstr1[128], tempstr2[256];
@@ -636,8 +636,15 @@ int ReadPSRFITSHdr(struct ASPHdr *hdr, fitsfile *Fin, struct RunVars *RunMode)
 	  fprintf(stderr, "ReadPSRFITSHdr ERROR: Unable to read REF_MJD...\n");
 	  return -1;
 	}
-	hdr->redn.Polycos[i_poly].MjdMidInt = floor(ref_mjd);
-	hdr->redn.Polycos[i_poly].MjdMidFrac = ref_mjd - floor(ref_mjd);
+	/* Patch to keep precision when reading REF_MJD */
+    long double mjdldi = (long double)((int)ref_mjd);
+    long double mjdldf = (long double)ref_mjd - mjdldi;
+    mjdldf = roundl(1.e10 * mjdldf)*1.e-10;
+	hdr->redn.Polycos[i_poly].MjdMidInt = mjdldi;
+	hdr->redn.Polycos[i_poly].MjdMidFrac = mjdldf;
+
+/*	hdr->redn.Polycos[i_poly].MjdMidInt = floor(ref_mjd);
+	hdr->redn.Polycos[i_poly].MjdMidFrac = ref_mjd - floor(ref_mjd); */
 	
 	if(RunMode->Verbose){
 	  printf("ref_mjd:                %lf\n", ref_mjd);
