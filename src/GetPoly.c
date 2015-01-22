@@ -10,7 +10,8 @@
 #include "ASPCommon.h"
 //#include "CmdLine.h"
 
-#define FREQTOL 0.003
+	 //#define FREQTOL 0.003
+#define FREQTOL 0.1
 
 //#include "misc.h"
 

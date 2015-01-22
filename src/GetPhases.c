@@ -69,7 +69,7 @@ int main(int argc, char **argv)
 	  /* Start polyco set to be 1 hour early, (and so end 1 hour later) */
 	  Cmd->MJDStart-0.04  /* start one hour early */,
 	  /* allow an extra 2 hours of polycos */
-	  Cmd->TObsHours + 1., /* End one hour later */ 
+	  Cmd->TObsHours + 2., /* End two hour later */ 
 	  /* default at 30 minutes valid span */
 	  Cmd->NSpan, Cmd->Site);
   
