@@ -1,0 +1,51 @@
+# Object files
+*.o
+*.ko
+*.obj
+*.elf
+
+# Precompiled Headers
+*.gch
+*.pch
+
+# Libraries
+*.lib
+*.a
+*.la
+*.lo
+
+# Shared objects (inc. Windows DLLs)
+*.dll
+*.so
+*.so.*
+*.dylib
+
+# Executables
+*.exe
+*.out
+*.app
+*.i*86
+*.x86_64
+*.hex
+
+# Debug files
+*.dSYM/
+
+# Bin directory
+bin/
+
+# AFR clig command line .c and .h files and .1 automatically generated man pages
+*CmdLine.c
+*CmdLine.h
+*.1
+
+# Back ".SAFE" or ".OLD" files
+*.SAFE
+*.OLD*
+
+
+
+
+src/TestPSRFITSPar.c
+
+.gitignore.swp

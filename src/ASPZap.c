@@ -819,7 +819,8 @@ int main(int argc, char *argv[])
       exit(1);
     }
     /* Make a long rectangular plot surface for profiles */
-    cpgpap(5.5, 1.9);
+    cpgpap(4.8, 1.9);
+//    cpgpap(5.5, 1.9);
 	//  printf("VIEW WIDTH = %f,  VIEW HEIGHT = %f\n\n", view_width, view_height);
     cpgsch(1.);  
     
@@ -829,6 +830,7 @@ int main(int argc, char *argv[])
     }
     /* Make a long rectangular plot surface for profiles */
     cpgpap(5., 0.618034);
+//    cpgpap(5., 0.618034);
     cpgsch(1.8);  
 
 
@@ -840,7 +842,8 @@ int main(int argc, char *argv[])
     /* Make a long rectangular plot surface for 4 histograms if we are doing 
        template matching  */
     if(Cmd->TemplateP)
-      cpgpap(4., 2.45);
+      cpgpap(3.4, 2.45);
+//      cpgpap(4., 2.45);
     else
       cpgpap(4., 0.6180);
     cpgsch(1.9);  

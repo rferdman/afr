@@ -351,11 +351,15 @@ int main(int argc, char **argv)
 			 &Polycos[i_chan_in*MAX_PC_SETS], 
 			 InHdr.obs.ChanFreq[i_chan_in], 
 			 StartMJD)) < 1) {
-	printf("Could not find polycos for all input profiles of \n");
-	printf("PSR %s given as input.  Will not shift profiles.\n",
-	       RunMode.Source);
-	Cmd->PolyfileP=0;
+				 printf("Could not find polycos for all input profiles of \n");
+				 printf("PSR %s given as input.  Will not shift profiles.\n",
+				 RunMode.Source);
+				 Cmd->PolyfileP=0;
       }
+/*	  else{
+		  printf("MAX_PC = %d\n", InHdr.obs.NChan*MAX_PC_SETS);fflush(stdout);
+		  printf("NEW n_poly = %d\n", n_poly);fflush(stdout); 
+	  } */
       //printf("%lf MHz:  %d polyco sets found...\n", InHdr.obs.ChanFreq[i_chan_in], n_poly);
     }
     if (Cmd->PolyfileP) printf("Polycos successfully found.\n\n");
