@@ -810,7 +810,8 @@ int main(int argc, char *argv[])
       printf("Warning:  pgplot device could not be initialized.\n");
       exit(1);
     }
-    cpgpap(8., 1.0);
+//    cpgpap(8., 1.0);
+    cpgpap(6.4, 1.0);
     cpgsch(1.);  
     
     /* Profile plots */
@@ -819,7 +820,7 @@ int main(int argc, char *argv[])
       exit(1);
     }
     /* Make a long rectangular plot surface for profiles */
-    cpgpap(4.8, 1.9);
+    cpgpap(3.3, 1.9);
 //    cpgpap(5.5, 1.9);
 	//  printf("VIEW WIDTH = %f,  VIEW HEIGHT = %f\n\n", view_width, view_height);
     cpgsch(1.);  
@@ -842,7 +843,7 @@ int main(int argc, char *argv[])
     /* Make a long rectangular plot surface for 4 histograms if we are doing 
        template matching  */
     if(Cmd->TemplateP)
-      cpgpap(3.4, 2.45);
+      cpgpap(2.6, 2.45);
 //      cpgpap(4., 2.45);
     else
       cpgpap(4., 0.6180);

@@ -24,8 +24,10 @@ PGPLOT_INCLUDE_DIR = /usr/local/include
 PGPLOT_LIB_DIR = /usr/local/lib
 
 ### SPECIFY X11 LIBRARY DIRECTASPORY HERE ###
-X11_INCLUDE_DIR = /usr/X11R6/include
-X11_LIB_DIR = /usr/X11R6/lib
+// X11_INCLUDE_DIR = /usr/X11R6/include
+// X11_LIB_DIR = /usr/X11R6/lib
+X11_INCLUDE_DIR = /usr/local/include/X11
+X11_LIB_DIR = /usr/local/lib/X11
 
 LCPGPLOT = -L$(PGPLOT_LIB_DIR) -lcpgplot -lpgplot  -L$(X11_LIB_DIR) -lX11 -lpng -pg -lgfortran # -L/sw/lib -lg2c -pg
 
@@ -385,4 +387,3 @@ clean:
 
 #distclean:
 #	/bin/rm -f Makefile config.h config.status config.cache config.log
-
