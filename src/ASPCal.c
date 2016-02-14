@@ -22,6 +22,7 @@
 #include "CalCmdLine.h"
 #include "ASPCal.h"
 
+#define FREQTOL 0.01
 
 int main(int argc, char **argv)
 {
@@ -288,11 +289,12 @@ int main(int argc, char **argv)
 	   write JyPerCount to file.  AFR will omit that channel 
 	   automatically.*/
 	if (CalHeight[i][pol] < 0.) {
-	  printf("WARNING: Did not calculate CalHeight correctly. ");
-	  printf("Skipping and will not write channel %.5lf to file.\n",
-		 CalHdr.obs.ChanFreq[i]);
-	  SkipChan[i]=1;
-	  // return -9;
+	  //printf("WARNING: Did not calculate CalHeight correctly. ");
+	  //printf("Skipping and will not write channel %.5lf to file.\n",
+		// CalHdr.obs.ChanFreq[i]);
+	  //SkipChan[i]=1;
+	  CalHeight[i][pol] = fabs(CalHeight[i][pol]);
+      // return -9;
 	}
 	else {
 	  if(CalRunMode.Verbose)
@@ -555,11 +557,12 @@ int main(int argc, char **argv)
 					    ContOnBin[i],ContOffBin[i],
 					    &OnAvg[i], &OffAvg[i]);
 	  if (ContCalHeight[i] < 0.) {
-	    printf("WARNING: Did not calculate CalHeight correctly for ");
-	    printf("continuum cal scan %s. ",ContRunMode[i].Infile);
-	    printf("Skipping and will not write channel %.1lf to file.\n",
-		 ContHdr[0].obs.ChanFreq[j]);
-	    SkipChan[j]=1;
+	    //printf("WARNING: Did not calculate CalHeight correctly for ");
+	    //printf("continuum cal scan %s. ",ContRunMode[i].Infile);
+	    //printf("Skipping and will not write channel %.1lf to file.\n",
+		// ContHdr[0].obs.ChanFreq[j]);
+	    //SkipChan[j]=1;
+        ContCalHeight[i] = fabs(ContCalHeight[i]);
 	  }
 
 	/* Calculte calheight/baseline ratio for each scan and use that to 
@@ -766,7 +769,8 @@ int main(int argc, char **argv)
       NumChansFound = 0;
       for(i=0;i<ContHdr[0].obs.NChan;i++){
 	for (j=0;j<CalHdr.obs.NChan;j++){
-	  if(CalHdr.obs.ChanFreq[j] == ContHdr[0].obs.ChanFreq[i]) {
+//	  if(CalHdr.obs.ChanFreq[j] == ContHdr[0].obs.ChanFreq[i]) {
+      if(fabsf(CalHdr.obs.ChanFreq[j] - ContHdr[0].obs.ChanFreq[i]) <= FREQTOL) {
 	    NumChansFound++;
 	    
 	    /* Write to file if this channel is not bad data */
@@ -787,6 +791,9 @@ int main(int argc, char **argv)
 	    
 	    break; // move on to next continuum cal frequency to match up
 	  }
+/*      else{
+          printf("ChanFreq = %.8lf\nContFreq = %.8lf\n\n", CalHdr.obs.ChanFreq[j], ContHdr[0].obs.ChanFreq[i]);
+      }*/
 	}
       }        
 
