@@ -289,11 +289,11 @@ int main(int argc, char **argv)
 	   write JyPerCount to file.  AFR will omit that channel 
 	   automatically.*/
 	if (CalHeight[i][pol] < 0.) {
-	  //printf("WARNING: Did not calculate CalHeight correctly. ");
-	  //printf("Skipping and will not write channel %.5lf to file.\n",
-		// CalHdr.obs.ChanFreq[i]);
-	  //SkipChan[i]=1;
-	  CalHeight[i][pol] = fabs(CalHeight[i][pol]);
+	  printf("WARNING: Did not calculate CalHeight correctly. ");
+	  printf("Skipping and will not write channel %.5lf to file.\n",
+		 CalHdr.obs.ChanFreq[i]);
+	  SkipChan[i]=1;
+	  ///////////CalHeight[i][pol] = fabs(CalHeight[i][pol]);
       // return -9;
 	}
 	else {
@@ -557,12 +557,12 @@ int main(int argc, char **argv)
 					    ContOnBin[i],ContOffBin[i],
 					    &OnAvg[i], &OffAvg[i]);
 	  if (ContCalHeight[i] < 0.) {
-	    //printf("WARNING: Did not calculate CalHeight correctly for ");
-	    //printf("continuum cal scan %s. ",ContRunMode[i].Infile);
-	    //printf("Skipping and will not write channel %.1lf to file.\n",
-		// ContHdr[0].obs.ChanFreq[j]);
-	    //SkipChan[j]=1;
-        ContCalHeight[i] = fabs(ContCalHeight[i]);
+	    printf("WARNING: Did not calculate CalHeight correctly for ");
+	    printf("continuum cal scan %s. ",ContRunMode[i].Infile);
+	    printf("Skipping and will not write channel %.1lf to file.\n",
+		 ContHdr[0].obs.ChanFreq[j]);
+	    SkipChan[j]=1;
+        //////ContCalHeight[i] = fabs(ContCalHeight[i]);
 	  }
 
 	/* Calculte calheight/baseline ratio for each scan and use that to 
